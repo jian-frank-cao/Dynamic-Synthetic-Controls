@@ -1,1 +1,1 @@
-# Synthetic-Controls
+# Dynamic-Synthetic-Controls
