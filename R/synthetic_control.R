@@ -1,6 +1,3 @@
-library(checkpoint)
-checkpoint("2022-04-01")
-
 library(foreign)
 library(Synth)
 library(tidyverse)

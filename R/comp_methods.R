@@ -213,7 +213,7 @@ compare_methods = function(data,
     x_original = approx(x_original, n = (length(x_original) - 1) * stretch + 1, method = "linear")$y
 
     res = TwoStepDTW(y, x, x_original, t_treat, k, n_1st, dtw_method = dtw_method,
-                     normalize_method = normalize_method, step.pattern = step.pattern)
+                     normalize_method = normalize_method, ...)
 
     df = data.frame(time = 1:length(x), y = y_original, x = x_original, warped = res$x_w[1:length(x)]) %>%
       `colnames<-`(c("time", dependent, country, paste0(country, "-Warped"))) %>%
@@ -328,26 +328,26 @@ compare_methods = function(data,
 
 
 ## Run -------------------------------------------------------------------------
-# countries = data[c("index", "country")] %>% distinct
-# k = 6
-# stretch = 1
-# result = NULL
-# for (i in 1:nrow(countries)) {
-#   dependent = countries$country[i]
-#   dependent_id = countries$index[i]
-#   print(paste0(dependent, ":", i, "-", k, " start..."))
-#   res = compare_methods(data = data,
-#                         dependent = dependent,
-#                         dependent_id = dependent_id,
-#                         stretch = stretch,
-#                         normalize_method = "minmax",
-#                         k = k,
-#                         step.pattern = dtw::symmetric1)
-#   result = rbind(result,
-#                  res$mad %>% mutate(dependent = dependent, k = k))
-#   print(paste0(dependent, ":", i, "-", k, " start...Done."))
-# }
-# result = result %>% mutate(ratio = mad2_post/mad1_post)
+countries = data[c("index", "country")] %>% distinct
+k = 6
+stretch = 1
+result = NULL
+for (i in 1:nrow(countries)) {
+  dependent = countries$country[i]
+  dependent_id = countries$index[i]
+  print(paste0(dependent, ":", i, "-", k, " start..."))
+  res = compare_methods(data = data,
+                        dependent = dependent,
+                        dependent_id = dependent_id,
+                        stretch = stretch,
+                        normalize_method = "minmax",
+                        k = k,
+                        step.pattern = dtw::symmetricP2)
+  result = rbind(result,
+                 res$mad %>% mutate(dependent = dependent, k = k))
+  print(paste0(dependent, ":", i, "-", k, " start...Done."))
+}
+result = result %>% mutate(ratio = mad2_post/mad1_post)
 
 
 # countries = data_qtrly[c("index", "country")] %>% distinct
