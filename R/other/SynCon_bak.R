@@ -1,11 +1,14 @@
-# library(Synth)
-# library(xtable)
+library(foreign)
+library(Synth)
+library(tidyverse)
+# library(haven)
+library(xtable)
 
 ## Functions -------------------------------------------------------------------
 do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
   # find v
   dataprep.out <-
-    Synth::dataprep(
+    dataprep(
       foo = df,
       predictors    = c(dep_var,"trade","infrate"),
       dependent     = dep_var,
@@ -26,7 +29,7 @@ do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
   
   # fit training model
   synth.out <- 
-    Synth::synth(
+    synth(
       data.prep.obj=dataprep.out,
       Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
     )
@@ -34,7 +37,7 @@ do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
   # main model
   # prepare data
   dataprep.out <-
-    Synth::dataprep(
+    dataprep(
       foo = df,
       predictors    = c(dep_var,"trade","infrate"),
       dependent     = dep_var,
@@ -55,7 +58,7 @@ do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
   
   # fit training model
   synth.out <- 
-    Synth::synth(
+    synth(
       data.prep.obj=dataprep.out,
       custom.v=as.numeric(synth.out$solution.v)
     )
@@ -79,7 +82,7 @@ do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
 do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
   # find v
   dataprep.out <-
-    Synth::dataprep(
+    dataprep(
       foo = df,
       predictors    = c(dep_var,"trade","infrate"),
       dependent     = dep_var,
@@ -100,7 +103,7 @@ do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
   
   # fit training model
   synth.out <- 
-    Synth::synth(
+    synth(
       data.prep.obj=dataprep.out,
       Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
     )
@@ -108,7 +111,7 @@ do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
   # main model
   # prepare data
   dataprep.out <-
-    Synth::dataprep(
+    dataprep(
       foo = df,
       predictors    = c(dep_var,"trade","infrate"),
       dependent     = dep_var,
@@ -129,7 +132,7 @@ do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
   
   # fit training model
   synth.out <- 
-    Synth::synth(
+    synth(
       data.prep.obj=dataprep.out,
       custom.v=as.numeric(synth.out$solution.v)
     )
@@ -149,117 +152,6 @@ do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
               synthetic = synthetic))
 }
 
-
-do_synth_tobacco_89 = function(df, dep_var, dependent_id, start_time, n){
-  # find v
-  dataprep.out <-
-    Synth::dataprep(
-      foo = df,
-      predictors    = c(dep_var,"lnincome","age15to24","retprice"),
-      dependent     = dep_var,
-      unit.variable = 1,
-      time.variable = 3,
-      special.predictors = list(
-        list("beer", 1984, c("mean")),
-        list("value", 1980, c("mean"))
-      ),
-      treatment.identifier = dependent_id,
-      controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1970:1984,
-      time.optimize.ssr = 1985:1988, 
-      unit.names.variable = 2,
-      time.plot = start_time:(start_time + n - 1)
-    )
-  
-  # fit training model
-  synth.out <- 
-    Synth::synth(
-      data.prep.obj=dataprep.out,
-      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
-    )
-  
-  # main model
-  # prepare data
-  dataprep.out <-
-    Synth::dataprep(
-      foo = df,
-      predictors    = c(dep_var,"lnincome","age15to24","retprice"),
-      dependent     = dep_var,
-      unit.variable = 1,
-      time.variable = 3,
-      special.predictors = list(
-        list("beer", 1984:1988, c("mean")),
-        list("value", 1988, c("mean"))
-      ),
-      treatment.identifier = dependent_id,
-      controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1980:1988,
-      time.optimize.ssr = 1970:1988, 
-      unit.names.variable = 2,
-      time.plot = start_time:(start_time + n - 1)
-    )
-  
-  # fit training model
-  synth.out <- 
-    Synth::synth(
-      data.prep.obj=dataprep.out,
-      custom.v=as.numeric(synth.out$solution.v)
-    )
-  
-  
-  value = df %>% filter(id == dependent_id) %>% `$`(value)
-  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
-                 summarise(average = mean(value, na.rm = TRUE)) %>% `$`(average)
-  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
-  
-  return(list(value = value,
-              average = average,
-              synthetic = synthetic))
-}
-
-
-do_synth_tobacco_89_2 = function(df, dep_var, dependent_id, start_time, n){
-  # find v
-  dataprep.out <-
-    Synth::dataprep(
-      foo = df,
-      predictors    = NULL,
-      dependent     = dep_var,
-      unit.variable = 1,
-      time.variable = 3,
-      special.predictors = list(
-        list("value", 1988, c("mean")),
-        list("value", 1980, c("mean")),
-        list("value", 1975, c("mean")),
-        list("beer", 1984:1988, c("mean")),
-        list("lnincome", 1980:1988, c("mean")),
-        list("age15to24", 1980:1988, c("mean")),
-        list("retprice", 1980:1988, c("mean"))
-      ),
-      treatment.identifier = dependent_id,
-      controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1970:1988,
-      time.optimize.ssr = 1970:1988, 
-      unit.names.variable = 2,
-      time.plot = start_time:(start_time + n - 1)
-    )
-  
-  # fit training model
-  synth.out <- 
-    Synth::synth(
-      data.prep.obj=dataprep.out,
-      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
-    )
-  
-  value = df %>% filter(id == dependent_id) %>% `$`(value)
-  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
-    summarise(average = mean(value, na.rm = TRUE)) %>% `$`(average)
-  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
-  
-  return(list(value = value,
-              average = average,
-              synthetic = synthetic))
-}
 
 plot_synth = function(df, dep_var, dependent, t_treat, stretch, k){
   n = length(df$gdp_dependent)
@@ -306,31 +198,3 @@ plot_synth = function(df, dep_var, dependent, t_treat, stretch, k){
   graphics.off()
 }
 
-plot_synth_tobacco = function(res_synth, dep_var, dependent, treat_time, k,
-                       start_time, end_time){
-  value = res_synth$value
-  average = res_synth$average
-  synthetic = res_synth$synthetic
-  
-  df = rbind(data.frame(time = start_time:end_time,
-                        unit = dependent,
-                        value = value),
-             data.frame(time = start_time:end_time,
-                        unit = "Average",
-                        value = average),
-             data.frame(time = start_time:end_time,
-                        unit = "Synthetic",
-                        value = synthetic))
-  
-  fig = ggplot(df, aes(time,value)) +
-    geom_line(aes(colour = unit)) +
-    geom_vline(xintercept = treat_time, linetype="dashed") +
-    scale_color_manual(values=c("#ee4035", "#2a4d69", "#7bc043")) +
-    theme_bw()
-  
-  ggsave(paste0("./figures/synth_",
-                paste0(c(dependent, dep_var, k), collapse = "_"),
-                ".pdf"),
-         fig, width = 8, height = 6,
-         units = "in", limitsize = FALSE)
-}

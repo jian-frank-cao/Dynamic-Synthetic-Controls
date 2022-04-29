@@ -61,13 +61,13 @@ add_buffer = function(TS, n){
   return(c(left, TS, right))
 }
 
-width = 23
+width = 9
 gdp_b = sapply(gdp %>% select(-year), add_buffer, n = (width - 1)/2) %>% 
   data.frame(.)
 
 ## derivative
 gdp_b = gdp_b %>%
-  mutate_all(~signal::sgolayfilt(., 6, width, 5)) %>%
+  mutate_all(~signal::sgolayfilt(., 3, width, 2)) %>%
   .[((width - 1)/2 + 1):((width - 1)/2 + nrow(gdp)),]
 gdp[-1] = gdp_b
 
@@ -80,11 +80,24 @@ gdp[-1] = gdp_b
 df <- reshape2::melt(gdp ,  id.vars = 'year', variable.name = 'country')
 
 
-df = df %>% filter(!(country %in% c("Portugal", "New Zealand", "Norway", "West Germany",
-                                    "UK", "USA")))
+# df = df %>% filter(!(country %in% c("Portugal", "New Zealand", "Norway", "West Germany",
+#                                     "UK", "USA")))
 # plot on same grid, each series colored differently -- 
 # good if the series have same scale
 ggplot(df, aes(year,value)) + geom_line(aes(colour = country))
+
+# ------------------------------------------------------------------------------
+
+load("./data/smoking.rda")
+prop99_raw = read.csv("./data/prop99.csv")
+
+prop99 = prop99_raw %>% 
+  filter(SubMeasureDesc == 'Cigarette Consumption (Pack Sales Per Capita)') %>% 
+  reshape2::dcast(., Year ~ LocationDesc, value.var = "Data_Value")
+
+
+
+ggplot(smoking, aes(year,cigsale)) + geom_line(aes(colour = as.factor(state)))
 
 
 

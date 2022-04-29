@@ -1,3 +1,15 @@
+library(checkpoint)
+checkpoint("2022-04-01")
+
+library(tidyverse)
+library(furrr)
+# library(dtw)     # dtw
+# library(DTWBI)   # ddtw
+# library(Matrix)  # sparseMatrix
+# library(gridExtra) # arrangeGrob
+plan(multisession, workers = 6)
+options(future.rng.onMisuse="ignore")
+
 ## functions -------------------------------------------------------------------
 # normalization
 t_normalize = function(data){
@@ -11,7 +23,7 @@ minmax_normalize = function(data){
 normalize = function(data, normalize_method){
   if (normalize_method == "minmax") {
     data = minmax_normalize(data)
-  }else if (normalize_method == "t") {
+  }else{
     data = t_normalize(data)
   }
   return(data)
@@ -28,15 +40,15 @@ derivatives = function(data){
 
 
 # 1st dtw
-first_dtw = function(x, y, k, n_dtw1, t_treat,
+first_dtw = function(x, y, k, n_1st, t_treat,
                      normalize_method = "t",
                      dtw_method = "dtw", 
                      step.pattern = dtw::symmetric2, ...){
   # normalize
   y_bak = y
   x_bak = x
-  y = normalize(y[1:n_dtw1], normalize_method)
-  x = normalize(x[1:n_dtw1], normalize_method)
+  y = normalize(y[1:n_1st], normalize_method)
+  x = normalize(x[1:n_1st], normalize_method)
   
   # ddtw
   if (dtw_method == "ddtw") {
@@ -276,7 +288,7 @@ second_dtw = function(x_post, x_pre,
     while (j <= n_pre - k + 1) {
       R = x_pre[j:(j + k - 1)]
       R = normalize(R, normalize_method)
-      alignment_qr = dtw::dtw(Q, R, open.end = TRUE,
+      alignment_qr = dtw::dtw(Q, R, open.end = FALSE,
                               step.pattern = step.pattern,
                               distance.only = TRUE)
       costs_qr = c(costs_qr, alignment_qr$distance)
@@ -357,7 +369,7 @@ warp_ts = function(w, ts){
 
 
 # Two Step DTW
-TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
+TwoStepDTW = function(y, x, x_original, t_treat, k, n_1st,
                       normalize_method = "t",
                       dtw_method = "dtw",
                       n_q = 1, n_r = 1, margin = 10,
@@ -367,9 +379,9 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   x_bak = x
   
   # 1st dtw
-  res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
+  res_1stDTW = first_dtw(x, y, k, n_1st, t_treat,
                          normalize_method, dtw_method,
-                         step.pattern, ...)
+                         step.pattern = step.pattern, ...)
   x_pre = res_1stDTW$x_pre
   x_post = res_1stDTW$x_post
   W_a = res_1stDTW$W_a
@@ -380,34 +392,50 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                           W_a, k, normalize_method,
                           n_q, n_r, margin,
                           step.pattern = step.pattern, ...)
-  avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
+  avg_weight = res_2ndDTW$avg_weight
   
   # warp x
   # warp_ind_a = warp_ind(W_a)
   # warp_ind_bs = warp_ind(W_bs)
   # x_w = c(x_original[1:cutoff][warp_ind_a],
   #         x_original[-(1:(cutoff - 1))][warp_ind_bs[-1]])
-  # x_w = c(warp_ts(W_a, x_original[1:cutoff]),
-  #         warp_using_weight(x_original[-(1:(cutoff - 1))],
-  #                           avg_weight[-(1:(k - 3))])[-1])
+  x_w = c(warp_ts(W_a, x_original[1:cutoff]),
+          warp_using_weight(x_original[-(1:(cutoff - 1))],
+                            avg_weight[-(1:(k - 3))])[-1])
   
   return(list(y = y_bak,
               x = x_bak,
+              x_original = x_original,
+              x_w = x_w,
               W_a = W_a,
               weight = res_2ndDTW$weight,
-              avg_weight = avg_weight,
+              avg_weight = res_2ndDTW$avg_weight,
               t_treat = t_treat,
               cutoff = cutoff))
 }
 
-plot_warped = function(fig_list, dependent, k, ncol){
-  nrow = ceiling(length(fig_list)/ncol)
-  fig = gridExtra::marrangeGrob(fig_list, ncol = ncol,
-                                nrow = nrow)
+plot_warped = function(results, dependent, stretch, k){
+  fig = gridExtra::arrangeGrob(results[[1]][["fig"]],
+                               results[[2]][["fig"]],
+                               results[[3]][["fig"]],
+                               results[[4]][["fig"]],
+                               results[[5]][["fig"]],
+                               results[[6]][["fig"]],
+                               results[[7]][["fig"]],
+                               results[[8]][["fig"]],
+                               results[[9]][["fig"]],
+                               results[[10]][["fig"]],
+                               results[[11]][["fig"]],
+                               results[[12]][["fig"]],
+                               results[[13]][["fig"]],
+                               results[[14]][["fig"]],
+                               results[[15]][["fig"]],
+                               results[[16]][["fig"]],
+                               ncol = 2)
   
   ggsave(paste0("./figures/warped_",
-                paste0(c(dependent, k), collapse = "_"),
-                ".pdf"),
-         fig, width = ncol*4, height = nrow*4,
-         units = "in", limitsize = FALSE)
+                paste0(c(dependent, stretch, k), collapse = "_"),
+                ".pdf"), fig,
+         width = 8, height = 32, units = "in")
+  
 }
