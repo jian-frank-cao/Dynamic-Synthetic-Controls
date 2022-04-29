@@ -88,16 +88,42 @@ ggplot(df, aes(year,value)) + geom_line(aes(colour = country))
 
 # ------------------------------------------------------------------------------
 
-load("./data/smoking.rda")
-prop99_raw = read.csv("./data/prop99.csv")
+ggplot(data, aes(time,value)) + geom_line(aes(colour = as.factor(unit)))
 
-prop99 = prop99_raw %>% 
-  filter(SubMeasureDesc == 'Cigarette Consumption (Pack Sales Per Capita)') %>% 
-  reshape2::dcast(., Year ~ LocationDesc, value.var = "Data_Value")
+values = reshape2::dcast(data %>% select(c("unit", "time", "value")), time ~ unit, value.var = "value")
+
+## minmax
+# values = values %>% mutate_at(setdiff(colnames(values), "time"), ~normalize(., "minmax"))
+
+## t
+values = values %>% mutate_at(setdiff(colnames(values), "time"), ~normalize(., "t"))
+
+## adding buffer
+add_buffer = function(TS, n){
+  model_right = forecast::auto.arima(TS)
+  right <- as.numeric(forecast::forecast(model_right, h = n)$mean)
+  model_left = forecast::auto.arima(rev(TS))
+  left <- rev(as.numeric(forecast::forecast(model_left, h = n)$mean))
+  
+  return(c(left, TS, right))
+}
+
+width = 15
+values2 = sapply(values %>% select(-time), add_buffer, n = (width - 1)/2) %>% 
+  data.frame(.)
+
+## derivative
+values2 = values2 %>%
+  mutate_all(~signal::sgolayfilt(., 3, width, 2)) %>%
+  .[((width - 1)/2 + 1):((width - 1)/2 + nrow(values)),]
+values[-1] = values2
+
+# plot
+df <- reshape2::melt(values ,  id.vars = 'time', variable.name = 'unit')
 
 
-
-ggplot(smoking, aes(year,cigsale)) + geom_line(aes(colour = as.factor(state)))
-
-
-
+# df = df %>% filter(!(country %in% c("Portugal", "New Zealand", "Norway", "West Germany",
+#                                     "UK", "USA")))
+# plot on same grid, each series colored differently -- 
+# good if the series have same scale
+ggplot(df, aes(time,value)) + geom_line(aes(colour = unit))

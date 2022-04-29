@@ -30,8 +30,46 @@ smoking = right_join(states, smoking, by = "id")
 colnames(smoking)[2:4] = c("unit", "time", "value")
 
 ## Pre-processing --------------------------------------------------------------
+values = reshape2::dcast(data %>% select(c("unit", "time", "value")),
+                         time ~ unit, value.var = "value")
 
+## minmax
+# values = values %>% mutate_at(setdiff(colnames(values), "time"),
+#                               ~normalize(., "minmax"))
 
+## t
+values = values %>% mutate_at(setdiff(colnames(values), "time"),
+                              ~normalize(., "t"))
+
+## adding buffer
+add_buffer = function(TS, n){
+  model_right = forecast::auto.arima(TS)
+  right <- as.numeric(forecast::forecast(model_right, h = n)$mean)
+  model_left = forecast::auto.arima(rev(TS))
+  left <- rev(as.numeric(forecast::forecast(model_left, h = n)$mean))
+  
+  return(c(left, TS, right))
+}
+
+width = 15
+values2 = sapply(values %>% select(-time),
+                 add_buffer, n = (width - 1)/2) %>% 
+  data.frame(.)
+
+## derivative
+values2 = values2 %>%
+  mutate_all(~signal::sgolayfilt(., 3, width, 2)) %>%
+  .[((width - 1)/2 + 1):((width - 1)/2 + nrow(values)),]
+values[-1] = values2
+
+# plot
+df <- reshape2::melt(values ,  id.vars = 'time',
+                     variable.name = 'unit')
+
+smoking = right_join(df, smoking %>% select(-value), by = c("time", "unit"))
+smoking$age15to24 = smoking$age15to24*100
+smoking = smoking[c("id", "unit", "time", "value", 
+                    "lnincome", "beer", "age15to24", "retprice")]
 
 ## Function --------------------------------------------------------------------
 stretch_var = function(Country, col_name, stretch){
@@ -288,12 +326,12 @@ result = as.list(1:39) %>%
                             start_time = 1970,
                             end_time = 2000,
                             treat_time = 1989,
-                            dtw1_time = 1993,
+                            dtw1_time = 1989,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
                             k = 6,
-                            step.pattern = dtw::symmetricP2)
+                            step.pattern = dtw::symmetricP1)
       print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
     }
