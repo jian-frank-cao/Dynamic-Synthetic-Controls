@@ -30,7 +30,7 @@ smoking = right_join(states, smoking, by = "id")
 colnames(smoking)[2:4] = c("unit", "time", "value")
 
 ## Pre-processing --------------------------------------------------------------
-values = reshape2::dcast(data %>% select(c("unit", "time", "value")),
+values = reshape2::dcast(smoking %>% select(c("unit", "time", "value")),
                          time ~ unit, value.var = "value")
 
 ## minmax
@@ -314,7 +314,8 @@ legend_position = c(0.3, 0.3)
 
 
 
-
+units = smoking[c("id", "unit")] %>% distinct
+k = 6
 result = as.list(1:39) %>% 
   future_map(
     ~{
@@ -330,7 +331,7 @@ result = as.list(1:39) %>%
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
-                            k = 6,
+                            k = k,
                             step.pattern = dtw::symmetricP1)
       print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
@@ -342,28 +343,28 @@ result = result %>%
   mutate(ratio = mse2_post/mse1_post)
 
 
-units = data[c("id", "unit")] %>% distinct
-k = 6
-result = NULL
-for (i in 1:nrow(units)) {
-  dependent = units$unit[i]
-  dependent_id = units$id[i]
-  print(paste0(dependent, ":", i, "-", k, " start..."))
-  res = compare_methods(data = smoking,
-                        start_time = 1970,
-                        end_time = 2000,
-                        treat_time = 1989,
-                        dtw1_time = 1993,
-                        dependent = dependent,
-                        dependent_id = dependent_id,
-                        normalize_method = "t",
-                        k = k,
-                        step.pattern = dtw::symmetricP2)
-  result = rbind(result,
-                 res$mse %>% mutate(dependent = dependent, k = k))
-  print(paste0(dependent, ":", i, "-", k, " start...Done."))
-}
-result = result %>% mutate(ratio = mse2_post/mse1_post)
+# units = data[c("id", "unit")] %>% distinct
+# k = 6
+# result = NULL
+# for (i in 1:nrow(units)) {
+#   dependent = units$unit[i]
+#   dependent_id = units$id[i]
+#   print(paste0(dependent, ":", i, "-", k, " start..."))
+#   res = compare_methods(data = smoking,
+#                         start_time = 1970,
+#                         end_time = 2000,
+#                         treat_time = 1989,
+#                         dtw1_time = 1993,
+#                         dependent = dependent,
+#                         dependent_id = dependent_id,
+#                         normalize_method = "t",
+#                         k = k,
+#                         step.pattern = dtw::symmetricP2)
+#   result = rbind(result,
+#                  res$mse %>% mutate(dependent = dependent, k = k))
+#   print(paste0(dependent, ":", i, "-", k, " start...Done."))
+# }
+# result = result %>% mutate(ratio = mse2_post/mse1_post)
 
 
 
