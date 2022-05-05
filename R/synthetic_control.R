@@ -228,9 +228,9 @@ do_synth_tobacco_89_2 = function(df, dep_var, dependent_id, start_time, n){
       unit.variable = 1,
       time.variable = 3,
       special.predictors = list(
-        list("value", 1988, c("mean")),
-        list("value", 1980, c("mean")),
-        list("value", 1975, c("mean")),
+        list("value_raw", 1988, c("mean")),
+        list("value_raw", 1980, c("mean")),
+        list("value_raw", 1975, c("mean")),
         list("beer", 1984:1988, c("mean")),
         list("lnincome", 1980:1988, c("mean")),
         list("age15to24", 1980:1988, c("mean")),
@@ -251,9 +251,96 @@ do_synth_tobacco_89_2 = function(df, dep_var, dependent_id, start_time, n){
       Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
     )
   
-  value = df %>% filter(id == dependent_id) %>% `$`(value)
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
   average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
-    summarise(average = mean(value, na.rm = TRUE)) %>% `$`(average)
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
+  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
+  
+  return(list(value = value,
+              average = average,
+              synthetic = synthetic))
+}
+
+do_synth_tobacco_85 = function(df, dep_var, dependent_id, start_time, n){
+  # find v
+  dataprep.out <-
+    Synth::dataprep(
+      foo = df,
+      predictors    = NULL,
+      dependent     = dep_var,
+      unit.variable = 1,
+      time.variable = 3,
+      special.predictors = list(
+        list("value_raw", 1984, c("mean")),
+        list("value_raw", 1980, c("mean")),
+        list("value_raw", 1975, c("mean")),
+        list("beer", 1984, c("mean")),
+        list("lnincome", 1980:1984, c("mean")),
+        list("age15to24", 1980:1984, c("mean")),
+        list("retprice", 1980:1984, c("mean"))
+      ),
+      treatment.identifier = dependent_id,
+      controls.identifier = setdiff(unique(df$id), dependent_id),
+      time.predictors.prior = 1970:1984,
+      time.optimize.ssr = 1970:1984, 
+      unit.names.variable = 2,
+      time.plot = start_time:(start_time + n - 1)
+    )
+  
+  # fit training model
+  synth.out <- 
+    Synth::synth(
+      data.prep.obj=dataprep.out,
+      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
+    )
+  
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
+  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
+  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
+  
+  return(list(value = value,
+              average = average,
+              synthetic = synthetic))
+}
+
+do_synth_tobacco_93 = function(df, dep_var, dependent_id, start_time, n){
+  # find v
+  dataprep.out <-
+    Synth::dataprep(
+      foo = df,
+      predictors    = NULL,
+      dependent     = dep_var,
+      unit.variable = 1,
+      time.variable = 3,
+      special.predictors = list(
+        list("value_raw", 1992, c("mean")),
+        list("value_raw", 1985, c("mean")),
+        list("value_raw", 1980, c("mean")),
+        list("value_raw", 1975, c("mean")),
+        list("beer", 1984:1992, c("mean")),
+        list("lnincome", 1980:1992, c("mean")),
+        list("age15to24", 1980:1990, c("mean")),
+        list("retprice", 1980:1992, c("mean"))
+      ),
+      treatment.identifier = dependent_id,
+      controls.identifier = setdiff(unique(df$id), dependent_id),
+      time.predictors.prior = 1970:1992,
+      time.optimize.ssr = 1970:1992, 
+      unit.names.variable = 2,
+      time.plot = start_time:(start_time + n - 1)
+    )
+  
+  # fit training model
+  synth.out <- 
+    Synth::synth(
+      data.prep.obj=dataprep.out,
+      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
+    )
+  
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
+  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
   synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
   
   return(list(value = value,

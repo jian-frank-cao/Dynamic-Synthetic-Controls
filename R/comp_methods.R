@@ -28,20 +28,17 @@ smoking = smoking %>% mutate_all(as.numeric)
 colnames(smoking)[1] = "id"
 smoking = right_join(states, smoking, by = "id")
 colnames(smoking)[2:4] = c("unit", "time", "value")
+smoking = smoking %>% mutate(value_raw = value)
 
 ## Pre-processing --------------------------------------------------------------
-values = reshape2::dcast(smoking %>% select(c("unit", "time", "value")),
-                         time ~ unit, value.var = "value")
+values = reshape2::dcast(smoking %>% select(c("unit", "time", "value_raw")),
+                         time ~ unit, value.var = "value_raw")
 
-## minmax
-# values = values %>% mutate_at(setdiff(colnames(values), "time"),
-#                               ~normalize(., "minmax"))
-
-## t
+# transform
 values = values %>% mutate_at(setdiff(colnames(values), "time"),
                               ~normalize(., "t"))
 
-## adding buffer
+# adding buffer
 add_buffer = function(TS, n){
   model_right = forecast::auto.arima(TS)
   right <- as.numeric(forecast::forecast(model_right, h = n)$mean)
@@ -51,47 +48,28 @@ add_buffer = function(TS, n){
   return(c(left, TS, right))
 }
 
-width = 15
+width = 5
 values2 = sapply(values %>% select(-time),
                  add_buffer, n = (width - 1)/2) %>% 
   data.frame(.)
 
-## derivative
+# derivative
 values2 = values2 %>%
   mutate_all(~signal::sgolayfilt(., 3, width, 2)) %>%
   .[((width - 1)/2 + 1):((width - 1)/2 + nrow(values)),]
 values[-1] = values2
 
-# plot
+# join data 
 df <- reshape2::melt(values ,  id.vars = 'time',
                      variable.name = 'unit')
 
 smoking = right_join(df, smoking %>% select(-value), by = c("time", "unit"))
 smoking$age15to24 = smoking$age15to24*100
 smoking = smoking[c("id", "unit", "time", "value", 
-                    "lnincome", "beer", "age15to24", "retprice")]
+                    "lnincome", "beer", "age15to24",
+                    "retprice", "value_raw")]
 
 ## Function --------------------------------------------------------------------
-stretch_var = function(Country, col_name, stretch){
-  target = data %>%
-    filter(country == Country) %>% 
-    .[[col_name]]
-  len = length(target)
-  if (stretch == 1) {   # fix this
-    res = target
-  }else{
-    res = approx(c(0, target, 0),
-                 n = (len + 1) * stretch + 1,
-                 na.rm = FALSE,
-                 method = "linear"
-    ) %>% 
-      .[["y"]] %>% 
-      .[(stretch + 1):(len * stretch + 1)]
-  }
-  
-  return(res)
-}
-
 compare_methods = function(data,
                            start_time,
                            end_time,
@@ -116,93 +94,50 @@ compare_methods = function(data,
   y_raw = data %>% 
     filter(unit == dependent &
              time <= end_time) %>%
+    .[["value_raw"]]
+  
+  y_processed = data %>% 
+    filter(unit == dependent &
+             time <= end_time) %>%
     .[["value"]]
   
   x_list = data %>% 
     filter(unit != dependent &
              time <= end_time) %>% 
-    select(c("unit", "time", "value")) %>% 
+    select(c("unit", "time", "value", "value_raw")) %>% 
     group_by(unit) %>% 
     group_split(.keep = TRUE)
   
-  # Two Step DTW
-  # results = x_list %>%
-  #   future_map(
-  #     ~{
-  #       item = .
-  #       unit = item[[unit_var]][1]
-  #       x_bak = item[[value_var]]
-  #       y_bak = y_raw
-  #       
-  #       x = x_bak
-  #       y = y_bak
-  # 
-  #       res = TwoStepDTW(x, y, t_treat, k, n_dtw1, dtw_method = dtw_method,
-  #                        normalize_method = normalize_method,
-  #                        step.pattern = step.pattern, ...)
-  #       
-  #       x_warped = c(warp_ts(res$W_a, x_bak[1:res$cutoff]),
-  #                    warp_using_weight(x_bak[-(1:(res$cutoff - 1))],
-  #                                      res$avg_weight)[-1])
-  # 
-  # 
-  #       df = data.frame(time = 1:length(x_bak),
-  #                       y = y_bak[1:length(x_bak)],
-  #                       x = x_bak[1:length(x_bak)],
-  #                       warped = x_warped[1:length(x_bak)]) %>%
-  #         `colnames<-`(c("time", dependent, unit, paste0(unit, "-Warped"))) %>%
-  #         reshape2::melt(., id.vars = "time") %>%
-  #         `colnames<-`(c("Time", "Unit", "Value"))
-  # 
-  #       fig = df %>%
-  #         ggplot(aes(x = Time, y = Value, color = Unit)) +
-  #         geom_line() +
-  #         scale_color_manual(values = c("#2a4d69", "#ee4035", "#7bc043")) +
-  #         geom_vline(xintercept = t_treat, linetype="dashed",
-  #                    color = "grey30", size = 0.3) +
-  #         theme_bw() +
-  #         ggtitle(Unit) +
-  #         theme(plot.title = element_text(hjust = 0.5),
-  #               legend.position = c(0.3, 0.8))
-  # 
-  #       list(Unit = Unit,
-  #            x = x_bak,
-  #            res = res,
-  #            df = df,
-  #            fig = fig)
-  #     }
-  #   )
-  
-
+  # TSDTW
   results = NULL
   for (z in 1:length(x_list)) {
     item = x_list[[z]]
     unit = item$unit[1]
-    x_bak = item$value
-    y_bak = y_raw
+    x_processed = item$value
+    x_raw = item$value_raw
     
-    x = x_bak
-    y = y_bak
+    x = x_processed
+    y = y_processed
     
     res = TwoStepDTW(x, y, t_treat, k, n_dtw1, dtw_method = dtw_method,
                      normalize_method = normalize_method,
                      step.pattern = step.pattern, ...)
     
-    x_warped = c(warp_ts(res$W_a, x_bak[1:res$cutoff]),
-                 warp_using_weight(x_bak[-(1:(res$cutoff - 1))],
+    x_warped = c(warp_ts(res$W_a, x_raw[1:res$cutoff]),
+                 warp_using_weight(x_raw[-(1:(res$cutoff - 1))],
                                    res$avg_weight)[-1])
     
     
-    df = data.frame(time = 1:length(x_bak),
-                    y = y_bak[1:length(x_bak)],
-                    x = x_bak[1:length(x_bak)],
-                    warped = x_warped[1:length(x_bak)]) %>%
+    df = data.frame(time = 1:length(x_raw),
+                    y = y_raw[1:length(x_raw)],
+                    x = x_raw[1:length(x_raw)],
+                    warped = x_warped[1:length(x_raw)]) %>%
       `colnames<-`(c("time", dependent, unit, paste0(unit, "-Warped"))) %>%
       reshape2::melt(., id.vars = "time") %>%
-      `colnames<-`(c("Time", "Unit", "Value"))
+      `colnames<-`(c("time", "unit", "value"))
     
     fig = df %>%
-      ggplot(aes(x = Time, y = Value, color = Unit)) +
+      ggplot(aes(x = time, y = value, color = unit)) +
       geom_line() +
       scale_color_manual(values = c("#2a4d69", "#ee4035", "#7bc043")) +
       geom_vline(xintercept = t_treat, linetype="dashed",
@@ -213,7 +148,7 @@ compare_methods = function(data,
             legend.position = legend_position)
 
     results[[unit]] = list(unit = unit,
-                           x = x_bak,
+                           x = x_raw,
                            res = res,
                            x_warped = x_warped,
                            df = df,
@@ -252,15 +187,13 @@ compare_methods = function(data,
   df = right_join(data, df, by = c("unit", "time"))
   df = data.frame(df)
   
-  # Original method
-  synth_origin = do_synth_tobacco_89_2(df, "value", dependent_id, start_time, n)
-  plot_synth_tobacco(synth_origin, "Abadie", dependent, treat_time, k,
+  # w/o TSDTW
+  synth_origin = do_synth_tobacco_93(df, "value_raw", dependent_id, start_time, n)
+  plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
-  # New method
-  # synth_new = do_synth_80(df, "gdp_warped", dependent_id, n, stretch)
-  # plot_synth(synth_new, "gdp_warped", dependent, t_treat, stretch, k)
-  synth_new = do_synth_tobacco_89_2(df, "value_warped", dependent_id, start_time, n)
+  # W/ TSDTW
+  synth_new = do_synth_tobacco_93(df, "value_warped", dependent_id, start_time, n)
   plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
@@ -292,8 +225,8 @@ compare_methods = function(data,
 data = smoking
 start_time = 1970
 end_time = 2000
-treat_time = 1989
-dtw1_time = 1993
+treat_time = 1985
+dtw1_time = 1990
 dependent = "California"
 dependent_id = 3
 t_treat = (treat_time - start_time) + 1
@@ -311,9 +244,6 @@ legend_position = c(0.3, 0.3)
 
 
 
-
-
-
 units = smoking[c("id", "unit")] %>% distinct
 k = 6
 result = as.list(1:39) %>% 
@@ -326,13 +256,13 @@ result = as.list(1:39) %>%
       res = compare_methods(data = smoking,
                             start_time = 1970,
                             end_time = 2000,
-                            treat_time = 1989,
-                            dtw1_time = 1989,
+                            treat_time = 1993,
+                            dtw1_time = 1996,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
                             k = k,
-                            step.pattern = dtw::symmetricP1)
+                            step.pattern = dtw::symmetricP2)
       print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
     }
@@ -340,31 +270,9 @@ result = as.list(1:39) %>%
 
 result = result %>% 
   do.call("rbind", .) %>% 
-  mutate(ratio = mse2_post/mse1_post)
-
-
-# units = data[c("id", "unit")] %>% distinct
-# k = 6
-# result = NULL
-# for (i in 1:nrow(units)) {
-#   dependent = units$unit[i]
-#   dependent_id = units$id[i]
-#   print(paste0(dependent, ":", i, "-", k, " start..."))
-#   res = compare_methods(data = smoking,
-#                         start_time = 1970,
-#                         end_time = 2000,
-#                         treat_time = 1989,
-#                         dtw1_time = 1993,
-#                         dependent = dependent,
-#                         dependent_id = dependent_id,
-#                         normalize_method = "t",
-#                         k = k,
-#                         step.pattern = dtw::symmetricP2)
-#   result = rbind(result,
-#                  res$mse %>% mutate(dependent = dependent, k = k))
-#   print(paste0(dependent, ":", i, "-", k, " start...Done."))
-# }
-# result = result %>% mutate(ratio = mse2_post/mse1_post)
+  mutate(ratio = (mse1_post - mse2_post)/mse1_post)
+length(which(result$ratio>0))/39
+boxplot(result$ratio)
 
 
 
