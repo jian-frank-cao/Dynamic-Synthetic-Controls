@@ -192,12 +192,12 @@ compare_methods = function(data,
   plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
-  # W/ TSDTW
+  # w/ TSDTW
   synth_new = do_synth_tobacco_93(df, "value_warped", dependent_id, start_time, n)
   plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
-  # MSE
+  # mse
   diff1 = (synth_origin$synthetic - synth_origin$value)
   diff2 = (synth_new$synthetic - synth_new$value)
   
@@ -222,25 +222,25 @@ compare_methods = function(data,
 
 
 ## Run -------------------------------------------------------------------------
-data = smoking
-start_time = 1970
-end_time = 2000
-treat_time = 1985
-dtw1_time = 1990
-dependent = "California"
-dependent_id = 3
-t_treat = (treat_time - start_time) + 1
-n = (end_time - start_time) + 1
-n_dtw1 = (dtw1_time - start_time) + 1
-k = 6
-n_q = 1
-n_r = 1
-normalize_method = "t"
-dtw_method = "dtw"
-margin = 10
-step.pattern = dtw::symmetricP2
-... = NULL
-legend_position = c(0.3, 0.3)
+# data = smoking
+# start_time = 1970
+# end_time = 2000
+# treat_time = 1985
+# dtw1_time = 1990
+# dependent = "California"
+# dependent_id = 3
+# t_treat = (treat_time - start_time) + 1
+# n = (end_time - start_time) + 1
+# n_dtw1 = (dtw1_time - start_time) + 1
+# k = 6
+# n_q = 1
+# n_r = 1
+# normalize_method = "t"
+# dtw_method = "dtw"
+# margin = 10
+# step.pattern = dtw::symmetricP2
+# ... = NULL
+# legend_position = c(0.3, 0.3)
 
 
 
@@ -256,8 +256,8 @@ result = as.list(1:39) %>%
       res = compare_methods(data = smoking,
                             start_time = 1970,
                             end_time = 2000,
-                            treat_time = 1993,
-                            dtw1_time = 1996,
+                            treat_time = 1989,
+                            dtw1_time = 1994,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
@@ -272,8 +272,10 @@ result = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = (mse1_post - mse2_post)/mse1_post)
 length(which(result$ratio>0))/39
-boxplot(result$ratio)
-
+boxplot(result$ratio,
+        ylab = "% MSE Improvement",
+        ylim = c(-1,1))
+abline(h = 0, lty = 5)
 
 
 
