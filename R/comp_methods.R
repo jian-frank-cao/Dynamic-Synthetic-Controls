@@ -272,7 +272,7 @@ result = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = (mse1_post - mse2_post)/mse1_post)
 length(which(result$ratio>0))/39
-boxplot(result$ratio,
+boxplot(result$imrpove,
         ylab = "% MSE Improvement",
         ylim = c(-1,1))
 abline(h = 0, lty = 5)
