@@ -126,9 +126,9 @@ ggplot(df, aes(time,value)) + geom_line(aes(colour = unit))
 
 ## grid search -----------------------------------------------------------------
 res_grid = NULL
-for (width in 5:5) {
-  for (k in 6:6) {
-    for (dtw1_time in 1993:1997) {
+for (width in (1:6)*2+3) {
+  for (k in 4:7) {
+    for (dtw1_time in 1985:1992) {
       ## Data ------------------------------------------------------------------------
       load("./data/smoking.rda")
       prop99 = read.csv("./data/prop99.csv")
@@ -196,8 +196,8 @@ for (width in 5:5) {
             print(paste0(dependent, ":", i, "-", k, " start..."))
             res = compare_methods(data = smoking,
                                   start_time = 1970,
-                                  end_time = 2000,
-                                  treat_time = 1993,
+                                  end_time = 1995,
+                                  treat_time = 1985,
                                   dtw1_time = dtw1_time,
                                   dependent = dependent,
                                   dependent_id = dependent_id,

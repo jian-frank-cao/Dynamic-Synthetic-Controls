@@ -188,12 +188,12 @@ compare_methods = function(data,
   df = data.frame(df)
   
   # w/o TSDTW
-  synth_origin = do_synth_tobacco_93(df, "value_raw", dependent_id, start_time, n)
+  synth_origin = do_synth_tobacco_85(df, "value_raw", dependent_id, start_time, n)
   plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
   # w/ TSDTW
-  synth_new = do_synth_tobacco_93(df, "value_warped", dependent_id, start_time, n)
+  synth_new = do_synth_tobacco_85(df, "value_warped", dependent_id, start_time, n)
   plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
                      start_time, end_time)
   
@@ -255,7 +255,7 @@ result = as.list(1:39) %>%
       print(paste0(dependent, ":", i, "-", k, " start..."))
       res = compare_methods(data = smoking,
                             start_time = 1970,
-                            end_time = 2000,
+                            end_time = 1995,
                             treat_time = 1989,
                             dtw1_time = 1994,
                             dependent = dependent,
