@@ -224,7 +224,7 @@ for (width in (2:6)*2+3) {
 res_grid = NULL      
 for (width in (1:6)*2+3) {
   for (k in 4:7) {
-    for (dtw1_time in 1985:1992) {
+    for (dtw1_time in 1992:1996) {
       temp = data.frame(width = width,
                         k = k,
                         dtw1_time = dtw1_time,
@@ -234,7 +234,7 @@ for (width in (1:6)*2+3) {
   }
 }
 
-res_grid = left_join(res_grid[,-4], res_grid2, by = c("width", "k", "dtw1_time"))
+# res_grid = left_join(res_grid[,-4], res_grid2, by = c("width", "k", "dtw1_time"))
 
 grid_search = function(width, k, dtw1_time){
   ## Data ------------------------------------------------------------------------
@@ -290,8 +290,8 @@ grid_search = function(width, k, dtw1_time){
         print(paste0(dependent, ":", i, "-", k, " start..."))
         res = compare_methods(data = smoking,
                               start_time = 1970,
-                              end_time = 1995,
-                              treat_time = 1985,
+                              end_time = 2000,
+                              treat_time = 1992,
                               dtw1_time = dtw1_time,
                               dependent = dependent,
                               dependent_id = dependent_id,

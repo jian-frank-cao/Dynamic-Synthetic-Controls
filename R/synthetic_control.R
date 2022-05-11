@@ -304,7 +304,7 @@ do_synth_tobacco_85 = function(df, dep_var, dependent_id, start_time, n){
               synthetic = synthetic))
 }
 
-do_synth_tobacco_93 = function(df, dep_var, dependent_id, start_time, n){
+do_synth_tobacco_92 = function(df, dep_var, dependent_id, start_time, n){
   # find v
   dataprep.out <-
     Synth::dataprep(
@@ -314,19 +314,18 @@ do_synth_tobacco_93 = function(df, dep_var, dependent_id, start_time, n){
       unit.variable = 1,
       time.variable = 3,
       special.predictors = list(
-        list("value_raw", 1992, c("mean")),
+        list("value_raw", 1991, c("mean")),
         list("value_raw", 1985, c("mean")),
         list("value_raw", 1980, c("mean")),
-        list("value_raw", 1975, c("mean")),
-        list("beer", 1984:1992, c("mean")),
-        list("lnincome", 1980:1992, c("mean")),
+        list("beer", 1984:1991, c("mean")),
+        list("lnincome", 1980:1991, c("mean")),
         list("age15to24", 1980:1990, c("mean")),
-        list("retprice", 1980:1992, c("mean"))
+        list("retprice", 1980:1991, c("mean"))
       ),
       treatment.identifier = dependent_id,
       controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1970:1992,
-      time.optimize.ssr = 1970:1992, 
+      time.predictors.prior = 1970:1991,
+      time.optimize.ssr = 1970:1991, 
       unit.names.variable = 2,
       time.plot = start_time:(start_time + n - 1)
     )
