@@ -236,27 +236,9 @@ for (width in (1:6)*2+3) {
 
 res_grid = left_join(res_grid[,-4], res_grid2, by = c("width", "k", "dtw1_time"))
 
-for (i in which(is.na(res_grid$ratio))) {
-  width = res_grid$width[i]
-  k = res_grid$k[i]
-  dtw1_time = res_grid$dtw1_time[i]
-  
+grid_search = function(width, k, dtw1_time){
   ## Data ------------------------------------------------------------------------
-  load("./data/smoking.rda")
-  prop99 = read.csv("./data/prop99.csv")
-  
-  exclude_states = c("Massachusetts", "Arizona", "Oregon", "Florida",
-                     "Alaska", "Hawaii", "Maryland", "Michigan",
-                     "New Jersey", "New York",
-                     "Washington", "District of Columbia")
-  states = data.frame(id = 1:39,
-                      state = sort(setdiff(unique(prop99$LocationDesc),
-                                           exclude_states)))
-  smoking = smoking %>% mutate_all(as.numeric)
-  colnames(smoking)[1] = "id"
-  smoking = right_join(states, smoking, by = "id")
-  colnames(smoking)[2:4] = c("unit", "time", "value")
-  smoking = smoking %>% mutate(value_raw = value)
+  smoking = readRDS("./data/data_smoking.Rds")
   
   ## Pre-processing --------------------------------------------------------------
   values = reshape2::dcast(smoking %>% select(c("unit", "time", "value_raw")),
@@ -299,7 +281,7 @@ for (i in which(is.na(res_grid$ratio))) {
   ## run
   print(paste0(paste0(c(width, k, dtw1_time), collapse = "-"), "...start..."))
   units = smoking[c("id", "unit")] %>% distinct
-  result = as.list(1:39) %>% 
+  result = as.list(1:nrow(units)) %>% 
     future_map(
       ~{
         i = .
@@ -323,8 +305,16 @@ for (i in which(is.na(res_grid$ratio))) {
   
   result = result %>% 
     do.call("rbind", .) %>% 
-    mutate(ratio = (mse1_post - mse2_post)/mse1_post)
+    mutate(improve = mse1_post - mse2_post)
   
-  res_grid$ratio[i] = length(which(result$ratio>0))/39
+  return(length(which(result$improve > 0))/nrow(result))
+}
+
+for (i in which(is.na(res_grid$ratio))) {
+  width = res_grid$width[i]
+  k = res_grid$k[i]
+  dtw1_time = res_grid$dtw1_time[i]
+  
+  res_grid$ratio[i] = grid_search(width, k, dtw1_time)
   gc()
 }

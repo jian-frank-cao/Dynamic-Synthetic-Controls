@@ -48,7 +48,7 @@ add_buffer = function(TS, n){
   return(c(left, TS, right))
 }
 
-width = 7
+width = 11
 values2 = sapply(values %>% select(-time),
                  add_buffer, n = (width - 1)/2) %>% 
   data.frame(.)
@@ -83,6 +83,7 @@ compare_methods = function(data,
                            k = 6,
                            n_q = 1,
                            n_r = 1,
+                           plot_figures = FALSE,
                            normalize_method = "t",
                            dtw_method = "dtw",
                            margin = 10,
@@ -156,7 +157,9 @@ compare_methods = function(data,
   }
   
   # plot warped data
-  plot_warped(lapply(results,"[[","fig"), dependent, k, ncol = 3)
+  if (plot_figures) {
+    plot_warped(lapply(results,"[[","fig"), dependent, k, ncol = 3)
+  }
   
   # prepare data for synthetic control
   df = results %>% 
@@ -189,14 +192,18 @@ compare_methods = function(data,
   
   # w/o TSDTW
   synth_origin = do_synth_tobacco_85(df, "value_raw", dependent_id, start_time, n)
-  plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
-                     start_time, end_time)
+  if (plot_figures) {
+    plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
+                       start_time, end_time)
+  }
   
   # w/ TSDTW
   synth_new = do_synth_tobacco_85(df, "value_warped", dependent_id, start_time, n)
-  plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
-                     start_time, end_time)
-  
+  if (plot_figures) {
+    plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
+                       start_time, end_time)
+  }
+
   # mse
   diff1 = (synth_origin$synthetic - synth_origin$value)
   diff2 = (synth_new$synthetic - synth_new$value)
@@ -245,8 +252,8 @@ compare_methods = function(data,
 
 
 units = smoking[c("id", "unit")] %>% distinct
-k = 6
-result = as.list(1:39) %>% 
+k = 7
+result = as.list(1:nrow(units)) %>% 
   future_map(
     ~{
       i = .
@@ -257,7 +264,7 @@ result = as.list(1:39) %>%
                             start_time = 1970,
                             end_time = 1995,
                             treat_time = 1985,
-                            dtw1_time = 1992,
+                            dtw1_time = 1990,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
@@ -270,14 +277,12 @@ result = as.list(1:39) %>%
 
 result = result %>% 
   do.call("rbind", .) %>% 
-  mutate(ratio = (mse1_post - mse2_post)/mse1_post)
-length(which(result$ratio>0))/39
-boxplot(result$imrpove,
-        ylab = "% MSE Improvement",
-        ylim = c(-1,1))
+  mutate(improve = mse1_post - mse2_post)
+length(which(result$improve>0))/39
+boxplot(result$improve, outline = FALSE)
 abline(h = 0, lty = 5)
 
-
+t.test(result$improve)
 
 
 
