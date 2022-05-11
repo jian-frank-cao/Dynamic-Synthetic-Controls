@@ -326,4 +326,5 @@ for (i in which(is.na(res_grid$ratio))) {
     mutate(ratio = (mse1_post - mse2_post)/mse1_post)
   
   res_grid$ratio[i] = length(which(result$ratio>0))/39
+  gc()
 }

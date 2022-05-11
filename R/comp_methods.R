@@ -48,7 +48,7 @@ add_buffer = function(TS, n){
   return(c(left, TS, right))
 }
 
-width = 5
+width = 7
 values2 = sapply(values %>% select(-time),
                  add_buffer, n = (width - 1)/2) %>% 
   data.frame(.)
@@ -256,8 +256,8 @@ result = as.list(1:39) %>%
       res = compare_methods(data = smoking,
                             start_time = 1970,
                             end_time = 1995,
-                            treat_time = 1989,
-                            dtw1_time = 1994,
+                            treat_time = 1985,
+                            dtw1_time = 1992,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
