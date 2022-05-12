@@ -191,14 +191,14 @@ compare_methods = function(data,
   df = data.frame(df)
   
   # w/o TSDTW
-  synth_origin = do_synth_tobacco_92(df, "value_raw", dependent_id, start_time, n)
+  synth_origin = do_synth_tobacco_87(df, "value_raw", dependent_id, start_time, n)
   if (plot_figures) {
     plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
                        start_time, end_time)
   }
   
   # w/ TSDTW
-  synth_new = do_synth_tobacco_92(df, "value_warped", dependent_id, start_time, n)
+  synth_new = do_synth_tobacco_87(df, "value_warped", dependent_id, start_time, n)
   if (plot_figures) {
     plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
                        start_time, end_time)
@@ -269,6 +269,7 @@ result = as.list(1:nrow(units)) %>%
                             dependent_id = dependent_id,
                             normalize_method = "t",
                             k = k,
+                            plot_figures = TRUE,
                             step.pattern = dtw::symmetricP2)
       print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
