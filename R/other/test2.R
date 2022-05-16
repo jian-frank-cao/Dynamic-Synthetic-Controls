@@ -318,3 +318,24 @@ for (i in which(is.na(res_grid$ratio))) {
   res_grid$ratio[i] = grid_search(width, k, dtw1_time)
   gc()
 }
+
+
+result = rbind(result_1985 %>% mutate(year = "1985"),
+               result_1987 %>% mutate(year = "1987"),
+               result_1989 %>% mutate(year = "1989"),
+               result_1992 %>% mutate(year = "1992"))
+
+
+ggplot(result, aes(x=year, y=improve)) + 
+  geom_boxplot() +
+  theme_bw() +
+  coord_cartesian(ylim = c(-40, 70)) +
+  geom_hline(yintercept=0, linetype="dashed")
+
+
+result = result %>% mutate(ratio = (mse1_post - mse2_post)/mse1_post)
+ggplot(result, aes(x=year, y=ratio)) + 
+  geom_boxplot() +
+  theme_bw() +
+  coord_cartesian(ylim = c(-1, 1)) +
+  geom_hline(yintercept=0, linetype="dashed")

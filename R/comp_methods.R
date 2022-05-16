@@ -48,7 +48,7 @@ add_buffer = function(TS, n){
   return(c(left, TS, right))
 }
 
-width = 11
+width = 5
 values2 = sapply(values %>% select(-time),
                  add_buffer, n = (width - 1)/2) %>% 
   data.frame(.)
@@ -191,14 +191,14 @@ compare_methods = function(data,
   df = data.frame(df)
   
   # w/o TSDTW
-  synth_origin = do_synth_tobacco_87(df, "value_raw", dependent_id, start_time, n)
+  synth_origin = do_synth_tobacco_89_2(df, "value_raw", dependent_id, start_time, n)
   if (plot_figures) {
     plot_synth_tobacco(synth_origin, "without_TSDTW", dependent, treat_time, k,
                        start_time, end_time)
   }
   
   # w/ TSDTW
-  synth_new = do_synth_tobacco_87(df, "value_warped", dependent_id, start_time, n)
+  synth_new = do_synth_tobacco_89_2(df, "value_warped", dependent_id, start_time, n)
   if (plot_figures) {
     plot_synth_tobacco(synth_new, "TSDTW", dependent, treat_time, k,
                        start_time, end_time)
@@ -252,7 +252,7 @@ compare_methods = function(data,
 
 
 units = smoking[c("id", "unit")] %>% distinct
-k = 5
+k = 6
 result = as.list(1:nrow(units)) %>% 
   future_map(
     ~{
@@ -262,14 +262,14 @@ result = as.list(1:nrow(units)) %>%
       print(paste0(dependent, ":", i, "-", k, " start..."))
       res = compare_methods(data = smoking,
                             start_time = 1970,
-                            end_time = 1997,
-                            treat_time = 1987,
-                            dtw1_time = 1993,
+                            end_time = 2000,
+                            treat_time = 1989,
+                            dtw1_time = 1994,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
                             k = k,
-                            plot_figures = TRUE,
+                            plot_figures = F,
                             step.pattern = dtw::symmetricP2)
       print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
