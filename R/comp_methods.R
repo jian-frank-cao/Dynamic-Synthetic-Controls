@@ -30,8 +30,12 @@ smoking = right_join(states, smoking, by = "id")
 colnames(smoking)[2:4] = c("unit", "time", "value")
 smoking = smoking %>% mutate(value_raw = value)
 
+data = smoking
+data$age15to24 = data$age15to24*100
+
+
 ## Pre-processing --------------------------------------------------------------
-values = reshape2::dcast(smoking %>% select(c("unit", "time", "value_raw")),
+values = reshape2::dcast(data %>% select(c("unit", "time", "value_raw")),
                          time ~ unit, value.var = "value_raw")
 
 # transform
@@ -63,9 +67,8 @@ values[-1] = values2
 df <- reshape2::melt(values ,  id.vars = 'time',
                      variable.name = 'unit')
 
-smoking = right_join(df, smoking %>% select(-value), by = c("time", "unit"))
-smoking$age15to24 = smoking$age15to24*100
-smoking = smoking[c("id", "unit", "time", "value", 
+data = right_join(df, data %>% select(-value), by = c("time", "unit"))
+data = data[c("id", "unit", "time", "value", 
                     "lnincome", "beer", "age15to24",
                     "retprice", "value_raw")]
 
@@ -229,7 +232,7 @@ compare_methods = function(data,
 
 
 ## Run -------------------------------------------------------------------------
-# data = smoking
+# data = data
 # start_time = 1970
 # end_time = 2000
 # treat_time = 1985
@@ -251,7 +254,7 @@ compare_methods = function(data,
 
 
 
-units = smoking[c("id", "unit")] %>% distinct
+units = data[c("id", "unit")] %>% distinct
 k = 6
 result = as.list(1:nrow(units)) %>% 
   future_map(
@@ -260,7 +263,7 @@ result = as.list(1:nrow(units)) %>%
       dependent = units$unit[i]
       dependent_id = units$id[i]
       print(paste0(dependent, ":", i, "-", k, " start..."))
-      res = compare_methods(data = smoking,
+      res = compare_methods(data = data,
                             start_time = 1970,
                             end_time = 2000,
                             treat_time = 1989,

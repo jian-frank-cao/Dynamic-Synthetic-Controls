@@ -75,6 +75,44 @@ do_synth_80 = function(df, dep_var, dependent_id, n, stretch){
               synthetic = synthetic))
 }
 
+do_synth_90 = function(df, dep_var, dependent_id, start_time, n){
+  # find v
+  dataprep.out <-
+    Synth::dataprep(
+      foo = df,
+      predictors    = c(dep_var,"trade","infrate"),
+      dependent     = dep_var,
+      unit.variable = 1,
+      time.variable = 3,
+      special.predictors = list(
+        list("industry", 1981:1990, c("mean")),
+        list("schooling",c(1980,1985), c("mean")),
+        list("invest80" ,1980, c("mean"))
+      ),
+      treatment.identifier = dependent_id,
+      controls.identifier = setdiff(unique(df$id), dependent_id),
+      time.predictors.prior = 1981:1990,
+      time.optimize.ssr = 1960:1989,
+      unit.names.variable = 2,
+      time.plot = start_time:(start_time + n - 1)
+    )
+  
+  # fit training model
+  synth.out <- 
+    Synth::synth(
+      data.prep.obj=dataprep.out,
+      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
+    )
+  
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
+  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
+  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
+  
+  return(list(value = value,
+              average = average,
+              synthetic = synthetic))
+}
 
 do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
   # find v

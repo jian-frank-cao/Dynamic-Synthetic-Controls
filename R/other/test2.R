@@ -339,3 +339,109 @@ ggplot(result, aes(x=year, y=ratio)) +
   theme_bw() +
   coord_cartesian(ylim = c(-1, 1)) +
   geom_hline(yintercept=0, linetype="dashed")
+
+
+# ------------------------------------------------------------------------------
+res_grid = NULL      
+for (width in (1:6)*2+3) {
+  for (k in 4:7) {
+    for (dtw1_time in 1990:1997) {
+      temp = data.frame(width = width,
+                        k = k,
+                        dtw1_time = dtw1_time,
+                        ratio = NA_real_)
+      res_grid = rbind(res_grid, temp)
+    }
+  }
+}
+
+
+grid_search = function(width, k, dtw1_time){
+  ## Data ------------------------------------------------------------------------
+  data = foreign::read.dta("./data/repgermany.dta")
+  colnames(data)[1:4] = c("id", "unit", "time", "value")
+  data = data %>% mutate(value_raw = value)
+  
+  
+  ## Pre-processing --------------------------------------------------------------
+  values = reshape2::dcast(data %>% select(c("unit", "time", "value_raw")),
+                           time ~ unit, value.var = "value_raw")
+  
+  # transform
+  values = values %>% mutate_at(setdiff(colnames(values), "time"),
+                                ~normalize(., "t"))
+  
+  # adding buffer
+  add_buffer = function(TS, n){
+    model_right = forecast::auto.arima(TS)
+    right <- as.numeric(forecast::forecast(model_right, h = n)$mean)
+    model_left = forecast::auto.arima(rev(TS))
+    left <- rev(as.numeric(forecast::forecast(model_left, h = n)$mean))
+    
+    return(c(left, TS, right))
+  }
+  
+  width = width
+  values2 = sapply(values %>% select(-time),
+                   add_buffer, n = (width - 1)/2) %>% 
+    data.frame(.)
+  
+  # derivative
+  values2 = values2 %>%
+    mutate_all(~signal::sgolayfilt(., 3, width, 2)) %>%
+    .[((width - 1)/2 + 1):((width - 1)/2 + nrow(values)),]
+  values[-1] = values2
+  
+  # join data 
+  df <- reshape2::melt(values ,  id.vars = 'time',
+                       variable.name = 'unit')
+  
+  data = right_join(df, data %>% select(-value), by = c("time", "unit"))
+  data = data[c("id", "unit", "time", "value", colnames(data)[-(1:4)])]
+  
+  
+  ## run
+  print(paste0(paste0(c(width, k, dtw1_time), collapse = "-"), "...start..."))
+  units = data[c("id", "unit")] %>% distinct
+  result = as.list(1:nrow(units)) %>% 
+    future_map(
+      ~{
+        i = .
+        dependent = units$unit[i]
+        dependent_id = units$id[i]
+        print(paste0(dependent, ":", i, "-", k, " start..."))
+        res = compare_methods(data = data,
+                              start_time = 1960,
+                              end_time = 2003,
+                              treat_time = 1990,
+                              dtw1_time = 1995,
+                              dependent = dependent,
+                              dependent_id = dependent_id,
+                              normalize_method = "t",
+                              k = k,
+                              plot_figures = T,
+                              step.pattern = dtw::symmetricP2)
+        print(paste0(dependent, ":", i, "-", k, " start...Done."))
+        res$mse %>% mutate(dependent = dependent, k = k)
+      }
+    )
+  
+  result = result %>% 
+    do.call("rbind", .) %>% 
+    mutate(improve = mse1_post - mse2_post)
+  
+  return(length(which(result$improve > 0))/nrow(result))
+}
+
+for (i in which(is.na(res_grid$ratio))) {
+  width = res_grid$width[i]
+  k = res_grid$k[i]
+  dtw1_time = res_grid$dtw1_time[i]
+  
+  res_grid$ratio[i] = grid_search(width, k, dtw1_time)
+  gc()
+}
+
+
+
+
