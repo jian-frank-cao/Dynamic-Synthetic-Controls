@@ -319,17 +319,24 @@ for (i in which(is.na(res_grid$ratio))) {
   gc()
 }
 
+result_1985 = readRDS("./data/result_tobacco_1985.Rds")
+result_1987 = readRDS("./data/result_tobacco_1987.Rds")
+result_1989 = readRDS("./data/result_tobacco_1989.Rds")
+result_1990 = readRDS("./data/result_gdp_1990.Rds")
 
-result = rbind(result_1985 %>% mutate(year = "1985"),
-               result_1987 %>% mutate(year = "1987"),
-               result_1989 %>% mutate(year = "1989"),
-               result_1992 %>% mutate(year = "1992"))
 
+result = rbind(result_1985 %>% mutate(year = "Tobacco_1985"),
+               result_1987 %>% mutate(year = "Tobacco_1987"),
+               result_1989 %>% mutate(year = "Tobacco_1989"))
 
-ggplot(result, aes(x=year, y=improve)) + 
+result = result %>% filter(dependent != "Rhode Island")
+result = result %>% mutate(ratio = mse2_post/mse1_post,
+                           log_ratio = log(ratio))
+
+ggplot(result, aes(x=year, y=log_ratio)) + 
   geom_boxplot() +
   theme_bw() +
-  coord_cartesian(ylim = c(-40, 70)) +
+  # coord_cartesian(ylim = c(-40, 70)) +
   geom_hline(yintercept=0, linetype="dashed")
 
 
@@ -339,6 +346,8 @@ ggplot(result, aes(x=year, y=ratio)) +
   theme_bw() +
   coord_cartesian(ylim = c(-1, 1)) +
   geom_hline(yintercept=0, linetype="dashed")
+
+t.test(result_1990$improve)
 
 
 # ------------------------------------------------------------------------------
@@ -414,7 +423,7 @@ grid_search = function(width, k, dtw1_time){
                               start_time = 1960,
                               end_time = 2003,
                               treat_time = 1990,
-                              dtw1_time = 1995,
+                              dtw1_time = dtw1_time,
                               dependent = dependent,
                               dependent_id = dependent_id,
                               normalize_method = "t",
@@ -442,6 +451,19 @@ for (i in which(is.na(res_grid$ratio))) {
   gc()
 }
 
+
+mratios::ttestratio(result %>% filter(year == "Tobacco_1989") %>% .[["mse2_post"]],
+                    result %>% filter(year == "Tobacco_1989") %>% .[["mse1_post"]])
+
+result = result %>% mutate(ratio = mse2_post/mse1_post)
+t.test(log(result %>% filter(year == "Tobacco_1985") %>% .[["ratio"]]))
+t.test(log(result %>% filter(year == "Tobacco_1987") %>% .[["ratio"]]))
+t.test(log(result %>% filter(year == "Tobacco_1989") %>% .[["ratio"]]))
+
+t.test(log(result_1985$mse2_post)-log(result_1985$mse1_post))
+t.test(log(result_1987$mse2_post)-log(result_1987$mse1_post))
+t.test(log(result_1989$mse2_post)-log(result_1989$mse1_post))
+t.test(log(result_1990$mse2_post)-log(result_1990$mse1_post))
 
 
 
