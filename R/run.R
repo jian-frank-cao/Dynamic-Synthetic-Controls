@@ -69,30 +69,44 @@ for (width in width_range) {
   }
 }
 
+res_grid_filename = "./data/res_grid_wger_1990.Rds"
+saveRDS(res_grid, res_grid_filename)
+res_grid = readRDS(res_grid_filename)
+
+# search
+synth_fun = "germany-90"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
   k = res_grid$k[i]
   dtw1_time = res_grid$dtw1_time[i]
+  start_time = res_grid$start_time[i]
+  end_time = res_grid$end_time[i]
+  treat_time = res_grid$treat_time[i]
+  
+  print(paste0("[Task-", i, "]: width-", width, ", k-", k,
+               ", dtw1_time-", dtw1_time, "...Start..."))
   
   data = preprocessing(data, filter_width = width)
   
-  res = run_all_units(data = data,
-                      start_time = start_time,
-                      end_time = end_time,
-                      treat_time = treat_time,
-                      dtw1_time = dtw1_time,
-                      # plot_figures = FALSE, 
-                      # normalize_method = "t",
-                      # step.pattern = dtw::symmetricP2,
-                      # legend_position = c(0.3, 0.3),
-                      filter_width = width,
-                      k = k,
-                      synth_fun = "tobacco-89",
-                      detail = FALSE)
+  res = SimDesign::quiet(run_all_units(data = data,
+                                       start_time = start_time,
+                                       end_time = end_time,
+                                       treat_time = treat_time,
+                                       dtw1_time = dtw1_time,
+                                       # plot_figures = FALSE, 
+                                       # normalize_method = "t",
+                                       # step.pattern = dtw::symmetricP2,
+                                       # legend_position = c(0.3, 0.3),
+                                       filter_width = width,
+                                       k = k,
+                                       synth_fun = synth_fun))
   
   res_grid$pos_ratio[i] = res$pos_ratio
   res_grid$t_test[i] = res$t_test
+  
+  print(paste0("[Task-", i, "]: width-", width, ", k-", k,
+               ", dtw1_time-", dtw1_time, "...Start...Done."))
   gc()
 }
 
