@@ -188,7 +188,7 @@ do_synth_80_qtrly = function(df, dep_var, dependent_id, n, stretch){
 }
 
 
-do_synth_tobacco_89 = function(df, dep_var, dependent_id, start_time, n){
+do_synth_tobacco_89_v1 = function(df, dep_var, dependent_id, start_time, n){
   # find v
   dataprep.out <-
     Synth::dataprep(
@@ -256,7 +256,7 @@ do_synth_tobacco_89 = function(df, dep_var, dependent_id, start_time, n){
 }
 
 
-do_synth_tobacco_89_2 = function(df, dep_var, dependent_id, start_time, n){
+do_synth_tobacco_89 = function(df, dep_var, dependent_id, start_time, n){
   # find v
   dataprep.out <-
     Synth::dataprep(
@@ -469,7 +469,7 @@ do_synth_tobacco_87 = function(df, dep_var, dependent_id, start_time, n){
               synthetic = synthetic))
 }
 
-plot_synth = function(df, dep_var, dependent, t_treat, stretch, k){
+plot_synth_v1 = function(df, dep_var, dependent, t_treat, stretch, k){
   n = length(df$gdp_dependent)
   pdf(paste0("./figures/synth_control_",
              paste0(c(dependent, dep_var, stretch, k), collapse = "_"),
@@ -514,8 +514,8 @@ plot_synth = function(df, dep_var, dependent, t_treat, stretch, k){
   graphics.off()
 }
 
-plot_synth_tobacco = function(res_synth, dep_var, dependent, treat_time, k,
-                       start_time, end_time){
+plot_synth = function(res_synth, dependent, treat_time,
+                       start_time, end_time, file_name){
   value = res_synth$value
   average = res_synth$average
   synthetic = res_synth$synthetic
@@ -536,9 +536,7 @@ plot_synth_tobacco = function(res_synth, dep_var, dependent, treat_time, k,
     scale_color_manual(values=c("#ee4035", "#2a4d69", "#7bc043")) +
     theme_bw()
   
-  ggsave(paste0("./figures/synth_",
-                paste0(c(dependent, dep_var, k), collapse = "_"),
-                ".pdf"),
+  ggsave(file_name,
          fig, width = 8, height = 6,
          units = "in", limitsize = FALSE)
 }

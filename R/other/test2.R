@@ -325,29 +325,24 @@ result_1989 = readRDS("./data/result_tobacco_1989.Rds")
 result_1990 = readRDS("./data/result_gdp_1990.Rds")
 
 
-result = rbind(result_1985 %>% mutate(year = "Tobacco_1985"),
-               result_1987 %>% mutate(year = "Tobacco_1987"),
-               result_1989 %>% mutate(year = "Tobacco_1989"))
+result = rbind(result_1985 %>% mutate(treatment = "Tobacco_1985"),
+               result_1987 %>% mutate(treatment = "Tobacco_1987"),
+               result_1989 %>% mutate(treatment = "Tobacco_1989"),
+               result_1990 %>% mutate(treatment = "GDP_1990"))
 
 result = result %>% filter(dependent != "Rhode Island")
 result = result %>% mutate(ratio = mse2_post/mse1_post,
                            log_ratio = log(ratio))
 
-ggplot(result, aes(x=year, y=log_ratio)) + 
+ggplot(result, aes(x=treatment, y=log_ratio)) + 
   geom_boxplot() +
   theme_bw() +
   # coord_cartesian(ylim = c(-40, 70)) +
   geom_hline(yintercept=0, linetype="dashed")
 
 
-result = result %>% mutate(ratio = (mse1_post - mse2_post)/mse1_post)
-ggplot(result, aes(x=year, y=ratio)) + 
-  geom_boxplot() +
-  theme_bw() +
-  coord_cartesian(ylim = c(-1, 1)) +
-  geom_hline(yintercept=0, linetype="dashed")
-
-t.test(result_1990$improve)
+t_test = result %>% group_by(treatment) %>% 
+  summarise(t_test = t.test(log_ratio)$p.value)
 
 
 # ------------------------------------------------------------------------------

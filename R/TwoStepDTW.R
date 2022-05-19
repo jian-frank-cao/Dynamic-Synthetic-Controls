@@ -31,7 +31,8 @@ derivatives = function(data){
 first_dtw = function(x, y, k, n_dtw1, t_treat,
                      normalize_method = "t",
                      dtw_method = "dtw", 
-                     step.pattern = dtw::symmetric2, ...){
+                     step.pattern = dtw::symmetricP2,
+                     plot_figures = FALSE, ...){
   # normalize
   y_bak = y
   x_bak = x
@@ -46,9 +47,10 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
   
   # dtw
   alignment = dtw::dtw(x, y, keep = TRUE, step.pattern = step.pattern, ...)
-  fig_ThreeWay = dtw::dtwPlotThreeWay(alignment)
+  if (plot_figures) {
+    fig_ThreeWay = dtw::dtwPlotThreeWay(alignment)
+  }
   wq = suppressWarnings(dtw::warp(alignment, index.reference = FALSE))
-  wt = suppressWarnings(dtw::warp(alignment, index.reference = TRUE))
   W = Matrix::sparseMatrix(alignment$index1, alignment$index2)
   cutoff = round(wq[t_treat])
   
@@ -65,9 +67,7 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
               n = n,
               t_treat = t_treat,
               alignment = alignment,
-              fig_ThreeWay = fig_ThreeWay,
               wq = wq,
-              wt = wt,
               W_a = W_a,
               cutoff = cutoff,
               x_pre = x_pre,
@@ -259,7 +259,7 @@ second_dtw = function(x_post, x_pre,
                       n_q = 1, n_r = 1,
                       margin = 10,
                       p_min = -5, p_max = 5,
-                      step.pattern = dtw::symmetric2, ...){
+                      step.pattern = dtw::symmetricP2, ...){
   n_pre = length(x_pre)
   n_post = length(x_post)
   
@@ -308,11 +308,11 @@ second_dtw = function(x_post, x_pre,
     W_a_Rs = W_a[j_opt:(j_opt + kp - 1),]
     col_sums = colSums(as.matrix(W_a_Rs))
     ind_nonzero = which(col_sums > 0)
-    n_ind = length(ind_nonzero)
+    # n_ind = length(ind_nonzero)
     min_ind = min(ind_nonzero)
     max_ind = max(ind_nonzero)
-    ind_left = min_ind - j_opt
-    ind_right = max_ind - (j_opt + kp - 1)
+    # ind_left = min_ind - j_opt
+    # ind_right = max_ind - (j_opt + kp - 1)
     W_a_Rs = W_a_Rs[, min_ind:max_ind]
     W_b_i = W_pp_i %*% W_a_Rs
     
@@ -362,14 +362,12 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       dtw_method = "dtw",
                       n_q = 1, n_r = 1, margin = 10,
                       p_min = -5, p_max = 5, 
-                      step.pattern = dtw::symmetric2, ...){
-  y_bak = y
-  x_bak = x
-  
+                      step.pattern = dtw::symmetricP2, 
+                      plot_figures = FALSE, ...){
   # 1st dtw
   res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
                          normalize_method, dtw_method,
-                         step.pattern, ...)
+                         step.pattern, plot_figures, ...)
   x_pre = res_1stDTW$x_pre
   x_post = res_1stDTW$x_post
   W_a = res_1stDTW$W_a
@@ -391,8 +389,8 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   #         warp_using_weight(x_original[-(1:(cutoff - 1))],
   #                           avg_weight[-(1:(k - 3))])[-1])
   
-  return(list(y = y_bak,
-              x = x_bak,
+  return(list(y = y,
+              x = x,
               W_a = W_a,
               weight = res_2ndDTW$weight,
               avg_weight = avg_weight,
@@ -400,14 +398,18 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
               cutoff = cutoff))
 }
 
-plot_warped = function(fig_list, dependent, k, ncol){
+plot_warped = function(fig_list, ncol, file_name){
   nrow = ceiling(length(fig_list)/ncol)
   fig = gridExtra::marrangeGrob(fig_list, ncol = ncol,
                                 nrow = nrow)
-  
-  ggsave(paste0("./figures/warped_",
-                paste0(c(dependent, k), collapse = "_"),
-                ".pdf"),
+  ggsave(file_name,
          fig, width = ncol*4, height = nrow*4,
          units = "in", limitsize = FALSE)
 }
+
+# paste0("./figures/warped_",
+#        paste0(c(dependent, k), collapse = "_"),
+#        ".pdf")
+
+
+

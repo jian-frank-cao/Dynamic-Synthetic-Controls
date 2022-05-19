@@ -1,0 +1,159 @@
+## Setup -----------------------------------------------------------------------
+library(checkpoint)
+checkpoint("2022-04-01")
+
+library(tidyverse)
+library(furrr)
+plan(multisession, workers = 7)
+options(future.rng.onMisuse="ignore")
+
+
+source("./R/TwoStepDTW.R")
+source("./R/synthetic_control.R")
+source("./R/comp_methods.R")
+set.seed(20220407)
+
+## California Tobacco Data -----------------------------------------------------
+load("./data/smoking.rda")
+prop99 = read.csv("./data/prop99.csv")
+
+exclude_states = c("Massachusetts", "Arizona", "Oregon", "Florida",
+                   "Alaska", "Hawaii", "Maryland", "Michigan",
+                   "New Jersey", "New York",
+                   "Washington", "District of Columbia")
+include_states = sort(setdiff(unique(prop99$LocationDesc),
+                              exclude_states))
+states = data.frame(id = 1:length(include_states),
+                    unit = include_states)
+smoking = smoking %>% mutate_all(as.numeric)
+colnames(smoking)[1:3] = c("id", "time", "value")
+smoking = right_join(states, smoking, by = "id")
+smoking = smoking %>%
+  mutate(value_raw = value,
+         age15to24 = age15to24*100) #%>% 
+  #filter(unit != "Rhode Island")
+
+data = smoking
+
+
+## Germany Reunification Data --------------------------------------------------
+data = foreign::read.dta("./data/repgermany.dta")
+colnames(data)[1:4] = c("id", "unit", "time", "value")
+data = data %>% mutate(value_raw = value)
+
+
+
+## Grid Search -----------------------------------------------------------------
+# search space
+width_range = (1:7)*2+3
+k_range = 4:9
+dtw1_time_range = 1990:1998
+start_time = 1960
+end_time = 2003
+treat_time = 1990
+
+res_grid = NULL      
+for (width in width_range) {
+  for (k in k_range) {
+    for (dtw1_time in dtw1_time_range) {
+      temp = data.frame(width = width,
+                        k = k,
+                        start_time = start_time,
+                        end_time = end_time,
+                        treat_time = treat_time,
+                        dtw1_time = dtw1_time,
+                        pos_ratio = NA_real_,
+                        t_test = NA_real_)
+      res_grid = rbind(res_grid, temp)
+    }
+  }
+}
+
+
+for (i in which(is.na(res_grid$pos_ratio))) {
+  width = res_grid$width[i]
+  k = res_grid$k[i]
+  dtw1_time = res_grid$dtw1_time[i]
+  
+  data = preprocessing(data, filter_width = width)
+  
+  res = run_all_units(data = data,
+                      start_time = start_time,
+                      end_time = end_time,
+                      treat_time = treat_time,
+                      dtw1_time = dtw1_time,
+                      # plot_figures = FALSE, 
+                      # normalize_method = "t",
+                      # step.pattern = dtw::symmetricP2,
+                      # legend_position = c(0.3, 0.3),
+                      filter_width = width,
+                      k = k,
+                      synth_fun = "tobacco-89",
+                      detail = FALSE)
+  
+  res_grid$pos_ratio[i] = res$pos_ratio
+  res_grid$t_test[i] = res$t_test
+  gc()
+}
+
+
+
+## Optimal Run -----------------------------------------------------------------
+# prepare data
+start_time = 1970
+end_time = 2000
+treat_time = 1989
+dtw1_time = 1994
+plot_figures = FALSE
+normalize_method = "t"
+dtw_method = "dtw"
+step.pattern = dtw::symmetricP2
+legend_position = c(0.3, 0.3)
+filter_width = 5
+k = 6
+
+data = preprocessing(data, filter_width)
+units = data[c("id", "unit")] %>% distinct
+
+# run
+result = as.list(1:nrow(units)) %>% 
+  future_map(
+    ~{
+      i = .
+      dependent = units$unit[i]
+      dependent_id = units$id[i]
+      # print(paste0(dependent, ":", i, "-", k, " start..."))
+      res = compare_methods(data = data,
+                            start_time = 1970,
+                            end_time = 2000,
+                            treat_time = 1989,
+                            dtw1_time = 1994,
+                            dependent = dependent,
+                            dependent_id = dependent_id,
+                            normalize_method = "t",
+                            k = k,
+                            plot_figures = F,
+                            step.pattern = dtw::symmetricP2)
+      # print(paste0(dependent, ":", i, "-", k, " start...Done."))
+      res$mse %>% mutate(dependent = dependent, k = k)
+    }
+  )
+
+result = result %>% 
+  do.call("rbind", .) %>% 
+  mutate(ratio = mse2_post/mse1_post,
+         log_ratio = log(ratio))
+length(which(result$log_ratio>0))/nrow(result)
+boxplot(result$log_ratio, outline = FALSE)
+abline(h = 0, lty = 5)
+
+t.test(result$log_ratio)
+
+
+
+
+
+
+
+
+
