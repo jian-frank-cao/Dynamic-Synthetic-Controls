@@ -30,8 +30,8 @@ colnames(smoking)[1:3] = c("id", "time", "value")
 smoking = right_join(states, smoking, by = "id")
 smoking = smoking %>%
   mutate(value_raw = value,
-         age15to24 = age15to24*100) #%>% 
-  #filter(unit != "Rhode Island")
+         age15to24 = age15to24*100) %>% 
+  filter(unit != "Rhode Island")
 
 data = smoking
 
@@ -47,10 +47,10 @@ data = data %>% mutate(value_raw = value)
 # search space
 width_range = (1:7)*2+3
 k_range = 4:9
-dtw1_time_range = 1990:1998
-start_time = 1960
-end_time = 2003
-treat_time = 1990
+dtw1_time_range = 1989:1996
+start_time = 1970
+end_time = 1999
+treat_time = 1989
 
 res_grid = NULL      
 for (width in width_range) {
@@ -69,12 +69,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_wger_1990.Rds"
-saveRDS(res_grid, res_grid_filename)
+res_grid_filename = "./data/res_grid_tobacco_1989.Rds"
+# saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "germany-90"
+synth_fun = "tobacco-89"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -84,8 +84,8 @@ for (i in which(is.na(res_grid$pos_ratio))) {
   end_time = res_grid$end_time[i]
   treat_time = res_grid$treat_time[i]
   
-  print(paste0("[Task-", i, "]: width-", width, ", k-", k,
-               ", dtw1_time-", dtw1_time, "...Start..."))
+  cat(paste0("[Task-", i, "]: width-", width, ", k-", k,
+               ", dtw1_time-", dtw1_time, "......"))
   
   data = preprocessing(data, filter_width = width)
   
@@ -105,8 +105,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
   res_grid$pos_ratio[i] = res$pos_ratio
   res_grid$t_test[i] = res$t_test
   
-  print(paste0("[Task-", i, "]: width-", width, ", k-", k,
-               ", dtw1_time-", dtw1_time, "...Start...Done."))
+  cat("Done.\n")
   gc()
 }
 
@@ -115,16 +114,17 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 ## Optimal Run -----------------------------------------------------------------
 # prepare data
 start_time = 1970
-end_time = 2000
-treat_time = 1989
-dtw1_time = 1994
+end_time = 1996
+treat_time = 1986
+dtw1_time = 1993
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 5
-k = 6
+filter_width = 11
+k = 5
+synth_fun = "tobacco-86"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct
@@ -138,15 +138,17 @@ result = as.list(1:nrow(units)) %>%
       dependent_id = units$id[i]
       # print(paste0(dependent, ":", i, "-", k, " start..."))
       res = compare_methods(data = data,
-                            start_time = 1970,
-                            end_time = 2000,
-                            treat_time = 1989,
-                            dtw1_time = 1994,
+                            start_time = start_time,
+                            end_time = end_time,
+                            treat_time = treat_time,
+                            dtw1_time = dtw1_time,
                             dependent = dependent,
                             dependent_id = dependent_id,
                             normalize_method = "t",
+                            filter_width = width,
                             k = k,
                             plot_figures = F,
+                            synth_fun = synth_fun,
                             step.pattern = dtw::symmetricP2)
       # print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse %>% mutate(dependent = dependent, k = k)
@@ -157,16 +159,40 @@ result = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
-length(which(result$log_ratio>0))/nrow(result)
+length(which(result$log_ratio < 0))/nrow(result)
 boxplot(result$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
 
 t.test(result$log_ratio)
 
+saveRDS(result, "./data/result_tobacco_1986.Rds")
+
+## Results ---------------------------------------------------------------------
+result_1985 = readRDS("./data/result_tobacco_1985.Rds")
+result_1986 = readRDS("./data/result_tobacco_1986.Rds")
+result_1987 = readRDS("./data/result_tobacco_1987.Rds")
+result_1989 = readRDS("./data/result_tobacco_1989.Rds")
+result_1990 = readRDS("./data/result_gdp_1990.Rds")
 
 
+result = rbind(result_1985 %>% mutate(treatment = "Tobacco_1985"),
+               result_1986 %>% mutate(treatment = "Tobacco_1986"),
+               result_1987 %>% mutate(treatment = "Tobacco_1987"),
+               result_1989 %>% mutate(treatment = "Tobacco_1989"),
+               result_1990 %>% mutate(treatment = "GDP_1990"))
 
+result = result %>% filter(dependent != "Rhode Island")
+result = result %>% mutate(ratio = mse2_post/mse1_post,
+                           log_ratio = log(ratio))
 
+ggplot(result, aes(x=treatment, y=log_ratio)) + 
+  geom_boxplot() +
+  theme_bw() +
+  # coord_cartesian(ylim = c(-40, 70)) +
+  geom_hline(yintercept=0, linetype="dashed")
+
+t_test = result %>% group_by(treatment) %>% 
+  summarise(t_test = t.test(log_ratio)$p.value)
 
 
 
