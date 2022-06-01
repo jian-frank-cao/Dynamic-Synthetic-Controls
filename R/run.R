@@ -4,14 +4,15 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 7)
+plan(multisession, workers = 11)
 options(future.rng.onMisuse="ignore")
-
+options(stringsAsFactors = FALSE)
 
 source("./R/TwoStepDTW.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
 set.seed(20220407)
+
 
 ## California Tobacco Data -----------------------------------------------------
 load("./data/smoking.rda")
@@ -114,17 +115,17 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 ## Optimal Run -----------------------------------------------------------------
 # prepare data
 start_time = 1970
-end_time = 1996
-treat_time = 1986
-dtw1_time = 1993
+end_time = 1999
+treat_time = 1989
+dtw1_time = 1991
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 11
-k = 5
-synth_fun = "tobacco-86"
+filter_width = 7
+k = 8
+synth_fun = "tobacco-89"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct

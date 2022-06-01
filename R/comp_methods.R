@@ -44,7 +44,7 @@ compare_methods = function(data,
   results = NULL
   for (z in 1:length(x_list)) {
     item = x_list[[z]]
-    unit = item$unit[1]
+    unit = as.character(item$unit[1])
     x_processed = item$value
     x_raw = item$value_raw
     
@@ -115,7 +115,8 @@ compare_methods = function(data,
         res = data.frame(
           time = 1:length(y_raw) + start_time - 1,
           unit = unit,
-          value_warped = NA
+          value_warped = NA,
+          stringsAsFactors = FALSE
         )
         res$value_warped = x_warped[1:((length(y_raw)-1) + 1)]  
         
@@ -132,7 +133,7 @@ compare_methods = function(data,
   
   df = right_join(data, df, by = c("unit", "time"))
   df = data.frame(df)
-  
+
   # synthetic control
   if (synth_fun == "tobacco-89") {
     synth_origin = do_synth_tobacco_89(df, "value_raw", 
