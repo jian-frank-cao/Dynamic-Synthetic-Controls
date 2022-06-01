@@ -20,6 +20,7 @@ data = basque
 colnames(data)[1:4] = c("id", "unit", "time", "value")
 data = data %>% mutate(invest_ratio = invest/value,
                        value_raw = value)
+data = data %>% filter(unit != "Basque Country (Pais Vasco)")
 
 
 ## California Tobacco Data -----------------------------------------------------
