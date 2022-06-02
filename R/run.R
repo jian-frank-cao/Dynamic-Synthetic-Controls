@@ -4,14 +4,24 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 7)
+plan(multisession, workers = 11)
 options(future.rng.onMisuse="ignore")
-
+options(stringsAsFactors = FALSE)
 
 source("./R/TwoStepDTW.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
 set.seed(20220407)
+
+
+## Basque Terrorism Data --------------------------------------------------
+data(basque, package = "Synth")
+data = basque
+colnames(data)[1:4] = c("id", "unit", "time", "value")
+data = data %>% mutate(invest_ratio = invest/value,
+                       value_raw = value)
+data = data %>% filter(unit != "Basque Country (Pais Vasco)")
+
 
 ## California Tobacco Data -----------------------------------------------------
 load("./data/smoking.rda")
@@ -42,15 +52,14 @@ colnames(data)[1:4] = c("id", "unit", "time", "value")
 data = data %>% mutate(value_raw = value)
 
 
-
 ## Grid Search -----------------------------------------------------------------
 # search space
 width_range = (1:7)*2+3
 k_range = 4:9
-dtw1_time_range = 1989:1996
-start_time = 1970
-end_time = 1999
-treat_time = 1989
+dtw1_time_range = 1967:1973
+start_time = 1955
+end_time = 1977
+treat_time = 1967
 
 res_grid = NULL      
 for (width in width_range) {
@@ -69,12 +78,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_tobacco_1989.Rds"
+res_grid_filename = "./data/res_grid_basque_67.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "tobacco-89"
+synth_fun = "basque-67"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -113,18 +122,18 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 
 ## Optimal Run -----------------------------------------------------------------
 # prepare data
-start_time = 1970
-end_time = 1996
-treat_time = 1986
-dtw1_time = 1993
+start_time = 1955
+end_time = 1980
+treat_time = 1970
+dtw1_time = 1971
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 11
-k = 5
-synth_fun = "tobacco-86"
+filter_width = 5
+k = 6
+synth_fun = "basque-70"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct

@@ -44,7 +44,7 @@ compare_methods = function(data,
   results = NULL
   for (z in 1:length(x_list)) {
     item = x_list[[z]]
-    unit = item$unit[1]
+    unit = as.character(item$unit[1])
     x_processed = item$value
     x_raw = item$value_raw
     
@@ -115,7 +115,8 @@ compare_methods = function(data,
         res = data.frame(
           time = 1:length(y_raw) + start_time - 1,
           unit = unit,
-          value_warped = NA
+          value_warped = NA,
+          stringsAsFactors = FALSE
         )
         res$value_warped = x_warped[1:((length(y_raw)-1) + 1)]  
         
@@ -132,7 +133,7 @@ compare_methods = function(data,
   
   df = right_join(data, df, by = c("unit", "time"))
   df = data.frame(df)
-  
+
   # synthetic control
   if (synth_fun == "tobacco-89") {
     synth_origin = do_synth_tobacco_89(df, "value_raw", 
@@ -159,6 +160,16 @@ compare_methods = function(data,
                                dependent_id, start_time, n)
     synth_new = do_synth_90(df, "value_warped",
                             dependent_id, start_time, n)
+  }else if (synth_fun == "basque-70") {
+    synth_origin = do_synth_basque_70(df, "value_raw", 
+                               dependent_id, start_time, n)
+    synth_new = do_synth_basque_70(df, "value_warped",
+                            dependent_id, start_time, n)
+  }else if (synth_fun == "basque-67") {
+    synth_origin = do_synth_basque_67(df, "value_raw", 
+                                      dependent_id, start_time, n)
+    synth_new = do_synth_basque_67(df, "value_warped",
+                                   dependent_id, start_time, n)
   }
   
   # plot synthetic control
@@ -189,8 +200,8 @@ compare_methods = function(data,
   mse1_1 = mean(diff1[1:(t_treat - 1)]^2, na.rm = T)
   mse2_1 = mean(diff2[1:(t_treat - 1)]^2, na.rm = T)
   
-  mse1_2 = mean(diff1[t_treat:((end_time - start_time - 5))]^2, na.rm = T)
-  mse2_2 = mean(diff2[t_treat:((end_time - start_time - 5))]^2, na.rm = T)
+  mse1_2 = mean(diff1[t_treat:((end_time - start_time - 3))]^2, na.rm = T)
+  mse2_2 = mean(diff2[t_treat:((end_time - start_time - 3))]^2, na.rm = T)
   
   
   return(list(
