@@ -80,7 +80,7 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_tobacco_89.Rds"
+res_grid_filename = "./data/grid_search_v1/res_grid_tobacco_89.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
