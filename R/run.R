@@ -44,6 +44,8 @@ smoking = smoking %>%
   filter(unit != "Rhode Island")
 
 data = smoking
+data = data %>% filter(unit != "California")
+
 
 
 ## Germany Reunification Data --------------------------------------------------
@@ -56,10 +58,10 @@ data = data %>% mutate(value_raw = value)
 # search space
 width_range = (1:7)*2+3
 k_range = 4:9
-dtw1_time_range = 1967:1973
-start_time = 1955
-end_time = 1977
-treat_time = 1967
+dtw1_time_range = 1989:1996
+start_time = 1970
+end_time = 1999
+treat_time = 1989
 
 res_grid = NULL      
 for (width in width_range) {
@@ -78,12 +80,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_basque_67.Rds"
+res_grid_filename = "./data/res_grid_tobacco_89.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "basque-67"
+synth_fun = "tobacco-89"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
