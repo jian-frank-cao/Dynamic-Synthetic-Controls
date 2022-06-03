@@ -612,6 +612,56 @@ do_synth_basque_67 = function(df, dep_var, dependent_id, start_time, n){
               synthetic = synthetic))
 }
 
+do_synth_basque_65 = function(df, dep_var, dependent_id, start_time, n){
+  # find v
+  dataprep.out <-
+    Synth::dataprep(
+      foo = df,
+      predictors    = NULL,
+      dependent     = dep_var,
+      unit.variable = 1,
+      time.variable = 3,
+      special.predictors = list(
+        list("value_raw", 1955:1964, c("mean")),
+        list("invest_ratio", 1964:1964, c("mean")),
+        list("popdens", 1969, c("mean")),
+        list("sec.agriculture", 1961:1964, c("mean")),
+        list("sec.energy", 1961:1964, c("mean")),
+        list("sec.industry", 1961:1964, c("mean")),
+        list("sec.construction", 1961:1964, c("mean")),
+        list("sec.services.venta", 1961:1964, c("mean")),
+        list("sec.services.nonventa", 1961:1964, c("mean")),
+        list("school.illit", 1964:1964, c("mean")),
+        list("school.prim", 1964:1964, c("mean")),
+        list("school.med", 1964:1964, c("mean")),
+        list("school.high", 1964:1964, c("mean")),
+        list("school.post.high", 1964:1964, c("mean"))
+      ),
+      treatment.identifier = dependent_id,
+      controls.identifier = setdiff(unique(df$id), dependent_id),
+      time.predictors.prior = 1955:1964,
+      time.optimize.ssr = 1955:1964, 
+      unit.names.variable = 2,
+      time.plot = start_time:(start_time + n - 1)
+    )
+  
+  # fit training model
+  synth.out <- 
+    Synth::synth(
+      data.prep.obj=dataprep.out,
+      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
+    )
+  
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
+  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
+  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
+  
+  return(list(value = value,
+              average = average,
+              synthetic = synthetic))
+}
+
 plot_synth_v1 = function(df, dep_var, dependent, t_treat, stretch, k){
   n = length(df$gdp_dependent)
   pdf(paste0("./figures/synth_control_",
