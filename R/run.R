@@ -58,10 +58,10 @@ data = data %>% mutate(value_raw = value)
 # search space
 width_range = (1:7)*2+3
 k_range = 4:9
-dtw1_time_range = 1989:1996
-start_time = 1970
-end_time = 1999
-treat_time = 1989
+dtw1_time_range = 1967:1974
+start_time = 1955
+end_time = 1977
+treat_time = 1967
 
 res_grid = NULL      
 for (width in width_range) {
@@ -80,12 +80,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/grid_search_v1/res_grid_tobacco_89.Rds"
+res_grid_filename = "./data/grid_search_v2/res_grid_basque_67.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "tobacco-89"
+synth_fun = "basque-67"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
