@@ -20,7 +20,7 @@ data = basque
 colnames(data)[1:4] = c("id", "unit", "time", "value")
 data = data %>% mutate(invest_ratio = invest/value,
                        value_raw = value)
-data = data %>% filter(unit != "Basque Country (Pais Vasco)")
+# data = data %>% filter(unit != "Basque Country (Pais Vasco)")
 
 
 ## California Tobacco Data -----------------------------------------------------
@@ -44,7 +44,7 @@ smoking = smoking %>%
   filter(unit != "Rhode Island")
 
 data = smoking
-data = data %>% filter(unit != "California")
+# data = data %>% filter(unit != "California")
 
 
 
@@ -52,6 +52,7 @@ data = data %>% filter(unit != "California")
 data = foreign::read.dta("./data/repgermany.dta")
 colnames(data)[1:4] = c("id", "unit", "time", "value")
 data = data %>% mutate(value_raw = value)
+# data = data %>% filter(unit != "West Germany")
 
 
 ## Grid Search -----------------------------------------------------------------
@@ -127,14 +128,14 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 start_time = 1955
 end_time = 1980
 treat_time = 1970
-dtw1_time = 1971
+dtw1_time = 1970
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
 filter_width = 5
-k = 6
+k = 5
 synth_fun = "basque-70"
 
 data = preprocessing(data, filter_width)
@@ -170,13 +171,14 @@ result = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
+result = result %>% filter(dependent != "Basque Country (Pais Vasco)")
 length(which(result$log_ratio < 0))/nrow(result)
 boxplot(result$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
 
 t.test(result$log_ratio)
 
-saveRDS(result, "./data/result_tobacco_1986.Rds")
+saveRDS(result, "./data/grid_search_v2/result_basque_70.Rds")
 
 ## Results ---------------------------------------------------------------------
 result_1985 = readRDS("./data/result_tobacco_1985.Rds")
