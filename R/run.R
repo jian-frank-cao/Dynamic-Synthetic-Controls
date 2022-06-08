@@ -59,10 +59,12 @@ data = data %>% mutate(value_raw = value)
 # search space
 width_range = (1:7)*2+3
 k_range = 4:9
-dtw1_time_range = 1967:1974
 start_time = 1955
-end_time = 1977
-treat_time = 1967
+treat_time = 1970
+end_time = treat_time + 10
+dtw1_time_range = treat_time:(treat_time + 7)
+
+
 
 res_grid = NULL      
 for (width in width_range) {
@@ -81,12 +83,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/grid_search_v2/res_grid_basque_67.Rds"
+res_grid_filename = "./data/grid_search_v3/res_grid_basque_70.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "basque-67"
+synth_fun = "basque-70"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -108,7 +110,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        # plot_figures = FALSE, 
                                        # normalize_method = "t",
-                                       # step.pattern = dtw::symmetricP2,
+                                       step.pattern = dtw::symmetricP1,
                                        # legend_position = c(0.3, 0.3),
                                        filter_width = width,
                                        k = k,
