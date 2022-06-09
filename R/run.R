@@ -83,7 +83,7 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/grid_search_v3/res_grid_basque_70.Rds"
+res_grid_filename = "./data/grid_search_v3/res_grid_basque_70_P05.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
@@ -110,7 +110,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        # plot_figures = FALSE, 
                                        # normalize_method = "t",
-                                       step.pattern = dtw::symmetricP1,
+                                       step.pattern = dtw::symmetricP05,
                                        # legend_position = c(0.3, 0.3),
                                        filter_width = width,
                                        k = k,
