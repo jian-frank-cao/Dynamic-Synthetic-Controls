@@ -175,6 +175,11 @@ compare_methods = function(data,
                                       dependent_id, start_time, n)
     synth_new = do_synth_basque_65(df, "value_warped",
                                    dependent_id, start_time, n)
+  }else if (synth_fun == "simulation") {
+    synth_origin = do_synth_simul(df, "value_raw", 
+                                      dependent_id)
+    synth_new = do_synth_simul(df, "value_warped",
+                                   dependent_id)
   }
   
   # plot synthetic control

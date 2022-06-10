@@ -1,0 +1,61 @@
+# Parameters
+noise = 0.05
+nCycles = 3.5
+speedUp = 1.2
+speedDown = 0.8
+par(bty = 'n')
+lineWidth = 2
+textcex=2
+trend = 0.3
+length = 150
+set.seed(20220407)
+
+x <- seq(0, nCycles * pi, length.out = length)
+speed1 = sin(x)
+#normalize speed to be between 0.8 and 1.2 (otherwise get swings that are too extreme)
+speed1 =  1 + (speed1/5 )
+plot(speed1, main = 'sample speed 1')
+
+speed2 = sin(-x)
+#normalize speed 
+speed2 =  1 + (speed2/5 )
+plot(speed2, main = 'sample speed 2')
+
+y1 <- trend*x + sin(x) + rnorm(length, sd = noise)
+y2 <- trend*x+ sin(speed1 * x) + rnorm(length, sd = noise)
+y3 <- trend*x + sin(speed2 * x) + rnorm(length, sd = noise)
+dat = data.frame(unit = c(rep('A', length),
+                          rep('B', length),
+                          rep('C',length)),
+                 time = rep(1:length, 3),
+                 Y = c(y1,y2,y3) )
+write.csv(dat, './data/simulData.csv', row.names = FALSE)
+
+
+# Plot curves
+plot(x, y1,
+     type = "l",
+     cex.axis = textcex,
+     las = 1,
+     lwd = lineWidth,
+     xlab='Time', cex.lab=textcex,
+     ylab = 'Y'
+)
+
+lines(x, y2,
+      lty = 2,
+      #col = 'darkgrey',
+      lwd = lineWidth
+)
+
+x <- seq(0, nCycles * pi, length.out = length)
+lines(x, y3,
+      lty = 3,
+      #col = 'lightgrey',
+      lwd = lineWidth
+)
+
+legend('topleft', 
+       legend = c('Unit T (constant speed)', 'Unit U1 (speed 1)', 'Unit U2 (Speed 2)'),
+       cex=textcex,
+       lty=1:3)
