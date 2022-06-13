@@ -59,3 +59,63 @@ legend('topleft',
        legend = c('Unit T (constant speed)', 'Unit U1 (speed 1)', 'Unit U2 (Speed 2)'),
        cex=textcex,
        lty=1:3)
+
+
+## Ver. 2 ----------------------------------------------------------------------
+set.seed(3)
+nCycles = 2.5
+x <- seq(0, nCycles * pi, length.out = 100)
+phi1 = sin(x)
+
+#normalize speed to be between 0.9 and 1.1
+# (otherwise we get swings that are too extreme) 
+phi1= 1+(phi1/10)
+
+phi2 = sin(-x) 
+#normalize speed
+phi2= 1+(phi2/10)
+# Plot the speed profiles
+plot( phi1,
+      type = 'l',
+      main = 'Speed profiles, i.e., \\phi_{i,t}',
+      ylab = 'phi',
+      xlab = 't'
+)
+lines(phi2, col = 2)
+legend('bottom',
+       c('phi1', 'phi2'),
+       col = c(1, 2),
+       lty = 1)
+
+
+# initialize y and z
+y <- z <- u <- NULL
+# starting values of y and z
+ylag <- zlag <- ulag <- ulag2 <- 1
+# Create a sequence of 100 values for y and z
+noise = 100:1/200 - 0.25
+for (i in 1:100) {
+  trend = 0
+  # noise = rnorm(n = 1, mean = 0)
+  yt = noise[i] + 0.9 * ylag * phi1[i]
+  zt = noise[i] + 0.9 * zlag * phi2[i]
+  y <- c(y, yt)
+  z <- c(z, zt)
+  u <- c(u, ut)
+  ylag = yt
+  zlag = zt
+}
+# plot the sequences
+mini = min(c(y, z))
+maxi = max(c(y, z))
+plot(y,
+     type = 'l',
+     ylim = c(mini, maxi),
+     main = 'Time series')
+lines(z, col = 2)
+legend('bottomright',
+       c('unit 1', 'unit 2'),
+       col = c(1, 2),
+       lty = 1)
+
+

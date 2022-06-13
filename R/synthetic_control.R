@@ -679,7 +679,7 @@ do_synth_simul = function(df, dep_var, dependent_id){
       time.predictors.prior = 1:59,
       time.optimize.ssr = 1:59, 
       unit.names.variable = 2,
-      time.plot = 1:100
+      time.plot = 1:150
     )
   
   # fit training model
