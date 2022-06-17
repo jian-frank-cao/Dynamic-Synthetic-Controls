@@ -15,7 +15,7 @@ set.seed(20220407)
 
 
 ## Simulation Data -------------------------------------------------------------
-data = read.csv("./data/simulData.csv", stringsAsFactors = FALSE)
+data = read.csv("./data/simulData_v3.csv", stringsAsFactors = FALSE)
 data = data %>% 
   mutate(id = case_when(unit == "A" ~ 1,
                         unit == "B" ~ 2,
@@ -27,24 +27,58 @@ data = data %>%
 
 
 ## Without TSDTW ---------------------------------------------------------------
-res_synth_old = do_synth_simul(data, "value_raw", 1)
-
-plot_synth(res_synth_old,
-           "A", 60, 1, 150,
-           "./figures/synth_simul_without_TSDTW.pdf")
+# res_synth_old = do_synth_simul(data, "value_raw", 1)
+# 
+# plot_synth(res_synth_old,
+#            "A", 50, 1, 80,
+#            "./figures/synth_simul_without_TSDTW.pdf")
 
 
 ## With TSDTW ------------------------------------------------------------------
-width = 31
-k = 6
+# grid search
+for (width in (1:9)*2+3) {
+  for (k in 4:9) {
+    for (dtw1_time in 70:70) {
+      data = preprocessing(data, filter_width = width)
+      
+      res = SimDesign::quiet(compare_methods(data = data,
+                            start_time = 1,
+                            end_time = 80,
+                            treat_time = 50,
+                            dtw1_time = dtw1_time,
+                            dependent = "A",
+                            dependent_id = 1,
+                            normalize_method = "t",
+                            k = k,
+                            synth_fun = "simulation",
+                            filter_width = width,
+                            plot_figures = FALSE,
+                            step.pattern = dtw::symmetricP2))
+      mse = mean((res$synth_new$synthetic - res$synth_new$value)[50:60]^2, rm.na = T)
+      print(paste0("width: ", width, ", k: ", k, ", dtw1: ", dtw1_time, ", MSE: ", mse))
+    }
+  }
+}
+
+
+
+
+
+
+# width = 21
+# k = 7
+
+width = 19
+k = 5
+
 
 data = preprocessing(data, filter_width = width)
 
 res = compare_methods(data = data,
                       start_time = 1,
-                      end_time = 150,
-                      treat_time = 60,
-                      dtw1_time = 80,
+                      end_time = 80,
+                      treat_time = 50,
+                      dtw1_time = 70,
                       dependent = "A",
                       dependent_id = 1,
                       normalize_method = "t",
@@ -55,20 +89,21 @@ res = compare_methods(data = data,
                       step.pattern = dtw::symmetricP2)
 
 df = rbind(res$df %>%
-             filter(time <= 100) %>%
+             filter(time <= 80) %>%
              select(c("unit", "time", "value_raw")) %>% 
              `colnames<-`(c("unit", "time", "value")),
            data.frame(unit = "w/o TSDTW",
-                      time = 1:100,
-                      value = res$synth_origin$synthetic[1:100]),
+                      time = 1:80,
+                      value = res$synth_origin$synthetic[1:80]),
            data.frame(unit = "w/ TSDTW",
-                      time = 1:100,
-                      value = res$synth_new$synthetic[1:100])
+                      time = 1:80,
+                      value = res$synth_new$synthetic[1:80])
            )
 
 ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line(aes(linetype = unit)) + 
-  geom_vline(xintercept = 60, linetype="dashed") +
+  geom_vline(xintercept = 50, linetype="dashed") +
   theme_bw() +
   scale_linetype_manual(values=c("solid", "dashed", "twodash", "solid", "solid")) +
   scale_color_manual(values=c("#4a4e4d", "grey70", "grey80", "#fe4a49","#2ab7ca"))
+

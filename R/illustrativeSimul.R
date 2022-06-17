@@ -21,9 +21,9 @@ speed2 = sin(-x)
 speed2 =  1 + (speed2/5 )
 plot(speed2, main = 'sample speed 2')
 
-y1 <- trend*x + sin(x) + rnorm(length, sd = noise)
-y2 <- trend*x+ sin(speed1 * x) + rnorm(length, sd = noise)
-y3 <- trend*x + sin(speed2 * x) + rnorm(length, sd = noise)
+y1 <- sin(x) + rnorm(length, sd = noise)
+y2 <- sin(speed1 * x) + rnorm(length, sd = noise)
+y3 <- sin(speed2 * x) + rnorm(length, sd = noise)
 dat = data.frame(unit = c(rep('A', length),
                           rep('B', length),
                           rep('C',length)),
@@ -117,5 +117,87 @@ legend('bottomright',
        c('unit 1', 'unit 2'),
        col = c(1, 2),
        lty = 1)
+
+## Ver. 3 ----------------------------------------------------------------------
+set.seed(3)
+n = 100
+nCycles = 2.5
+x1 <- seq(0, nCycles * pi, length.out = n)
+x2 <- seq(0, nCycles * pi, length.out = n)
+x3 <- seq(0, nCycles * pi, length.out = n)
+
+
+phi1 =  0.5 + (sin(x1) / 2)
+phi2 = 0.5 + (sin(x2 + 0.66*pi) / 2)
+phi3 = 0.5 + (sin(x3 + 0.33*pi) /2)
+
+phi1 =  1/(1+exp(cumsum(rnorm(100))))
+phi2 = 1/(1+exp(cumsum(rnorm(100))))
+phi3 = 1/(1+exp(cumsum(rnorm(100))))
+
+
+
+# Plot the speed profiles
+plot( phi1,
+      type = 'l',
+      main = 'Speed profiles, i.e., \\phi_{i,t}',
+      ylab = 'phi',
+      xlab = 't',
+      col = 3
+)
+lines(phi2, col = 2)
+lines(phi3, col = 1)
+legend('bottom',
+       c('phi1', 'phi2', "phi3"),
+       col = c(3, 2, 1),
+       lty = 1)
+
+# initialize y and z
+y <- z <- yt <- zt <- u <- ut <- NULL
+# starting values of y and z
+ylag <- zlag <- ulag <- 1
+# Create a sequence of 100 values for y and z
+set.seed(9)
+# x =  cumsum(rep(1, 100))
+x = cumsum(rnorm(n = 100, mean = 0))
+# x =  cumsum(sin(x1+0.5*pi)/2+0.3)
+
+for (i in 21:100) {
+  yt = 0.9*ylag + phi1[i]*x[i] + (1-phi1[i])*x[i-10] + rnorm(n = 1, mean = 0, sd = 0.1)
+  zt = 0.9*zlag + phi3[i]*x[i] + (1-phi3[i])*x[i-10] + rnorm(n = 1, mean = 0, sd = 0.1)
+  ut = 0.9*ulag + phi2[i]*x[i] + (1-phi2[i])*x[i-10] + rnorm(n = 1, mean = 0, sd = 0.1)
+  # ut =  0.9* ulag + x[i] + rnorm(n = 1, mean = 0, sd = 0.1)
+  y <- c(y, yt)
+  z <- c(z, zt)
+  u <- c(u, ut)
+  ylag = yt
+  zlag = zt
+  ulag = ut
+}
+
+# plot the sequences
+mini = min(c(y, z, u))
+maxi = max(c(y, z, u))
+#pdf('sample.pdf')
+plot(y, lwd=2, col = 3,
+     type = 'l',
+     ylim = c(mini, maxi),
+     main = 'Time series')
+lines(z, col = 2, lwd=2)
+lines(u, col = 1, lwd=2)
+legend('bottomright',
+       c('unit 1', 'unit 2', 'unit 3'),
+       col = c(3, 2, 1),
+       lty = 1,
+       lwd=2, cex=2)
+
+length = length(y)
+dat = data.frame(unit = c(rep('A', length),
+                          rep('B', length),
+                          rep('C',length)),
+                 time = rep(1:length, 3),
+                 Y = c(u,y,z) )
+write.csv(dat, './data/simulData_v3.csv', row.names = FALSE)
+
 
 

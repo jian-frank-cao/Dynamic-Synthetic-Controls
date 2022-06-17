@@ -672,14 +672,14 @@ do_synth_simul = function(df, dep_var, dependent_id){
       unit.variable = 1,
       time.variable = 3,
       special.predictors = list(
-        list("value_raw", 50:59, c("mean"))
+        list("value_raw", 40:49, c("mean"))
       ),
       treatment.identifier = dependent_id,
       controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1:59,
-      time.optimize.ssr = 1:59, 
+      time.predictors.prior = 1:49,
+      time.optimize.ssr = 1:49, 
       unit.names.variable = 2,
-      time.plot = 1:150
+      time.plot = 1:80
     )
   
   # fit training model
