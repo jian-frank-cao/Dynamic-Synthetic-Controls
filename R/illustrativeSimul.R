@@ -200,4 +200,56 @@ dat = data.frame(unit = c(rep('A', length),
 write.csv(dat, './data/simulData_v3.csv', row.names = FALSE)
 
 
+## Ver. 4 ----------------------------------------------------------------------
+simulate_data = function(n = 1000,
+                         burn_in = 100,
+                         n_lag = 50,
+                         beta1 = 0.9,
+                         noise_mean = 0,
+                         noise_sd = 0.1){
+  # speed profiles
+  phi1 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
+  phi2 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
+  phi3 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
+  
+  # initialize y and z
+  y <- z <- yt <- zt <- u <- ut <- NULL
+  # starting values of y and z
+  ylag <- zlag <- ulag <- 1
+  # Create a sequence of n values for y and z
+  x = cumsum(rnorm(n = n + burn_in, mean = 0))
+  
+  for (i in (1 + burn_in):(n + burn_in)) {
+    yt = beta1*ylag + phi1[i]*x[i] +
+      (1 - phi1[i])*x[i-n_lag] + 
+      rnorm(n = 1, mean = noise_mean, sd = noise_sd)
+    zt = beta1*zlag + phi3[i]*x[i] + 
+      (1 - phi3[i])*x[i-n_lag] + 
+      rnorm(n = 1, mean = noise_mean, sd = noise_sd)
+    ut = beta1*ulag + phi2[i]*x[i] + 
+      (1 - phi2[i])*x[i-n_lag] + 
+      rnorm(n = 1, mean = noise_mean, sd = noise_sd)
+    y <- c(y, yt)
+    z <- c(z, zt)
+    u <- c(u, ut)
+    ylag = yt
+    zlag = zt
+    ulag = ut
+  }
+  
+  data = data.frame(unit = c(rep('A', n), rep('B', n), rep('C',n)),
+                    time = rep(1:n, 3),
+                    value = c(u,y,z)) %>% 
+    mutate(id = case_when(unit == "A" ~ 1,
+                          unit == "B" ~ 2,
+                          TRUE ~ 3),
+           value_raw = value) %>% 
+    select(c("id", "unit", "time", "value", "value_raw"))
+  
+  return(data)
+}
+
+
+
+
 
