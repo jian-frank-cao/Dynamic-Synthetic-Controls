@@ -164,12 +164,33 @@ for (i in 1:length(data_list)) {
                           start_time = 1,
                           end_time = 200,
                           t_treat = 120,
-                          width_range = (1:10)*2+3,
-                          k_range = 4:20,
-                          dtw1_range = 120:140,
+                          # width_range = (1:10)*2+3,
+                          # k_range = 4:20,
+                          # dtw1_range = 120:140,
                           n_mse = 20)
   cat("Done.\n")
 }
+
+saveRDS(result, "./data/res_simul.Rds")
+
+
+result_bak = result
+
+min_ratio = result %>% 
+  map(
+    ~{
+      res = .
+      min(res$mse_ratio)
+    }
+  ) %>% 
+  do.call("c", .)
+
+log_min_ratio = log(min_ratio)
+
+t.test(log_min_ratio)
+
+boxplot(log_min_ratio)
+abline(h = 0, lty = 5)
 
 
 ## Plot Result -----------------------------------------------------------------
