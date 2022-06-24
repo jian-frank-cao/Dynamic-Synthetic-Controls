@@ -15,23 +15,29 @@ set.seed(20220407)
 
 
 ## Functions -------------------------------------------------------------------
-simulate_data = function(n = 1000,
-                         burn_in = 100,
-                         n_lag = 50,
+simulate_data = function(n = 200,
+                         burn_in = 40,
+                         n_lag = 2,
+                         ar_phi = 0.9,
+                         ar_x = 0.9,
                          beta1 = 0.9,
                          noise_mean = 0,
                          noise_sd = 0.1){
   # speed profiles
-  phi1 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
-  phi2 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
-  phi3 = 1/(1 + exp(cumsum(rnorm(n + burn_in))))
+  phi1 = arima.sim(list(order = c(1,0,0), ar = ar_phi), n = n + burn_in)
+  phi2 = arima.sim(list(order = c(1,0,0), ar = ar_phi), n = n + burn_in)
+  phi3 = arima.sim(list(order = c(1,0,0), ar = ar_phi), n = n + burn_in)
+  
+  phi1 = normalize(phi1, normalize_method = "minmax")
+  phi2 = normalize(phi2, normalize_method = "minmax")
+  phi3 = normalize(phi3, normalize_method = "minmax")
   
   # initialize y and z
   y <- z <- yt <- zt <- u <- ut <- NULL
   # starting values of y and z
   ylag <- zlag <- ulag <- 1
   # Create a sequence of n values for y and z
-  x = cumsum(rnorm(n = n + burn_in, mean = 0))
+  x = cumsum(arima.sim(list(order = c(1,0,0), ar = ar_x), n = n + burn_in))
   
   # time series
   for (i in (1 + burn_in):(n + burn_in)) {
@@ -150,6 +156,8 @@ for (i in 1:n_simulation) {
                                  burn_in = 40,
                                  n_lag = 20,
                                  beta1 = 0.9,
+                                 ar_phi = 0.9,
+                                 ar_x = 0.9,
                                  noise_mean = 0,
                                  noise_sd = 0.1)
 }
@@ -158,20 +166,21 @@ for (i in 1:n_simulation) {
 ## Run -------------------------------------------------------------------------
 result = NULL
 
-for (i in 1:length(data_list)) {
+for (i in 3:10) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
                           end_time = 200,
                           t_treat = 120,
-                          # width_range = (1:10)*2+3,
-                          # k_range = 4:20,
-                          # dtw1_range = 120:140,
+                          width_range = (1:10)*2+3,
+                          k_range = 4:20,
+                          dtw1_range = 120:160,
                           n_mse = 20)
   cat("Done.\n")
 }
 
 saveRDS(result, "./data/res_simul.Rds")
+saveRDS(result, paste("./data/res_simul", rnorm(1), ".Rds",  sep=''))
 
 
 result_bak = result
@@ -189,7 +198,7 @@ log_min_ratio = log(min_ratio)
 
 t.test(log_min_ratio)
 
-boxplot(log_min_ratio)
+boxplot(log_min_ratio, outline = F)
 abline(h = 0, lty = 5)
 
 
@@ -197,8 +206,8 @@ abline(h = 0, lty = 5)
 # width = 21
 # k = 7
 
-width = 7
-k = 5
+width = 5
+k = 20
 
 
 data = preprocessing(data, filter_width = width)
@@ -207,7 +216,7 @@ res = compare_methods(data = data,
                       start_time = 1,
                       end_time = 200,
                       treat_time = 120,
-                      dtw1_time = 140,
+                      dtw1_time = 135,
                       dependent = "A",
                       dependent_id = 1,
                       normalize_method = "t",
