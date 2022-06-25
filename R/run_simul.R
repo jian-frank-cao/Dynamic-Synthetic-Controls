@@ -17,7 +17,7 @@ set.seed(20220407)
 ## Functions -------------------------------------------------------------------
 simulate_data = function(n = 200,
                          burn_in = 40,
-                         n_lag = 2,
+                         n_lag = 20,
                          ar_phi = 0.9,
                          ar_x = 0.9,
                          beta1 = 0.9,
@@ -37,7 +37,7 @@ simulate_data = function(n = 200,
   # starting values of y and z
   ylag <- zlag <- ulag <- 1
   # Create a sequence of n values for y and z
-  x = cumsum(arima.sim(list(order = c(1,0,0), ar = ar_x), n = n + burn_in))
+  x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = n + burn_in)
   
   # time series
   for (i in (1 + burn_in):(n + burn_in)) {
@@ -78,7 +78,7 @@ run_simul = function(data,
                      t_treat = 120,
                      width_range = (1:3)*2+3,
                      k_range = 4:6,
-                     dtw1_range = 140:143,
+                     dtw1_range = 140:145,
                      n_mse = 20
                      ){
   # grid search
@@ -166,22 +166,20 @@ for (i in 1:n_simulation) {
 ## Run -------------------------------------------------------------------------
 result = NULL
 
-for (i in 3:10) {
+for (i in 1:length(data_list)) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
                           end_time = 200,
                           t_treat = 120,
-                          width_range = (1:10)*2+3,
-                          k_range = 4:20,
-                          dtw1_range = 120:160,
+                          width_range = (1:3)*2+3,
+                          k_range = 4:6,
+                          dtw1_range = 135:140,
                           n_mse = 20)
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul.Rds")
-saveRDS(result, paste("./data/res_simul", rnorm(1), ".Rds",  sep=''))
-
+saveRDS(result, "./data/res_simul_0625_v1.Rds")
 
 result_bak = result
 
