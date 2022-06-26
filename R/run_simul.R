@@ -154,7 +154,7 @@ data_list = NULL
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data(n = 200,
                                  burn_in = 40,
-                                 n_lag = 20,
+                                 n_lag = 2,
                                  beta1 = 0.9,
                                  ar_phi = 0.9,
                                  ar_x = 0.9,
@@ -179,7 +179,7 @@ for (i in 1:length(data_list)) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0625_v1.Rds")
+saveRDS(result, "./data/res_simul_0626_v1.Rds")
 
 result_bak = result
 
