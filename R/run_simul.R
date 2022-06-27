@@ -39,6 +39,11 @@ simulate_data = function(n = 200,
   # Create a sequence of n values for y and z
   x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = n + burn_in)
   
+  # n_lag
+  if (length(n_lag) == 2) {
+    n_lag = round(runif(n = 1, min = min(n_lag), max = max(n_lag)), 0)
+  }
+  
   # time series
   for (i in (1 + burn_in):(n + burn_in)) {
     yt = beta1*ylag + phi1[i]*x[i] +
@@ -154,13 +159,17 @@ data_list = NULL
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data(n = 200,
                                  burn_in = 40,
-                                 n_lag = 2,
+                                 n_lag = c(2,20),
+                                 # n_lag = 20,
+                                 # n_lag = 2,
                                  beta1 = 0.9,
                                  ar_phi = 0.9,
                                  ar_x = 0.9,
                                  noise_mean = 0,
                                  noise_sd = 0.1)
 }
+
+saveRDS(data_list, "./data/simul_data_list_v3.Rds")
 
 
 ## Run -------------------------------------------------------------------------
