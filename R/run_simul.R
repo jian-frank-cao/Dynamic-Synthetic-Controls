@@ -159,9 +159,9 @@ data_list = NULL
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data(n = 200,
                                  burn_in = 40,
-                                 n_lag = c(2,20),
-                                 # n_lag = 20,
+                                 n_lag = 20,
                                  # n_lag = 2,
+                                 # n_lag = c(2,20),
                                  beta1 = 0.9,
                                  ar_phi = 0.9,
                                  ar_x = 0.9,
@@ -169,7 +169,7 @@ for (i in 1:n_simulation) {
                                  noise_sd = 0.1)
 }
 
-saveRDS(data_list, "./data/simul_data_list_v3.Rds")
+saveRDS(data_list, "./data/simul_data_list_v1.Rds")
 
 
 ## Run -------------------------------------------------------------------------
@@ -205,17 +205,25 @@ log_min_ratio = log(min_ratio)
 
 t.test(log_min_ratio)
 
-boxplot(log_min_ratio, outline = F)
+boxplot(log_min_ratio, outline = F, 
+        # xlab = "Simulation Data",
+        # ylab = latex2exp::TeX("$log(MSE_{w/ TFDTW}/MSE_{w/o TFDTW})$")
+        ylab = "Log Ratio"
+        )
 abline(h = 0, lty = 5)
+text(1,-0.1,"t test: P = 0")
+
 
 
 ## Plot Result -----------------------------------------------------------------
 # width = 21
 # k = 7
 
-width = 5
-k = 20
-
+data = data_list[[105]]
+width = 9
+k = 6
+dtw1_time = 138
+max_x = 150
 
 data = preprocessing(data, filter_width = width)
 
@@ -223,32 +231,36 @@ res = compare_methods(data = data,
                       start_time = 1,
                       end_time = 200,
                       treat_time = 120,
-                      dtw1_time = 135,
+                      dtw1_time = dtw1_time,
                       dependent = "A",
                       dependent_id = 1,
                       normalize_method = "t",
                       k = k,
                       synth_fun = "simulation",
                       filter_width = width,
-                      plot_figures = TRUE,
+                      plot_figures = FALSE,
                       step.pattern = dtw::symmetricP2)
 
 df = rbind(res$df %>%
-             filter(time <= 200) %>%
+             filter(time <= max_x) %>%
              select(c("unit", "time", "value_raw")) %>% 
              `colnames<-`(c("unit", "time", "value")),
-           data.frame(unit = "w/o TSDTW",
-                      time = 1:200,
-                      value = res$synth_origin$synthetic[1:200]),
-           data.frame(unit = "w/ TSDTW",
-                      time = 1:200,
-                      value = res$synth_new$synthetic[1:200])
+           data.frame(unit = "w/o TFDTW",
+                      time = 1:max_x,
+                      value = res$synth_origin$synthetic[1:max_x]),
+           data.frame(unit = "w/ TFDTW",
+                      time = 1:max_x,
+                      value = res$synth_new$synthetic[1:max_x])
            )
 
-ggplot(df, aes(x = time, y = value, color = unit)) +
+fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line(aes(linetype = unit)) + 
   geom_vline(xintercept = 120, linetype="dashed") +
   theme_bw() +
   scale_linetype_manual(values=c("solid", "dashed", "twodash", "solid", "solid")) +
   scale_color_manual(values=c("#4a4e4d", "grey70", "grey80", "#fe4a49","#2ab7ca"))
 
+
+ggsave("./figures/simul_example.pdf",
+       fig, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
