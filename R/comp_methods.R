@@ -180,6 +180,11 @@ compare_methods = function(data,
                                       dependent_id)
     synth_new = do_synth_simul(df, "value_warped",
                                    dependent_id)
+  }else if (synth_fun == "mexico-86") {
+    synth_origin = do_synth_mexico_86(df, "value_raw", 
+                                  dependent_id)
+    synth_new = do_synth_mexico_86(df, "value_warped",
+                               dependent_id)
   }
   
   # plot synthetic control
