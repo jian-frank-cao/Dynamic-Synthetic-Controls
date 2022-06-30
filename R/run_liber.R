@@ -4,7 +4,7 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 11)
+plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
@@ -29,9 +29,9 @@ data = foreign::read.dta("./data/PTpanelRESTAT.dta") %>%
            "inflation","democracy","inv_ratio","value_raw")) %>% 
   filter(time >= 1964)
 
-mexico = data %>% filter(unit == "Mexico" & time %in% c(1960:1985))
-colMeans(mexico[c("value","school2","pop_growth",
-                  "inflation","democracy","inv_ratio")],na.rm = T)
+# mexico = data %>% filter(unit == "Mexico" & time %in% c(1960:1985))
+# colMeans(mexico[c("value","school2","pop_growth",
+#                   "inflation","democracy","inv_ratio")],na.rm = T)
 
 ## Synth Function --------------------------------------------------------------
 do_synth_mexico_86 = function(df, dep_var, dependent_id,
@@ -105,7 +105,7 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_mexico_86.Rds"
+res_grid_filename = "./data/res_grid_mexico_86_2.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
@@ -132,9 +132,10 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        plot_figures = F,
                                        # normalize_method = "t",
-                                       step.pattern = dtw::symmetricP2,
+                                       step.pattern = dtw::symmetric2,
                                        # legend_position = c(0.3, 0.3),
                                        filter_width = width,
+                                       n_mse = 10,
                                        k = k,
                                        synth_fun = synth_fun))
   
@@ -149,18 +150,18 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 
 ## Optimal Run Basque ----------------------------------------------------------
 # prepare data
-start_time = 1955
-end_time = 1980
-treat_time = 1970
-dtw1_time = 1970
+start_time = 1964
+end_time = 2005
+treat_time = 1986
+dtw1_time = 1988
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetricP2
+step.pattern = dtw::symmetric2
 legend_position = c(0.3, 0.3)
 filter_width = 5
-k = 5
-synth_fun = "basque-70"
+k = 6
+synth_fun = "mexico-86"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct
@@ -182,10 +183,11 @@ result = as.list(1:nrow(units)) %>%
                             dependent_id = dependent_id,
                             normalize_method = "t",
                             filter_width = width,
+                            n_mse = 10,
                             k = k,
                             plot_figures = F,
                             synth_fun = synth_fun,
-                            step.pattern = dtw::symmetricP2)
+                            step.pattern = step.pattern)
       # print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse = res$mse %>% mutate(dependent = dependent, k = k)
       res
@@ -213,18 +215,18 @@ saveRDS(mse, "./data/grid_search_v2/mse_basque_70.Rds")
 
 # plot figure
 df = rbind(data.frame(unit = "Basque Country",
-                      time = 1955:1980,
+                      time = 1964:2005,
                       value = result[[4]]$synth_origin$value),
            data.frame(unit = "Synthetic Control w/o TFDTW",
-                      time = 1955:1980,
+                      time = 1964:2005,
                       value = result[[4]]$synth_origin$synthetic),
            data.frame(unit = "Synthetic Control w/ TFDTW",
-                      time = 1955:1980,
+                      time = 1964:2005,
                       value = result[[4]]$synth_new$synthetic))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
-  geom_vline(xintercept = 1970, linetype="dashed") +
+  geom_vline(xintercept = 1986, linetype="dashed") +
   theme_bw() +
   scale_color_manual(values=c("grey40", "#fe4a49","#2ab7ca")) +
   xlab("Time") +

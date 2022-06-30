@@ -11,6 +11,7 @@ compare_methods = function(data,
                            n = (end_time - start_time) + 1,
                            n_dtw1 = (dtw1_time - start_time) + 1,
                            synth_fun = "tobacco-89",
+                           n_mse = 10,
                            k = 6,
                            n_q = 1,
                            n_r = 1,
@@ -215,8 +216,8 @@ compare_methods = function(data,
   mse1_1 = mean(diff1[1:(t_treat - 1)]^2, na.rm = T)
   mse2_1 = mean(diff2[1:(t_treat - 1)]^2, na.rm = T)
   
-  mse1_2 = mean(diff1[t_treat:((end_time - start_time - 3))]^2, na.rm = T)
-  mse2_2 = mean(diff2[t_treat:((end_time - start_time - 3))]^2, na.rm = T)
+  mse1_2 = mean(diff1[t_treat:(t_treat + n_mse - 1)]^2, na.rm = T)
+  mse2_2 = mean(diff2[t_treat:(t_treat + n_mse - 1)]^2, na.rm = T)
   
   
   return(list(
@@ -298,6 +299,7 @@ run_all_units = function(data,
                          step.pattern = dtw::symmetricP2,
                          legend_position = c(0.3, 0.3),
                          filter_width = 5,
+                         n_mse = 10,
                          k = 6,
                          synth_fun = "tobacco-89",
                          detail = FALSE
@@ -321,6 +323,7 @@ run_all_units = function(data,
                               dependent = dependent,
                               dependent_id = dependent_id,
                               normalize_method = normalize_method,
+                              n_mse = n_mse,
                               k = k,
                               synth_fun = synth_fun,
                               filter_width = filter_width,
