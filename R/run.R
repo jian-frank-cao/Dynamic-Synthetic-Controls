@@ -189,7 +189,7 @@ t.test(mse$log_ratio)
 saveRDS(mse, "./data/grid_search_v2/mse_basque_70.Rds")
 
 
-# plot figure
+# plot time series figure
 df = rbind(data.frame(unit = "Basque Country",
                       time = 1955:1980,
                       value = result[[4]]$synth_origin$value),
@@ -213,11 +213,33 @@ fig = ggplot(df, aes(x = time, y = value, color = unit)) +
 saveRDS(fig, "./data/grid_search_v2/fig_comp_method_basque_70.Rds")
 
 
+# plot placebo figure
+df = result %>% 
+  map(
+    ~{
+      data.frame(unit = .[["mse"]][["dependent"]],
+                 time = 1955:1980,
+                 value = .[["synth_origin"]][["value"]],
+                 synth_origin = .[["synth_origin"]][["synthetic"]],
+                 synth_new = .[["synth_new"]][["synthetic"]])
+    }
+  ) %>% 
+  do.call("rbind", .) %>% 
+  mutate(
+    color = case_when(unit == "Basque Country (Pais Vasco)" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df %>% 
+  ggplot(aes(x = time, y = gap_origin, color = unit)) +
+  geom_line()
 
 ## Optimal Run Tobacco ---------------------------------------------------------
 # prepare data
 start_time = 1970
-end_time = 1999
+end_time = 2000
 treat_time = 1989
 dtw1_time = 1995
 plot_figures = FALSE
@@ -278,16 +300,16 @@ t.test(mse$log_ratio)
 saveRDS(mse, "./data/grid_search_v2/mse_tobacco_89.Rds")
 
 
-# plot figure
+# plot time series figure
 df = rbind(data.frame(unit = "California",
                       time = 1970:1999,
-                      value = result[[3]]$synth_origin$value),
+                      value = result[[3]]$synth_origin$value[-31]),
            data.frame(unit = "Synthetic Control w/o TFDTW",
                       time = 1970:1999,
-                      value = result[[3]]$synth_origin$synthetic),
+                      value = result[[3]]$synth_origin$synthetic[-31]),
            data.frame(unit = "Synthetic Control w/ TFDTW",
                       time = 1970:1999,
-                      value = result[[3]]$synth_new$synthetic))
+                      value = result[[3]]$synth_new$synthetic[-31]))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
@@ -300,6 +322,29 @@ fig = ggplot(df, aes(x = time, y = value, color = unit)) +
         legend.position = c(0.2, 0.2))
 
 saveRDS(fig, "./data/grid_search_v2/fig_comp_method_tobacco_89.Rds")
+
+# plot placebo figure
+df = result %>% 
+  map(
+    ~{
+      data.frame(unit = .[["mse"]][["dependent"]],
+                 time = 1970:1999,
+                 value = .[["synth_origin"]][["value"]][-31],
+                 synth_origin = .[["synth_origin"]][["synthetic"]][-31],
+                 synth_new = .[["synth_new"]][["synthetic"]][-31])
+    }
+  ) %>% 
+  do.call("rbind", .) %>% 
+  mutate(
+    color = case_when(unit == "California" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df %>% 
+  ggplot(aes(x = time, y = gap_new, color = color)) +
+  geom_line()
 
 
 ## Optimal Run Germany ---------------------------------------------------------
@@ -366,16 +411,16 @@ t.test(mse$log_ratio)
 saveRDS(mse, "./data/grid_search_v2/mse_germany_90.Rds")
 
 
-# plot figure
+# plot time series figure
 df = rbind(data.frame(unit = "West Germany",
-                      time = 1960:2003,
-                      value = result[[17]]$synth_origin$value),
+                      time = 1960:2000,
+                      value = result[[17]]$synth_origin$value[-c(42:44)]),
            data.frame(unit = "Synthetic Control w/o TFDTW",
-                      time = 1960:2003,
-                      value = result[[17]]$synth_origin$synthetic),
+                      time = 1960:2000,
+                      value = result[[17]]$synth_origin$synthetic[-c(42:44)]),
            data.frame(unit = "Synthetic Control w/ TFDTW",
-                      time = 1960:2003,
-                      value = result[[17]]$synth_new$synthetic))
+                      time = 1960:2000,
+                      value = result[[17]]$synth_new$synthetic[-c(42:44)]))
 
 df$unit = factor(df$unit, levels = c("West Germany",
                                      "Synthetic Control w/o TFDTW",
@@ -392,6 +437,30 @@ fig = ggplot(df, aes(x = time, y = value, color = unit)) +
         legend.position = c(0.3, 0.8))
 
 saveRDS(fig, "./data/grid_search_v2/fig_comp_method_germany_90.Rds")
+
+
+# plot placebo figure
+df = result %>% 
+  map(
+    ~{
+      data.frame(unit = .[["mse"]][["dependent"]],
+                 time = 1960:2000,
+                 value = .[["synth_origin"]][["value"]][-c(42:44)],
+                 synth_origin = .[["synth_origin"]][["synthetic"]][-c(42:44)],
+                 synth_new = .[["synth_new"]][["synthetic"]][-c(42:44)])
+    }
+  ) %>% 
+  do.call("rbind", .) %>% 
+  mutate(
+    color = case_when(unit == "West Germany" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df %>% 
+  ggplot(aes(x = time, y = gap_new, color = unit)) +
+  geom_line()
 
 
 ## Results ---------------------------------------------------------------------
