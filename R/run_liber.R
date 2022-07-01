@@ -105,7 +105,7 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_mexico_86_2.Rds"
+res_grid_filename = "./data/res_grid_mexico_86_P2.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
@@ -153,14 +153,14 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 start_time = 1964
 end_time = 2005
 treat_time = 1986
-dtw1_time = 1988
+dtw1_time = 1990
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetric2
+step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 5
-k = 6
+filter_width = 13
+k = 9
 synth_fun = "mexico-86"
 
 data = preprocessing(data, filter_width)
@@ -203,7 +203,7 @@ mse = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
-mse = mse %>% filter(dependent != "Basque Country (Pais Vasco)")
+mse = mse %>% filter(!(dependent %in% c("Panama", "Mexico")))
 length(which(mse$log_ratio < 0))/nrow(mse)
 boxplot(mse$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
@@ -214,15 +214,15 @@ saveRDS(mse, "./data/grid_search_v2/mse_basque_70.Rds")
 
 
 # plot figure
-df = rbind(data.frame(unit = "Basque Country",
+df = rbind(data.frame(unit = "Mexico",
                       time = 1964:2005,
-                      value = result[[4]]$synth_origin$value),
+                      value = result[[7]]$synth_origin$value),
            data.frame(unit = "Synthetic Control w/o TFDTW",
                       time = 1964:2005,
-                      value = result[[4]]$synth_origin$synthetic),
+                      value = result[[7]]$synth_origin$synthetic),
            data.frame(unit = "Synthetic Control w/ TFDTW",
                       time = 1964:2005,
-                      value = result[[4]]$synth_new$synthetic))
+                      value = result[[7]]$synth_new$synthetic))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
