@@ -4,7 +4,7 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 11)
+plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
@@ -40,8 +40,8 @@ colnames(smoking)[1:3] = c("id", "time", "value")
 smoking = right_join(states, smoking, by = "id")
 smoking = smoking %>%
   mutate(value_raw = value,
-         age15to24 = age15to24*100) %>% 
-  filter(unit != "Rhode Island")
+         age15to24 = age15to24*100) #%>% 
+  #filter(unit != "Rhode Island")
 
 data = smoking
 # data = data %>% filter(unit != "California")
@@ -233,8 +233,18 @@ df = result %>%
   )
 
 df %>% 
-  ggplot(aes(x = time, y = gap_origin, color = unit)) +
-  geom_line()
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*0.001) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1970, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  coord_cartesian(ylim=c(-0.75, 0.75)) +
+  xlab("year") +
+  ylab("gap in per-capita cigarette sales (in packs)") +
+  theme_bw()
 
 ## Optimal Run Tobacco ---------------------------------------------------------
 # prepare data
@@ -291,6 +301,7 @@ mse = result %>%
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
 mse = mse %>% filter(dependent != "California")
+# mse = mse %>% filter(mse1_pre < 5*3)
 length(which(mse$log_ratio < 0))/nrow(mse)
 boxplot(mse$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
@@ -302,18 +313,18 @@ saveRDS(mse, "./data/grid_search_v2/mse_tobacco_89.Rds")
 
 # plot time series figure
 df = rbind(data.frame(unit = "California",
-                      time = 1970:1999,
-                      value = result[[3]]$synth_origin$value[-31]),
+                      time = 1970:2000,
+                      value = result[[3]]$synth_origin$value),
            data.frame(unit = "Synthetic Control w/o TFDTW",
-                      time = 1970:1999,
-                      value = result[[3]]$synth_origin$synthetic[-31]),
+                      time = 1970:2000,
+                      value = result[[3]]$synth_origin$synthetic),
            data.frame(unit = "Synthetic Control w/ TFDTW",
-                      time = 1970:1999,
-                      value = result[[3]]$synth_new$synthetic[-31]))
+                      time = 1970:2000,
+                      value = result[[3]]$synth_new$synthetic))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
-  geom_vline(xintercept = 1989, linetype="dashed") +
+  geom_vline(xintercept = 1988, linetype="dashed") +
   theme_bw() +
   scale_color_manual(values=c("grey40", "#fe4a49","#2ab7ca")) +
   xlab("Time") +
@@ -328,10 +339,10 @@ df = result %>%
   map(
     ~{
       data.frame(unit = .[["mse"]][["dependent"]],
-                 time = 1970:1999,
-                 value = .[["synth_origin"]][["value"]][-31],
-                 synth_origin = .[["synth_origin"]][["synthetic"]][-31],
-                 synth_new = .[["synth_new"]][["synthetic"]][-31])
+                 time = 1970:2000,
+                 value = .[["synth_origin"]][["value"]],
+                 synth_origin = .[["synth_origin"]][["synthetic"]],
+                 synth_new = .[["synth_new"]][["synthetic"]])
     }
   ) %>% 
   do.call("rbind", .) %>% 
@@ -343,8 +354,18 @@ df = result %>%
   )
 
 df %>% 
-  ggplot(aes(x = time, y = gap_new, color = color)) +
-  geom_line()
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "California"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "California"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1988, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  coord_cartesian(ylim=c(-32, 32)) +
+  xlab("year") +
+  ylab("gap in per-capita cigarette sales (in packs)") +
+  theme_bw()
 
 
 ## Optimal Run Germany ---------------------------------------------------------
@@ -459,8 +480,18 @@ df = result %>%
   )
 
 df %>% 
-  ggplot(aes(x = time, y = gap_new, color = unit)) +
-  geom_line()
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "West Germany"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "West Germany"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1990, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("year") +
+  ylab("gap in per-capita cigarette sales (in packs)") +
+  theme_bw()
 
 
 ## Results ---------------------------------------------------------------------
