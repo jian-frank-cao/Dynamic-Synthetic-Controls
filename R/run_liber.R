@@ -14,7 +14,7 @@ source("./R/comp_methods.R")
 set.seed(20220407)
 
 
-## Liberalization Data ---------------------------------------------------------
+## Mexico Liberalization Data --------------------------------------------------
 data = foreign::read.dta("./data/PTpanelRESTAT.dta") %>%
   filter(ctycode %in% c(104,22,121,162,6,68,69,114,124,174)) %>% 
   mutate(countryname = case_when(countryname == "" ~ NA_character_,
@@ -33,6 +33,29 @@ data = foreign::read.dta("./data/PTpanelRESTAT.dta") %>%
 # colMeans(mexico[c("value","school2","pop_growth",
 #                   "inflation","democracy","inv_ratio")],na.rm = T)
 
+
+## Botswana Liberalization Data ------------------------------------------------
+data = foreign::read.dta("./data/PTpanelRESTAT.dta") %>%
+  filter(ctycode %in% c(21,57,116,4,18,25,26,28,31,32,37,53,65,66,80,
+                        85,91,97,98,100,108,115,131,135,137,143,158,
+                        160,166,179,180)) %>% 
+  mutate(countryname = case_when(countryname == "" ~ NA_character_,
+                                 TRUE ~ countryname),
+         inv_ratio = inv_ratio*100,
+         unit = zoo::na.locf(countryname),
+         id = ctycode,
+         time = year,
+         value = rgdppp,
+         value_raw = value) %>% 
+  select(c("id","unit","time","value","school2","pop_growth",
+           "inflation","democracy","inv_ratio","value_raw")) %>% 
+  filter(time >= 1964)
+
+botswana = data %>% filter(unit == "Botswana" & time %in% c(1960:1978))
+colMeans(botswana[c("value","school2","pop_growth",
+                  "inflation","democracy","inv_ratio")],na.rm = T)
+
+
 ## Synth Function --------------------------------------------------------------
 do_synth_mexico_86 = function(df, dep_var, dependent_id,
                           start_time = 1964, end_time = 2005,
@@ -49,6 +72,49 @@ do_synth_mexico_86 = function(df, dep_var, dependent_id,
         list("school2", start_time:(t_treat - 1), c("mean")),
         list("pop_growth", start_time:(t_treat - 1), c("mean")),
         list("inflation", start_time:(t_treat - 1), c("mean")),
+        list("democracy", start_time:(t_treat - 1), c("mean")),
+        list("inv_ratio", start_time:(t_treat - 1), c("mean"))
+      ),
+      treatment.identifier = dependent_id,
+      controls.identifier = setdiff(unique(df$id), dependent_id),
+      time.predictors.prior = start_time:(t_treat - 1),
+      time.optimize.ssr = start_time:(t_treat - 1), 
+      unit.names.variable = 2,
+      time.plot = start_time:end_time
+    )
+  
+  # fit training model
+  synth.out <- 
+    Synth::synth(
+      data.prep.obj=dataprep.out,
+      Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
+    )
+  
+  value = df %>% filter(id == dependent_id) %>% `$`(value_raw)
+  average = df %>% filter(id != dependent_id) %>% group_by(time) %>% 
+    summarise(average = mean(value_raw, na.rm = TRUE)) %>% `$`(average)
+  synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric
+  
+  return(list(value = value,
+              average = average,
+              synthetic = synthetic))
+}
+
+
+do_synth_botswana_79 = function(df, dep_var, dependent_id,
+                              start_time = 1964, end_time = 2005,
+                              t_treat = 1979){
+  # find v
+  dataprep.out <-
+    Synth::dataprep(
+      foo = df,
+      predictors    = dep_var,
+      dependent     = dep_var,
+      unit.variable = 1,
+      time.variable = 3,
+      special.predictors = list(
+        list("school2", start_time:(t_treat - 1), c("mean")),
+        list("pop_growth", start_time:(t_treat - 1), c("mean")),
         list("democracy", start_time:(t_treat - 1), c("mean")),
         list("inv_ratio", start_time:(t_treat - 1), c("mean"))
       ),
