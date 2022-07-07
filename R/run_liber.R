@@ -212,8 +212,8 @@ do_synth_southafrica_91 = function(df, dep_var, dependent_id,
 width_range = (1:7)*2+3
 k_range = 4:9
 start_time = 1964
-treat_time = 1979
 end_time = 2005
+treat_time = 1991
 dtw1_time_range = treat_time:(treat_time + 7)
 
 
@@ -235,12 +235,11 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_mexico_86_P2.Rds"
-# saveRDS(res_grid, res_grid_filename)
-res_grid = readRDS(res_grid_filename)
+res_grid_filename = "./data/res_grid_southafrica_91_P2.Rds"
+# res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "botswana-79"
+synth_fun = "southafrica-91"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -276,6 +275,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
   gc()
 }
 
+saveRDS(res_grid, res_grid_filename)
 
 
 ## Optimal Run Botswana ----------------------------------------------------------
