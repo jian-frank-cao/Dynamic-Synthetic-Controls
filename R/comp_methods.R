@@ -191,7 +191,13 @@ compare_methods = function(data,
                                       dependent_id)
     synth_new = do_synth_botswana_79(df, "value_warped",
                                    dependent_id)
+  }else if (synth_fun == "southafrica-91") {
+    synth_origin = do_synth_southafrica_91(df, "value_raw", 
+                                        dependent_id)
+    synth_new = do_synth_southafrica_91(df, "value_warped",
+                                     dependent_id)
   }  
+  
   # plot synthetic control
   if (plot_figures) {
     plot_synth(synth_origin, 
