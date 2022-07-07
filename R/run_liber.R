@@ -282,16 +282,16 @@ saveRDS(res_grid, res_grid_filename)
 # prepare data
 start_time = 1964
 end_time = 2005
-treat_time = 1986
-dtw1_time = 1990
+treat_time = 1991
+dtw1_time = 1993
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 13
-k = 7
-synth_fun = "mexico-86"
+filter_width = 15
+k = 5
+synth_fun = "southafrica-91"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct
@@ -333,41 +333,74 @@ mse = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
-mse = mse %>% filter(!(dependent %in% c("Congo")))
+mse = mse %>% filter(!(dependent %in% c("South Africa")))
 length(which(mse$log_ratio < 0))/nrow(mse)
 boxplot(mse$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
 
 t.test(mse$log_ratio)
 
-saveRDS(mse, "./data/grid_search_v2/mse_basque_70.Rds")
+saveRDS(mse, "./data/grid_search_v2/mse_southafrica_91.Rds")
 
 
 # plot figure
-df = rbind(data.frame(unit = "Mexico",
+df = rbind(data.frame(unit = "South Africa",
                       time = 1964:2005,
-                      value = result[[5]]$synth_origin$value),
+                      value = result[[19]]$synth_origin$value),
            data.frame(unit = "Synthetic Control w/o TFDTW",
                       time = 1964:2005,
-                      value = result[[5]]$synth_origin$synthetic),
+                      value = result[[19]]$synth_origin$synthetic),
            data.frame(unit = "Synthetic Control w/ TFDTW",
                       time = 1964:2005,
-                      value = result[[5]]$synth_new$synthetic))
+                      value = result[[19]]$synth_new$synthetic))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
-  geom_vline(xintercept = 1979, linetype="dashed") +
+  geom_vline(xintercept = 1991, linetype="dashed") +
   theme_bw() +
   scale_color_manual(values=c("grey40", "#fe4a49","#2ab7ca")) +
   xlab("Time") +
-  ylab("Per Capita GDP (1986 USD Thousand)") + 
+  ylab("Per Capita GDP") + 
   theme(legend.title=element_blank(),
-        legend.position = c(0.6, 0.8))
+        legend.position = c(0.3, 0.2))
 
-ggsave("./figures/comp_method_mexico_86.pdf",
+ggsave("./figures/comp_method_southafrica_91.pdf",
        fig, width = 6, height = 5,
        units = "in", limitsize = FALSE)
 
+
+# plot placebo figure
+df = result %>% 
+  map(
+    ~{
+      data.frame(unit = .[["mse"]][["dependent"]],
+                 time = 1964:2005,
+                 value = .[["synth_origin"]][["value"]],
+                 synth_origin = .[["synth_origin"]][["synthetic"]],
+                 synth_new = .[["synth_new"]][["synthetic"]])
+    }
+  ) %>% 
+  do.call("rbind", .) %>% 
+  mutate(
+    color = case_when(unit == "South Africa" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df %>% 
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*13000) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "South Africa"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "South Africa"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1991, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-0.75, 0.75)) +
+  xlab("year") +
+  ylab("gap in per-capita GDP") +
+  theme_bw()
 
 ## Optimal Run Botswana ---------------------------------------------------------
 # prepare data
