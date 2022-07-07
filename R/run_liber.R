@@ -148,7 +148,7 @@ do_synth_botswana_79 = function(df, dep_var, dependent_id,
 width_range = (1:7)*2+3
 k_range = 4:9
 start_time = 1964
-treat_time = 1986
+treat_time = 1979
 end_time = 2005
 dtw1_time_range = treat_time:(treat_time + 7)
 
@@ -171,12 +171,12 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/res_grid_mexico_86_P2.Rds"
+res_grid_filename = "./data/res_grid_botswana_79_P2.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "mexico-86"
+synth_fun = "botswana-79"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -198,7 +198,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        plot_figures = F,
                                        # normalize_method = "t",
-                                       step.pattern = dtw::symmetric2,
+                                       step.pattern = dtw::symmetricP2,
                                        # legend_position = c(0.3, 0.3),
                                        filter_width = width,
                                        n_mse = 10,
@@ -218,16 +218,16 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 # prepare data
 start_time = 1964
 end_time = 2005
-treat_time = 1986
-dtw1_time = 1990
+treat_time = 1979
+dtw1_time = 1979
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::symmetricP2
 legend_position = c(0.3, 0.3)
 filter_width = 13
-k = 9
-synth_fun = "mexico-86"
+k = 5
+synth_fun = "botswana-79"
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct
@@ -269,7 +269,7 @@ mse = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
-mse = mse %>% filter(!(dependent %in% c("Panama", "Mexico")))
+mse = mse %>% filter(!(dependent %in% c("Congo", "Mexico")))
 length(which(mse$log_ratio < 0))/nrow(mse)
 boxplot(mse$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
