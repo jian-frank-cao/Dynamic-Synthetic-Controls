@@ -136,17 +136,20 @@ run_simul = function(data,
         
         mse_ratio = mse_new/mse_original
         
-        data.frame(width = width,
+        
+        mse = data.frame(width = width,
                    k = k,
                    dtw1_time = dtw1_time,
                    mse_original = mse_original,
                    mse_new = mse_new,
                    mse_ratio = mse_ratio)
+        
+        list(mse = mse,
+             synth_original = synth_original,
+             synth_new = synth_new,
+             value_raw = value_raw)
       }
     )
-  
-  result = result %>%
-    do.call("rbind", .)
   
   return(result)
 }
@@ -173,6 +176,7 @@ saveRDS(data_list, "./data/simul_data_list_v1.Rds")
 
 
 ## Run -------------------------------------------------------------------------
+data_list = readRDS("./data/simul_data_list_v1.Rds")
 result = NULL
 
 for (i in 1:length(data_list)) {
@@ -188,14 +192,12 @@ for (i in 1:length(data_list)) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0626_v1.Rds")
-
-result_bak = result
+saveRDS(result, "./data/res_simul_0711_v1.Rds")
 
 min_ratio = result %>% 
   map(
     ~{
-      res = .
+      res = .[[mse]]
       min(res$mse_ratio)
     }
   ) %>% 
@@ -216,6 +218,7 @@ text(1,-0.1,"t test: P = 0")
 
 
 ## Plot Result -----------------------------------------------------------------
+# Plot example
 # width = 21
 # k = 7
 
@@ -264,3 +267,5 @@ fig = ggplot(df, aes(x = time, y = value, color = unit)) +
 ggsave("./figures/simul_example.pdf",
        fig, width = 6, height = 4,
        units = "in", limitsize = FALSE)
+
+# 

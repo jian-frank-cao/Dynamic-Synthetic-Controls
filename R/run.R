@@ -495,7 +495,7 @@ df %>%
 
 
 ## Results ---------------------------------------------------------------------
-# boxplot
+# Abadie boxplot
 mse_basque = readRDS("./data/grid_search_v2/mse_basque_70.Rds")
 mse_tobacco = readRDS("./data/grid_search_v2/mse_tobacco_89.Rds")
 mse_germany = readRDS("./data/grid_search_v2/mse_germany_90.Rds")
@@ -548,32 +548,62 @@ ggsave("./figures/comp_method_20220627.pdf",
        units = "in", limitsize = FALSE)
 
 
-# result_1985 = readRDS("./data/result_tobacco_1985.Rds")
-# result_1986 = readRDS("./data/result_tobacco_1986.Rds")
-# result_1987 = readRDS("./data/result_tobacco_1987.Rds")
-# result_1989 = readRDS("./data/result_tobacco_1989.Rds")
-# result_1990 = readRDS("./data/result_gdp_1990.Rds")
-# 
-# 
-# result = rbind(result_1985 %>% mutate(treatment = "Tobacco_1985"),
-#                result_1986 %>% mutate(treatment = "Tobacco_1986"),
-#                result_1987 %>% mutate(treatment = "Tobacco_1987"),
-#                result_1989 %>% mutate(treatment = "Tobacco_1989"),
-#                result_1990 %>% mutate(treatment = "GDP_1990"))
-# 
-# result = result %>% filter(dependent != "Rhode Island")
-# result = result %>% mutate(ratio = mse2_post/mse1_post,
-#                            log_ratio = log(ratio))
-# 
-# ggplot(result, aes(x=treatment, y=log_ratio)) + 
-#   geom_boxplot() +
-#   theme_bw() +
-#   # coord_cartesian(ylim = c(-40, 70)) +
-#   geom_hline(yintercept=0, linetype="dashed")
-# 
-# t_test = result %>% group_by(treatment) %>% 
-#   summarise(t_test = t.test(log_ratio)$p.value)
-# 
+# Abadie + simulation boxplot
+mse_basque = readRDS("./data/grid_search_v2/mse_basque_70.Rds")
+mse_tobacco = readRDS("./data/grid_search_v2/mse_tobacco_89.Rds")
+mse_germany = readRDS("./data/grid_search_v2/mse_germany_90.Rds")
 
+mse_basque = mse_basque %>% filter(dependent != "Basque Country (Pais Vasco)")
+mse_tobacco = mse_basque %>% filter(dependent != "California")
+mse_germany = mse_basque %>% filter(dependent != "West Germany")
 
+result_simul = readRDS("./data/res_simul_0626_v1.Rds")
 
+mse_simul = result %>% 
+  map(
+    ~{
+      res = .
+      min_ratio = min(res$mse_ratio)
+      res %>% filter(mse_ratio == min_ratio) %>% .[1,]
+    }
+  ) %>% 
+  do.call("rbind", .)
+
+df = rbind(mse_basque[c("mse1_post", "mse2_post")] %>% mutate(group = "Basque"),
+           mse_tobacco[c("mse1_post", "mse2_post")] %>% mutate(group = "Tobacco"),
+           mse_germany[c("mse1_post", "mse2_post")] %>% mutate(group = "Germany"),
+           mse_simul %>% mutate(mse1_post = mse_original,
+                                mse2_post = mse_new,
+                                group = "Simulation") %>% select(c("mse1_post", "mse2_post", "group")))
+
+df = df %>% mutate(mse1 = log(mse1_post),
+                   mse2 = log(mse2_post),
+                   log_ratio = log(mse2_post/mse1_post),
+                   group = factor(group, levels = c("Basque", "Tobacco", "Germany", "Simulation")))
+
+fig = ggplot(df, aes(x=group, y=log_ratio)) + 
+  geom_boxplot() +
+  theme_bw() +
+  # coord_cartesian(ylim = c(-40, 70)) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  xlab("") +
+  ylab("Log Ratio") +
+  annotate("text", x = 1:4 + 0.2, y = 0.1, label = c("P=0.05", "P=0.05", "P=0.01", "P=0"))
+
+ggsave("./figures/comp_method_boxplot.pdf",
+       fig, width = 6, height = 5,
+       units = "in", limitsize = FALSE)
+
+# cloud plot
+fig = df %>% 
+  ggplot(aes(x = mse1, y = mse2, color = group)) +
+  geom_mark_hull(aes(fill = group, label = group), concavity = 3) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  xlab("Log MSE (Abadie)") +
+  ylab("Log MSE (TFDTW)") +
+  theme_bw()
+
+ggsave("./figures/comp_method_cloud.pdf",
+       fig, width = 6, height = 5,
+       units = "in", limitsize = FALSE)
