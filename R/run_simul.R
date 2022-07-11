@@ -179,7 +179,7 @@ saveRDS(data_list, "./data/simul_data_list_v1.Rds")
 data_list = readRDS("./data/simul_data_list_v1.Rds")
 result = NULL
 
-for (i in 1:length(data_list)) {
+for (i in 179:length(data_list)) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
