@@ -197,7 +197,7 @@ saveRDS(result, "./data/res_simul_0711_v1.Rds")
 min_ratio = result %>% 
   map(
     ~{
-      res = .[[mse]]
+      res = lapply(., "[[", "mse") %>% do.call("rbind", .)
       min(res$mse_ratio)
     }
   ) %>% 
@@ -215,6 +215,52 @@ boxplot(log_min_ratio, outline = F,
 abline(h = 0, lty = 5)
 text(1,-0.1,"t test: P = 0")
 
+# placebo test figure
+df = future_map2(
+  result,
+  as.list(1:length(result)),
+  ~{
+    item = .x
+    id = .y
+    mse = lapply(., "[[", "mse") %>% do.call("rbind", .)
+    n = which(mse$mse_ratio == min(mse$mse_ratio))[1]
+    gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
+    gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
+    data.frame(time = 1:200, 
+               gap_origin = gap_origin,
+               gap_new = gap_new,
+               id = id)
+  }
+) %>% 
+  do.call("rbind", .)
+
+percent = df %>%
+  group_by(time) %>% 
+  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_mean = mean(gap_origin, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_mean = mean(gap_new, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
+  mutate(id = 0)
+
+
+
+df %>% 
+  # filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = id)) +
+  geom_line(aes(y = gap_origin), col = "blue", alpha=0.1) +
+  geom_line(aes(y = gap_new), col = "purple", alpha=0.1) +
+  geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "black", alpha=1) +
+  geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "black", alpha=1) +
+  geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "red", alpha=1) +
+  geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "red", alpha=1) +
+  geom_vline(xintercept = 120, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("Time") +
+  ylab("Synthetic Control - True Value") +
+  theme_bw()
 
 
 ## Plot Result -----------------------------------------------------------------
