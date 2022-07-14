@@ -43,7 +43,6 @@ derivatives = function(data){
 }
 
 
-
 # warping path W to weight
 warping2weight = function(W){
   w = as.matrix(W)
@@ -144,16 +143,26 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
                      dtw_method = "dtw", 
                      step.pattern = dtw::symmetricP2,
                      plot_figures = FALSE, ...){
-  # normalize
+  # backup
   y_bak = y
   x_bak = x
+  
+  # # ddtw
+  # if (dtw_method == "ddtw") {
+  #   y = derivatives(y)
+  #   x = derivatives(x)
+  # }
+  
+  # normalize
   y = normalize(y_bak[1:t_treat], normalize_method)
   x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
   
-  # ddtw
-  if (dtw_method == "ddtw") {
-    y = derivatives(y)
-    x = derivatives(x)
+  # check if x is too short
+  x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
+  while(x_too_short & n_dtw1 < length(x_bak)){
+    n_dtw1 = n_dtw1 + 1
+    x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
+    x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
   }
   
   # dtw
@@ -193,7 +202,6 @@ second_dtw = function(x_post, x_pre,
                       W_a, k, normalize_method = "t",
                       n_q = 1, n_r = 1,
                       default_margin = 3,
-                      p_min = -5, p_max = 5,
                       step.pattern = dtw::symmetricP2, ...){
   n_pre = length(x_pre)
   n_post = length(x_post)
@@ -290,8 +298,7 @@ second_dtw = function(x_post, x_pre,
 TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       normalize_method = "t",
                       dtw_method = "dtw",
-                      n_q = 1, n_r = 1, margin = 10,
-                      p_min = -5, p_max = 5, 
+                      n_q = 1, n_r = 1, default_margin = 3,
                       step.pattern = dtw::symmetricP2, 
                       plot_figures = FALSE, ...){
   # 1st dtw
@@ -306,18 +313,9 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   # 2nd dtw
   res_2ndDTW = second_dtw(x_post, x_pre, 
                           W_a, k, normalize_method,
-                          n_q, n_r, margin,
+                          n_q, n_r, default_margin,
                           step.pattern = step.pattern, ...)
   avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
-  
-  # warp x
-  # warp_ind_a = warp_ind(W_a)
-  # warp_ind_bs = warp_ind(W_bs)
-  # x_w = c(x_original[1:cutoff][warp_ind_a],
-  #         x_original[-(1:(cutoff - 1))][warp_ind_bs[-1]])
-  # x_w = c(warp_ts(W_a, x_original[1:cutoff]),
-  #         warp_using_weight(x_original[-(1:(cutoff - 1))],
-  #                           avg_weight[-(1:(k - 3))])[-1])
   
   return(list(y = y,
               x = x,
@@ -328,6 +326,8 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
               cutoff = cutoff))
 }
 
+
+# plot warped
 plot_warped = function(fig_list, ncol, file_name){
   nrow = ceiling(length(fig_list)/ncol)
   fig = gridExtra::marrangeGrob(fig_list, ncol = ncol,
@@ -337,9 +337,6 @@ plot_warped = function(fig_list, ncol, file_name){
          units = "in", limitsize = FALSE)
 }
 
-# paste0("./figures/warped_",
-#        paste0(c(dependent, k), collapse = "_"),
-#        ".pdf")
 
 
 
