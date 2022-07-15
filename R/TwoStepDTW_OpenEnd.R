@@ -132,6 +132,9 @@ ref_too_short = function(query, reference,
   if (is.null(alignment)) {
     return(FALSE)
   }
+  if (length(unique(alignment$index2)) == 1) {
+    return(TRUE)
+  }
   wq = suppressWarnings(dtw::warp(alignment, index.reference = FALSE))
   return(round(max(wq)) < length(query))
 }

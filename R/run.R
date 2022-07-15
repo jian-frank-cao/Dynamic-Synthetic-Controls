@@ -8,7 +8,7 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/TwoStepDTW_v2.R")
+source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
 set.seed(20220407)
@@ -376,7 +376,7 @@ dtw1_time = 1995
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetric2
+step.pattern = dtw::symmetric1
 legend_position = c(0.3, 0.3)
 filter_width = 5
 k = 8
