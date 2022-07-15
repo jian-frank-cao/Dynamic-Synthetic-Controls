@@ -57,12 +57,32 @@ data = data %>% mutate(value_raw = value)
 
 ## Grid Search -----------------------------------------------------------------
 # search space
-width_range = (1:9)*2+3
-k_range = 4:9
+width_range = (1:5)*2+3
+k_range = 4:7
 start_time = 1960
 treat_time = 1990
 end_time = 2003
 dtw1_time_range = 1995
+step_pattern_range = list(
+  # dtw::symmetricP0, # too bumpy
+  dtw::symmetricP05,
+  dtw::symmetricP1,
+  dtw::symmetricP2,
+  dtw::asymmetricP0,
+  dtw::asymmetricP05,
+  dtw::asymmetricP1,
+  dtw::asymmetricP2,
+  dtw::typeIc,
+  dtw::typeIcs,
+  # dtw::typeIIc,  # jumps
+  # dtw::typeIIIc, # jumps
+  # dtw::typeIVc,  # jumps
+  dtw::typeId,
+  dtw::typeIds,
+  dtw::typeIId,
+  dtw::mori2006
+)
+
 
 res_grid = NULL      
 for (width in width_range) {
@@ -87,7 +107,7 @@ res_grid = readRDS(res_grid_filename)
 
 # search
 synth_fun = "germany-90"
-step.pattern = dtw::symmetricP2
+step.pattern = dtw::asymmetric
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -376,10 +396,10 @@ dtw1_time = 1995
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetric1
+step.pattern = dtw::symmetric2
 legend_position = c(0.3, 0.3)
 filter_width = 5
-k = 8
+k = 5
 synth_fun = "germany-90"
 
 data = preprocessing(data, filter_width)
