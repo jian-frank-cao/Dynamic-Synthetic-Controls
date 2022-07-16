@@ -1,6 +1,6 @@
 result = NULL
 
-for (i in 2:length(step_pattern_range)) {
+for (i in 13:length(step_pattern_range)) {
   step.pattern = step_pattern_range[[i]]
   result[[i]] = as.list(1:nrow(units)) %>% 
     future_map(
