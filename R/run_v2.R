@@ -8,7 +8,8 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/TwoStepDTW_OpenEnd.R")
+# source("./R/TwoStepDTW_OpenEnd.R")
+source("./R/TwoStepDTW_Fixed.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
 set.seed(20220407)
@@ -59,16 +60,16 @@ data = data %>% mutate(value_raw = value)
 # search space
 width_range = (1:9)*2+3
 k_range = 4:9
-start_time = 1970
-treat_time = 1989
-end_time = 2000
-dtw1_time_range = 1994
+start_time = 1955
+treat_time = 1970
+end_time = 1997
+dtw1_time_range = 1975
 step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   symmetricP05 = dtw::symmetricP05,
   symmetricP1 = dtw::symmetricP1,
   symmetricP2 = dtw::symmetricP2,
-  asymmetricP0 = dtw::asymmetricP0,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   asymmetricP05 = dtw::asymmetricP05,
   asymmetricP1 = dtw::asymmetricP1,
   asymmetricP2 = dtw::asymmetricP2,
@@ -109,7 +110,7 @@ res_grid_filename = "./data/grid_search_v4/res_grid_tobacco_89.Rds"
 res_grid = readRDS(res_grid_filename)
 
 # search
-synth_fun = "tobacco-89"
+synth_fun = "basque-70"
 
 for (i in which(is.na(res_grid$pos_ratio))) {
   width = res_grid$width[i]
@@ -274,13 +275,13 @@ df %>%
 start_time = 1970
 end_time = 2000
 treat_time = 1989
-dtw1_time = 1995
+dtw1_time = 1994
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetricP2
+step.pattern = dtw::typeId
 legend_position = c(0.3, 0.3)
-filter_width = 7
+filter_width = 5
 k = 8
 synth_fun = "tobacco-89"
 
@@ -305,9 +306,10 @@ result = as.list(1:nrow(units)) %>%
                             normalize_method = "t",
                             filter_width = filter_width,
                             k = k,
+                            n_mse = 5,
                             plot_figures = F,
                             synth_fun = synth_fun,
-                            step.pattern = dtw::symmetricP2)
+                            step.pattern = step.pattern)
       # print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse = res$mse %>% mutate(dependent = dependent, k = k)
       res
