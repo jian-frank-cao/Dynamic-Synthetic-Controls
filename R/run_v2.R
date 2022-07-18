@@ -105,7 +105,7 @@ for (width in width_range) {
   }
 }
 
-res_grid_filename = "./data/grid_search_v4/res_grid_tobacco_89.Rds"
+res_grid_filename = "./data/grid_search_v5/res_grid_basque_70.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
@@ -154,13 +154,13 @@ for (i in which(is.na(res_grid$pos_ratio))) {
 start_time = 1955
 end_time = 1980
 treat_time = 1970
-dtw1_time = 1970
+dtw1_time = 1975
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetricP2
+step.pattern = dtw::symmetricP1
 legend_position = c(0.3, 0.3)
-filter_width = 5
+filter_width = 7
 k = 5
 synth_fun = "basque-70"
 
