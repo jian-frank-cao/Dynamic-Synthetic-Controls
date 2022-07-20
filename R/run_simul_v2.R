@@ -8,7 +8,7 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/TwoStepDTW.R")
+source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
 set.seed(20220407)
@@ -122,12 +122,30 @@ simulate_data_sin = function(n = 3,
 
 run_simul = function(data, 
                      start_time = 1,
-                     end_time = 200,
-                     t_treat = 120,
-                     width_range = (1:3)*2+3,
-                     k_range = 4:6,
-                     dtw1_range = 140:145,
-                     n_mse = 20
+                     end_time = 100,
+                     t_treat = 80,
+                     width_range = (1:8)*2+3,
+                     k_range = 4:12,
+                     dtw1_range = 90,
+                     step_pattern_range = list(
+                       # symmetricP0 = dtw::symmetricP0, # too bumpy
+                       symmetricP05 = dtw::symmetricP05,
+                       symmetricP1 = dtw::symmetricP1,
+                       symmetricP2 = dtw::symmetricP2,
+                       # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+                       asymmetricP05 = dtw::asymmetricP05,
+                       asymmetricP1 = dtw::asymmetricP1,
+                       asymmetricP2 = dtw::asymmetricP2,
+                       typeIc = dtw::typeIc,
+                       typeIcs = dtw::typeIcs,
+                       # typeIIc = dtw::typeIIc,  # jumps
+                       # typeIIIc = dtw::typeIIIc, # jumps
+                       # typeIVc = dtw::typeIVc,  # jumps
+                       typeId = dtw::typeId,
+                       typeIds = dtw::typeIds,
+                       # typeIId = dtw::typeIId, # jumps
+                       mori2006 = dtw::mori2006),
+                     n_mse = 10
                      ){
   # grid search
   grid_search = NULL
@@ -135,13 +153,16 @@ run_simul = function(data,
   for (width in width_range) {
     for (k in k_range) {
       for (dtw1_time in dtw1_range) {
-        grid_search[[i]] = data.frame(width = width,
-                            k = k,
-                            dtw1_time = dtw1_time,
-                            mse_original = NA_real_,
-                            mse_new = NA_real_,
-                            mse_ratio = NA_real_)
-        i = i + 1
+        for (pattern_name in names(step_pattern_range)) {
+          grid_search[[i]] = data.frame(width = width,
+                                        k = k,
+                                        step_pattern = pattern_name,
+                                        dtw1_time = dtw1_time,
+                                        mse_original = NA_real_,
+                                        mse_new = NA_real_,
+                                        mse_ratio = NA_real_)
+          i = i + 1
+        }
       }
     }
   }
@@ -152,6 +173,7 @@ run_simul = function(data,
         search = .
         width = search$width
         k = search$k
+        step.pattern = step_pattern_range[[search$step_pattern]]
         dtw1_time = search$dtw1_time
         
         data = preprocessing(data, filter_width = width)
@@ -168,7 +190,7 @@ run_simul = function(data,
                                                synth_fun = "simulation",
                                                filter_width = width,
                                                plot_figures = FALSE,
-                                               step.pattern = dtw::symmetricP2))
+                                               step.pattern = step.pattern))
         
         synth_original = res$synth_origin$synthetic
         synth_new = res$synth_new$synthetic
@@ -251,16 +273,16 @@ for (i in 1:length(data_list)) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
-                          end_time = 200,
-                          t_treat = 120,
-                          width_range = (1:3)*2+3,
-                          k_range = 4:6,
-                          dtw1_range = 135:140,
-                          n_mse = 20)
+                          end_time = 100,
+                          t_treat = 80,
+                          # width_range = (1:3)*2+3,
+                          # k_range = 4:6,
+                          # dtw1_range = 135:140,
+                          n_mse = 10)
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0711_v1.Rds")
+saveRDS(result, "./data/res_simul_0720_v1.Rds")
 
 min_ratio = result %>% 
   map(
