@@ -204,6 +204,7 @@ run_simul = function(data,
         
         mse = data.frame(width = width,
                    k = k,
+                   step_pattern = search$step_pattern,
                    dtw1_time = dtw1_time,
                    mse_original = mse_original,
                    mse_new = mse_new,
@@ -262,11 +263,11 @@ for (i in 1:n_simulation) {
 }
 
 
-saveRDS(data_list, "./data/simul_data_list_0720.Rds")
+saveRDS(data_list, "./data/simul_data_list_0721.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0720.Rds")
+data_list = readRDS("./data/simul_data_list_0721.Rds")
 result = NULL
 
 for (i in 1:length(data_list)) {
@@ -282,7 +283,7 @@ for (i in 1:length(data_list)) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0720_v1.Rds")
+saveRDS(result, "./data/res_simul_0721_v1.Rds")
 
 min_ratio = result %>% 
   map(
