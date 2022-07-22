@@ -120,6 +120,56 @@ simulate_data_sin = function(n = 3,
 }
 
 
+simulate_data_v2 = function(n = 3,
+                                length = 100,
+                                rnd_nCycles = seq(0.1, 0.9, length.out = n),
+                                rnd_shift = seq(0.9, 0.1, length.out = n),
+                                rnd_trend = seq(0.2, 0.8, length.out = n),
+                                nCycles_min = 6,
+                                nCycles_max = 12,
+                                trend_min = 0.01,
+                                trend_max = 0.1,
+                                beta = 0.9,
+                                ar_x = 0.9,
+                                shock = 0.5){
+  
+  # prepare random numbers
+  nCycles = rnd_nCycles * (nCycles_max - nCycles_min) + nCycles_min
+  shifts = rnd_shift * 2 * pi
+  trends = rnd_trend * (trend_max - trend_min) + trend_min
+  
+  # common exogenous shocks
+  x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = length + n_lag)
+  x = cumsum(sin(seq(0, 5*pi, length.out = length + n_lag))/2+0.5)
+  
+  
+  # simulate
+  data = NULL
+  
+  for (i in 1:n) {
+    # speed profile
+    phi = sin(seq(0, nCycles[i] * pi, length.out = length) + shifts[i])
+    y = NULL
+    ylag = 1
+    for (j in 1:length) {
+      yt = 0.9*ylag + phi[j]*x[j + n_lag] +
+        (1 - phi[j])*x[j] + 
+        rnorm(n = 1, mean = 0, sd = 0)
+      y <- c(y, yt)
+      ylag = yt
+    }
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y,
+                            value_raw = y))
+  }
+  return(data)
+}
+
+
 run_simul = function(data, 
                      start_time = 1,
                      end_time = 100,
@@ -263,27 +313,27 @@ for (i in 1:n_simulation) {
 }
 
 
-saveRDS(data_list, "./data/simul_data_list_0721.Rds")
+saveRDS(data_list, "./data/simul_data_list_0722.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0720.Rds")
+data_list = readRDS("./data/simul_data_list_0721.Rds")
 result = NULL
 
 for (i in 1:length(data_list)) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
-                          end_time = 100,
-                          t_treat = 80,
+                          end_time = 80,
+                          t_treat = 70,
                           # width_range = (1:3)*2+3,
                           # k_range = 4:6,
                           # dtw1_range = 135:140,
-                          n_mse = 20)
+                          n_mse = 10)
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0721_v1.Rds")
+saveRDS(result, "./data/res_simul_0722_v2.Rds")
 
 min_ratio = result %>% 
   map(
@@ -325,7 +375,7 @@ df = future_map2(
           # mse$mse_ratio = mse$mse_new/mse$mse_original
           mse$mse_ratio = mean((synth_new - value_raw + cumsum(c(rep(0, 100*4/5),
                                                                  seq(0, 0.5, length.out = 100/20),
-                                                                 seq(shock, 0, length.out = 100/20),
+                                                                 seq(0.5, 0, length.out = 100/20),
                                                                  rep(0, 100/5-100/10))))[80:100]^2, rm.na = T)
             
           mse
@@ -336,7 +386,7 @@ df = future_map2(
     n = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))[1]
     gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
     gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
-    data.frame(time = 1:length(gap_new), 
+    data.frame(time = 1:length(gap_new),
                gap_origin = gap_origin,
                gap_new = gap_new,
                id = id)
@@ -354,7 +404,7 @@ percent = df %>%
             ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
   mutate(artifical_effect = cumsum(c(rep(0, 100*4/5),
                               seq(0, 0.5, length.out = 100/20),
-                              seq(shock, 0, length.out = 100/20),
+                              seq(0.5, 0, length.out = 100/20),
                               rep(0, 100/5-100/10))),
          id = 0)
 

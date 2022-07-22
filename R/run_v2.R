@@ -158,7 +158,7 @@ dtw1_time = 1975
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetricP1
+step.pattern = dtw::symmetricP05
 legend_position = c(0.3, 0.3)
 filter_width = 7
 k = 5
@@ -185,9 +185,9 @@ result = as.list(1:nrow(units)) %>%
                             normalize_method = "t",
                             filter_width = filter_width,
                             k = k,
-                            plot_figures = F,
+                            plot_figures = T,
                             synth_fun = synth_fun,
-                            step.pattern = dtw::symmetricP2)
+                            step.pattern = step.pattern)
       # print(paste0(dependent, ":", i, "-", k, " start...Done."))
       res$mse = res$mse %>% mutate(dependent = dependent, k = k)
       res
@@ -279,7 +279,7 @@ dtw1_time = 1994
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::typeId
+step.pattern = dtw::asymmetricP2
 legend_position = c(0.3, 0.3)
 filter_width = 5
 k = 8
@@ -307,7 +307,7 @@ result = as.list(1:nrow(units)) %>%
                             filter_width = filter_width,
                             k = k,
                             n_mse = 5,
-                            plot_figures = F,
+                            plot_figures = T,
                             synth_fun = synth_fun,
                             step.pattern = step.pattern)
       # print(paste0(dependent, ":", i, "-", k, " start...Done."))
