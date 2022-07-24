@@ -333,7 +333,7 @@ for (i in 1:length(data_list)) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0722_v2.Rds")
+saveRDS(result, "./data/res_simul_0722_v1.Rds")
 
 min_ratio = result %>% 
   map(
@@ -384,12 +384,13 @@ df = future_map2(
       do.call("rbind", .)
     # mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
     n = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))[1]
-    gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
-    gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
-    data.frame(time = 1:length(gap_new),
-               gap_origin = gap_origin,
-               gap_new = gap_new,
-               id = id)
+    # gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
+    # gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
+    # data.frame(time = 1:length(gap_new),
+    #            gap_origin = gap_origin,
+    #            gap_new = gap_new,
+    #            id = id)
+    mse[n,]
   }
 ) %>% 
   do.call("rbind", .)
