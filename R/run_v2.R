@@ -9,6 +9,7 @@ options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
 # source("./R/TwoStepDTW_OpenEnd.R")
+# source("./R/TwoStepDTW_OpenBegin.R")
 source("./R/TwoStepDTW_Fixed.R")
 source("./R/synthetic_control.R")
 source("./R/comp_methods.R")
@@ -158,10 +159,10 @@ dtw1_time = 1975
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::symmetricP05
+step.pattern = dtw::asymmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 7
-k = 5
+filter_width = 9
+k = 10
 synth_fun = "basque-70"
 
 data = preprocessing(data, filter_width)
@@ -281,8 +282,8 @@ normalize_method = "t"
 dtw_method = "dtw"
 step.pattern = dtw::asymmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 5
-k = 8
+filter_width = 9
+k = 10
 synth_fun = "tobacco-89"
 
 data = preprocessing(data, filter_width)
@@ -402,10 +403,10 @@ dtw1_time = 1995
 plot_figures = FALSE
 normalize_method = "t"
 dtw_method = "dtw"
-step.pattern = dtw::stypeId
+step.pattern = dtw::asymmetricP2
 legend_position = c(0.3, 0.3)
-filter_width = 5
-k = 5
+filter_width = 9
+k = 10
 synth_fun = "germany-90"
 
 data = preprocessing(data, filter_width)

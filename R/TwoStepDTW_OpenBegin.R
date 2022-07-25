@@ -171,19 +171,21 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
   # dtw
   alignment = dtw::dtw(y, x, keep = TRUE,
                        step.pattern = step.pattern,
+                       open.begin = TRUE,
                        open.end = TRUE, ...)
   if (plot_figures) {
     fig_ThreeWay = dtw::dtwPlotThreeWay(alignment)
   }
   wr = suppressWarnings(dtw::warp(alignment, index.reference = TRUE))
   W = Matrix::sparseMatrix(alignment$index2, alignment$index1)
+  begin = round(wr[1])
   cutoff = round(wr[t_treat])
   
   # partition warping path W
-  W_a = W[1:cutoff, 1:t_treat]
+  W_a = W[begin:cutoff, 1:t_treat]
   
   # cut x
-  x_pre = x_bak[1:cutoff]
+  x_pre = x_bak[begin:cutoff]
   x_post = x_bak[-(1:(cutoff - k + 2))]
   
   return(list(x = x_bak,
@@ -194,6 +196,7 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
               alignment = alignment,
               wr = wr,
               W_a = W_a,
+              begin = begin,
               cutoff = cutoff,
               x_pre = x_pre,
               x_post = x_post))
@@ -215,60 +218,74 @@ second_dtw = function(x_post, x_pre,
   while (i <= n_post - k + 1) {
     Q = x_post[i:(i + k - 1)]
     Q = normalize(Q, normalize_method)
-    costs_qr = NULL
+    # costs_qr = NULL
     
-    # slide reference window
-    continue = TRUE
-    margin = default_margin
-    j = 1
-    while (continue) {  # j <= n_pre - k + 1
-      # check if the search is finished
-      if (j > n_pre - k + 3) {
-        continue = FALSE
-        next
-      }
-      # define R
-      R = x_pre[j:min(j + k + margin - 1, n_pre)]
-      R = normalize(R, normalize_method)
-      # check if R is too short
-      R_too_short = ref_too_short(Q, R, step.pattern = step.pattern)
-      if (R_too_short) {
-        # check if the R can be extended
-        if (j < n_pre - k - margin + 1) {
-          margin = margin + 1
-          next
-        }else{
-          margin = default_margin
-          j = j + n_r
-          next
-        }
-      }
-      # match Q and R
-      alignment_qr = dtw::dtw(Q, R, open.end = TRUE,
-                              step.pattern = step.pattern,
-                              distance.only = TRUE)
-      costs_qr = rbind(costs_qr,
-                       data.frame(cost = alignment_qr$distance,
-                                  j = j,
-                                  margin = margin))
-      j = j + n_r
-      margin = default_margin
-    }
-    # find the minimum cost
-    min_cost = which(costs_qr$cost == min(costs_qr$cost))[1]
-    j_opt = costs_qr$j[min_cost]
-    margin_opt = costs_qr$margin[min_cost]
+    # # slide reference window
+    # continue = TRUE
+    # margin = default_margin
+    # j = 1
+    # while (continue) {  # j <= n_pre - k + 1
+    #   # check if the search is finished
+    #   if (j > n_pre - k + 3) {
+    #     continue = FALSE
+    #     next
+    #   }
+    #   # define R
+    #   R = x_pre[j:min(j + k + margin - 1, n_pre)]
+    #   R = normalize(R, normalize_method)
+    #   # check if R is too short
+    #   R_too_short = ref_too_short(Q, R, step.pattern = step.pattern)
+    #   if (R_too_short) {
+    #     # check if the R can be extended
+    #     if (j < n_pre - k - margin + 1) {
+    #       margin = margin + 1
+    #       next
+    #     }else{
+    #       margin = default_margin
+    #       j = j + n_r
+    #       next
+    #     }
+    #   }
+    #   # match Q and R
+    #   alignment_qr = dtw::dtw(Q, R, open.end = TRUE,
+    #                           step.pattern = step.pattern,
+    #                           distance.only = TRUE)
+    #   costs_qr = rbind(costs_qr,
+    #                    data.frame(cost = alignment_qr$distance,
+    #                               j = j,
+    #                               margin = margin))
+    #   j = j + n_r
+    #   margin = default_margin
+    # }
+    # # find the minimum cost
+    # min_cost = which(costs_qr$cost == min(costs_qr$cost))[1]
+    # j_opt = costs_qr$j[min_cost]
+    # margin_opt = costs_qr$margin[min_cost]
     
-    # obtain warping path W_pp_i: x_post -> n_pre
-    Rs = x_pre[j_opt:min(j_opt + k + margin_opt - 1, n_pre)]
-    Rs = normalize(Rs, normalize_method)
-    alignment_qrs = dtw::dtw(Q, Rs, open.end = TRUE,
-                             step.pattern = step.pattern, ...)
-    W_pp_i = Matrix::sparseMatrix(alignment_qrs$index1,
-                                  alignment_qrs$index2)
+    # partial match Q -> x_pre
+    x_pre_normalized = normalize(x_pre, normalize_method = normalize_method)
+    alignment_qx = dtw::dtw(Q, x_pre_normalized,
+                            open.begin = TRUE,
+                            open.end = TRUE,
+                            keep = TRUE,
+                            step.pattern = step.pattern, ...)
+    
+    # obtain warping path W_pp_i: x_post -> x_pre
+    begin_x_pre = min(alignment_qx$index2)
+    end_x_pre = max(alignment_qx$index2)
+    W_pp_i = Matrix::sparseMatrix(alignment_qx$index1,
+                                  alignment_qx$index2 - begin_x_pre + 1)
+    
+    # # obtain warping path W_pp_i: x_post -> x_pre
+    # Rs = x_pre[j_opt:min(j_opt + k + margin_opt - 1, n_pre)]
+    # Rs = normalize(Rs, normalize_method)
+    # alignment_qrs = dtw::dtw(Q, Rs, open.end = TRUE,
+    #                          step.pattern = step.pattern, ...)
+    # W_pp_i = Matrix::sparseMatrix(alignment_qrs$index1,
+    #                               alignment_qrs$index2)
     
     # obtain warping path W_b_i: x_post -> y
-    W_a_Rs = W_a[j_opt:(j_opt + ncol(W_pp_i) - 1),]
+    W_a_Rs = W_a[begin_x_pre:end_x_pre,]
     col_sums = colSums(as.matrix(W_a_Rs))
     ind_nonzero = which(col_sums > 0)
     # n_ind = length(ind_nonzero)
@@ -312,6 +329,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   x_pre = res_1stDTW$x_pre
   x_post = res_1stDTW$x_post
   W_a = res_1stDTW$W_a
+  begin = res_1stDTW$begin
   cutoff = res_1stDTW$cutoff
   
   # 2nd dtw
@@ -327,6 +345,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
               weight = res_2ndDTW$weight,
               avg_weight = avg_weight,
               t_treat = t_treat,
+              begin = begin,
               cutoff = cutoff))
 }
 
