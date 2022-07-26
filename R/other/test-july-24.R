@@ -1,5 +1,9 @@
 data = data_list[[393]]
 
+data_list[[261]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line() +
+  geom_vline(xintercept = 80, linetype="dashed")
+
 start_time = 1
 end_time = 100
 treat_time = 80
@@ -245,6 +249,9 @@ a$distance
 
 a = NULL
 alag = 0
+shock = 5
+length = 100
+beta = 0.9
 trend = c(rep(0, length*4/5),
           seq(0, shock, length.out = length/20),
           seq(shock, 0, length.out = length/20),
@@ -254,3 +261,4 @@ for (j in 1:100) {
   a = c(a, at)
   alag = at
 }
+

@@ -8,9 +8,12 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/TwoStepDTW_OpenBegin.R")
+# source("./R/TwoStepDTW_OpenBegin.R")
+source("./R/TwoStepDTW_Fixed.R")
+# source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
-source("./R/comp_methods_OpenBegin.R")
+# source("./R/comp_methods_OpenBegin.R")
+source("./R/comp_methods.R")
 set.seed(20220407)
 
 
@@ -124,14 +127,14 @@ simulate_data_v2 = function(n = 3,
                             length = 100,
                             rnd_nCycles = seq(0.1, 0.9, length.out = n),
                             rnd_shift = seq(0.9, 0.1, length.out = n),
-                            rnd_trend = seq(0.2, 0.8, length.out = n),
+                            rnd_lag = seq(0.1, 0.9, length.out = n),
                             nCycles_min = 6,
                             nCycles_max = 12,
-                            trend_min = 0.01,
-                            trend_max = 0.1,
                             noise_mean = 0,
                             noise_sd = 0.01,
-                            n_lag = 10,
+                            n_lag_min = 5,
+                            n_lag_max = 15,
+                            extra_x = 20,
                             beta = 0.9,
                             ar_x = 0.9,
                             t_treat = 80,
@@ -140,10 +143,10 @@ simulate_data_v2 = function(n = 3,
   # prepare random numbers
   nCycles = rnd_nCycles * (nCycles_max - nCycles_min) + nCycles_min
   shifts = rnd_shift * 2 * pi
-  trends = rnd_trend * (trend_max - trend_min) + trend_min
+  n_lags = round(rnd_lag * (n_lag_max - n_lag_min) + n_lag_min, 0)
   
   # common exogenous shocks
-  x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = length + n_lag)
+  x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = length + extra_x)
   # x = cumsum(sin(seq(0, 5*pi, length.out = length + n_lag))/2+0.5)
   
   # simulate
@@ -154,17 +157,17 @@ simulate_data_v2 = function(n = 3,
     phi = sin(seq(0, nCycles[i] * pi, length.out = length) + shifts[i])
     # trend
     if (i == 1) {
-      trend = rep(trends[i], length) + c(rep(0, length*4/5),
+      trend = rep(0, length) + c(rep(0, length*4/5),
                                          seq(0, shock, length.out = length/20),
                                          seq(shock, 0, length.out = length/20),
                                          rep(0, length/5-length/10))
     }else{
-      trend = rep(trends[i], length)
+      trend = rep(0, length)
     }
     y = NULL
     ylag = 1
     for (j in 1:length) {
-      yt = trend[j] + beta*ylag + phi[j]*x[j + n_lag] +
+      yt = trend[j] + beta*ylag + phi[j]*x[j + n_lag[i]] +
         (1 - phi[j])*x[j] + 
         rnorm(n = 1, mean = noise_mean, sd = noise_sd)
       y <- c(y, yt)
@@ -311,20 +314,11 @@ rnd_trend = sobol_seq[(2*n_simulation + 1):(3*n_simulation),]
 # }
 
 for (i in 1:n_simulation) {
-  data_list[[i]] = simulate_data_v2(n = 3,
+  data_list[[i]] = simulate_data_v2(n = 5,
                                     length = 100,
                                     rnd_nCycles = rnd_nCycles,
                                     rnd_shift = rnd_shift,
-                                    rnd_trend = rnd_trend,
-                                    nCycles_min = 6,
-                                    nCycles_max = 12,
-                                    trend_min = 0.01,
-                                    trend_max = 0.1,
-                                    noise_mean = 0,
-                                    noise_sd = 0.01,
-                                    n_lag = 10,
-                                    beta = 0.9,
-                                    ar_x = 0.9,
+                                    rnd_lag = rnd_trend,
                                     t_treat = 80,
                                     shock = 5)
 }
@@ -334,7 +328,7 @@ saveRDS(data_list, "./data/simul_data_list_0725.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0721.Rds")
+data_list = readRDS("./data/simul_data_list_0725.Rds")
 result = NULL
 
 for (i in 1:length(data_list)) {
