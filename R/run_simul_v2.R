@@ -8,12 +8,12 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-# source("./R/TwoStepDTW_OpenBegin.R")
-source("./R/TwoStepDTW_Fixed.R")
+source("./R/TwoStepDTW_OpenBegin.R")
+# source("./R/TwoStepDTW_Fixed.R")
 # source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
-# source("./R/comp_methods_OpenBegin.R")
-source("./R/comp_methods.R")
+source("./R/comp_methods_OpenBegin.R")
+# source("./R/comp_methods.R")
 set.seed(20220407)
 
 
@@ -167,7 +167,7 @@ simulate_data_v2 = function(n = 3,
     y = NULL
     ylag = 1
     for (j in 1:length) {
-      yt = trend[j] + beta*ylag + phi[j]*x[j + n_lag[i]] +
+      yt = trend[j] + beta*ylag + phi[j]*x[j + n_lags[i]] +
         (1 - phi[j])*x[j] + 
         rnorm(n = 1, mean = noise_mean, sd = noise_sd)
       y <- c(y, yt)

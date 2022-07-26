@@ -1,6 +1,6 @@
 data = data_list[[393]]
 
-data_list[[261]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[151]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 80, linetype="dashed")
 
