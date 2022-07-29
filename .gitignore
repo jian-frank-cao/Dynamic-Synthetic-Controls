@@ -7,3 +7,5 @@ figures/
 ._.DS_Store
 **/.DS_Store
 **/._.DS_Store
+data/res_simul_0727_v1.Rds
+data/res_simul_0728_v1.Rds
