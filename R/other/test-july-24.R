@@ -1,20 +1,20 @@
-data = data_list[[393]]
+data = data_list[[176]]
 
-data_list[[151]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[176]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 80, linetype="dashed")
 
 start_time = 1
 end_time = 100
-treat_time = 80
-dtw1_time = 90
+treat_time = 60
+dtw1_time = 60
 width = 9
-k = 10
-step.pattern = dtw::asymmetricP2
+k = 15
+step.pattern = dtw::symmetricP1
 t_treat = (treat_time - start_time) + 1
 n = (end_time - start_time) + 1
 n_dtw1 = (dtw1_time - start_time) + 1
-n_mse = 10
+n_mse = 30
 ... = NULL
 
 result2 = data_list %>% 
@@ -262,3 +262,238 @@ for (j in 1:100) {
   alag = at
 }
 
+mse = result %>% 
+  future_map(
+    ~{
+      item = .
+      mse = item %>% 
+        map(
+          ~{
+            .[[1]][["mse"]]
+          }
+        ) %>% do.call("rbind", .)
+      min_ratio = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))
+      mse[min_ratio,]
+    }
+  )
+
+result2 = future_map2(
+  mse,
+  data_list[1:228],
+  ~{
+    search = .x
+    data = .y
+    width = search$width
+    k = search$k
+    step.pattern = step_pattern_range[[search$step_pattern]]
+    dtw1_time = search$dtw1_time
+    
+    data = preprocessing(data, filter_width = width)
+    units = data[c("id", "unit")] %>% distinct
+
+    res = SimDesign::quiet(compare_methods(data = data,
+                                           start_time = 1,
+                                           end_time = 100,
+                                           treat_time = 80,
+                                           dtw1_time = 80,
+                                           dependent = "A",
+                                           dependent_id = 1,
+                                           normalize_method = "t",
+                                           k = k,
+                                           synth_fun = "simulation",
+                                           filter_width = width,
+                                           plot_figures = FALSE,
+                                           step.pattern = step.pattern))
+    
+    synth_original = res$synth_origin$synthetic
+    synth_new = res$synth_new$synthetic
+    value_raw = res$synth_origin$value
+    
+    mse_original = mean((synth_original - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+    mse_new = mean((synth_new - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+    
+    mse_ratio = mse_new/mse_original
+    
+    
+    mse = data.frame(width = width,
+                     k = k,
+                     step_pattern = search$step_pattern,
+                     dtw1_time = dtw1_time,
+                     mse_original = mse_original,
+                     mse_new = mse_new,
+                     mse_ratio = mse_ratio)
+    
+    list(mse = mse,
+         synth_original = synth_original,
+         synth_new = synth_new,
+         value_raw = value_raw)
+  }
+)
+  
+# placebo test figure
+df = future_map2(
+  result2,
+  as.list(1:length(result2)),
+  ~{
+    item = .x[[1]]
+    id = .y
+    gap_origin =  item[["value_raw"]] - item[["synth_original"]]
+    gap_new = item[["value_raw"]] - item[["synth_new"]]
+    data.frame(time = 1:length(gap_new),
+               gap_origin = gap_origin,
+               gap_new = gap_new,
+               id = id)
+  }
+) %>% 
+  do.call("rbind", .)
+
+
+a = NULL
+alag = 0
+shock = 5
+length = 100
+beta = 1
+trend = c(rep(0, length*4/5),
+          seq(0, shock, length.out = length/20),
+          seq(shock, 0, length.out = length/20),
+          rep(0, length/5-length/10))
+for (j in 1:100) {
+  at = trend[j] + beta*alag 
+  a = c(a, at)
+  alag = at
+}
+
+
+percent = df %>%
+  group_by(time) %>% 
+  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_mean = mean(gap_origin, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_mean = mean(gap_new, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
+  mutate(artifical_effect = a,
+         id = 0)
+
+
+
+df %>% 
+  # filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = id)) +
+  geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
+  geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
+  geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
+  geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
+  geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
+  geom_vline(xintercept = 80, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("Time") +
+  ylab("Synthetic Control - True Value") +
+  theme_bw()
+
+res = NULL
+for (i in 1:5) {
+  item = result[[i]]
+  id = i
+  mse = item %>%
+    map(
+      ~{
+        synth_original = .[["synth_original"]]
+        synth_new = .[["synth_new"]]
+        value_raw = .[["value_raw"]]
+        mse = .[["mse"]]
+        mse$mse_original = mean((synth_original - value_raw)[1:79]^2, rm.na = T)
+        mse$mse_new = mean((synth_new - value_raw)[1:79]^2, rm.na = T)
+        mse$mse_ratio = mse$mse_new/mse$mse_original
+        # mse$mse_ratio = mean((synth_new - value_raw + cumsum(c(rep(0, 100*4/5),
+        mse
+      }
+    ) %>%
+    do.call("rbind", .)
+  # mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
+  n = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))[1]
+  gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
+  gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
+  res[[i]] = data.frame(time = 1:length(gap_new),
+             gap_origin = gap_origin,
+             gap_new = gap_new,
+             id = id)
+}
+
+res = res %>% do.call("rbind", .)
+
+
+
+
+df = future_map2(
+  result,
+  as.list(1:length(result)),
+  ~{
+    item = .x
+    id = .y
+    mse = item %>%
+      map(
+        ~{
+          synth_original = .[["synth_original"]]
+          synth_new = .[["synth_new"]]
+          value_raw = .[["value_raw"]]
+          mse = .[["mse"]]
+          mse$mse_original = mean((synth_original - value_raw)[1:59]^2, rm.na = T)
+          mse$mse_new = mean((synth_new - value_raw)[1:59]^2, rm.na = T)
+          mse$mse_ratio = mse$mse_new/mse$mse_original
+          # mse$mse_ratio = mean((synth_new - value_raw + cumsum(c(rep(0, 100*4/5),
+          mse
+        }
+      ) %>%
+      do.call("rbind", .)
+    # mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
+    n = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))[1]
+    gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
+    gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
+    data.frame(time = 1:length(gap_new),
+               gap_origin = gap_origin,
+               gap_new = gap_new,
+               id = id)
+  }
+) %>% 
+  do.call("rbind", .)
+
+percent = df %>%
+  group_by(time) %>% 
+  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_mean = mean(gap_origin, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_mean = mean(gap_new, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
+  mutate(artifical_effect = cumsum(c(rep(0, 100*3/5),
+                                     seq(0, 0.5, length.out = 100/20),
+                                     seq(0.5, 0, length.out = 100/20),
+                                     rep(0, 100*2/5-100/10))),
+         id = 0)
+
+
+
+df %>% 
+  # filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
+  ggplot(aes(x = time, group = id)) +
+  geom_line(aes(y = -gap_origin), col = "#4d648d", alpha=0.1) +
+  geom_line(aes(y = -gap_new), col = "#feb2a8", alpha=0.1) +
+  geom_line(aes(x = time, y = -ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = -ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = -ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = -ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = -ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
+  geom_line(aes(x = time, y = -ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
+  geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
+  geom_vline(xintercept = 60, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("Time") +
+  ylab("Synthetic Control - True Value") +
+  theme_bw()

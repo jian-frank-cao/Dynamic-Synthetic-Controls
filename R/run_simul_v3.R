@@ -8,12 +8,12 @@ plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/TwoStepDTW_OpenBegin.R")
-# source("./R/TwoStepDTW_Fixed.R")
+# source("./R/TwoStepDTW_OpenBegin.R")
+source("./R/TwoStepDTW_Fixed2.R")
 # source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
-source("./R/comp_methods_OpenBegin.R")
-# source("./R/comp_methods.R")
+# source("./R/comp_methods_OpenBegin.R")
+source("./R/comp_methods.R")
 set.seed(20220407)
 
 
@@ -189,28 +189,29 @@ run_simul = function(data,
                      start_time = 1,
                      end_time = 100,
                      t_treat = 80,
-                     width_range = (1:8)*2+3,
-                     k_range = 4:12,
-                     dtw1_range = 90,
+                     width_range = (1:9)*2+3,
+                     k_range = (1:10)*2+2,
+                     dtw1_range = 80,
                      step_pattern_range = list(
                        # symmetricP0 = dtw::symmetricP0, # too bumpy
-                       symmetricP05 = dtw::symmetricP05,
+                       # symmetricP05 = dtw::symmetricP05,
                        symmetricP1 = dtw::symmetricP1,
                        symmetricP2 = dtw::symmetricP2,
-                       # asymmetricP0 = dtw::asymmetricP0, # too bumpy
-                       asymmetricP05 = dtw::asymmetricP05,
+                       # # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+                       # asymmetricP05 = dtw::asymmetricP05,
                        asymmetricP1 = dtw::asymmetricP1,
                        asymmetricP2 = dtw::asymmetricP2,
-                       typeIc = dtw::typeIc,
-                       typeIcs = dtw::typeIcs,
-                       # typeIIc = dtw::typeIIc,  # jumps
-                       # typeIIIc = dtw::typeIIIc, # jumps
-                       # typeIVc = dtw::typeIVc,  # jumps
-                       typeId = dtw::typeId,
-                       typeIds = dtw::typeIds,
-                       # typeIId = dtw::typeIId, # jumps
-                       mori2006 = dtw::mori2006),
-                     n_mse = 10
+                       # typeIc = dtw::typeIc,
+                       # typeIcs = dtw::typeIcs,
+                       # # typeIIc = dtw::typeIIc,  # jumps
+                       # # typeIIIc = dtw::typeIIIc, # jumps
+                       # # typeIVc = dtw::typeIVc,  # jumps
+                       # typeId = dtw::typeId,
+                       # typeIds = dtw::typeIds,
+                       # # typeIId = dtw::typeIId, # jumps
+                       mori2006 = dtw::mori2006
+                       ),
+                     n_mse = 20
                      ){
   # grid search
   grid_search = NULL
@@ -242,46 +243,55 @@ run_simul = function(data,
         dtw1_time = search$dtw1_time
         
         data = preprocessing(data, filter_width = width)
+        units = data[c("id", "unit")] %>% distinct
         
-        res = SimDesign::quiet(compare_methods(data = data,
-                                               start_time = start_time,
-                                               end_time = end_time,
-                                               treat_time = t_treat,
-                                               dtw1_time = dtw1_time,
-                                               dependent = "A",
-                                               dependent_id = 1,
-                                               normalize_method = "t",
-                                               k = k,
-                                               synth_fun = "simulation",
-                                               filter_width = width,
-                                               plot_figures = FALSE,
-                                               step.pattern = step.pattern))
-        
-        synth_original = res$synth_origin$synthetic
-        synth_new = res$synth_new$synthetic
-        value_raw = res$synth_origin$value
-        
-        mse_original = mean((synth_original - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
-        mse_new = mean((synth_new - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
-        
-        mse_ratio = mse_new/mse_original
-        
-        
-        mse = data.frame(width = width,
-                   k = k,
-                   step_pattern = search$step_pattern,
-                   dtw1_time = dtw1_time,
-                   mse_original = mse_original,
-                   mse_new = mse_new,
-                   mse_ratio = mse_ratio)
-        
-        list(mse = mse,
-             synth_original = synth_original,
-             synth_new = synth_new,
-             value_raw = value_raw)
+        ouput = NULL
+        # for (i in 1:nrow(units)) {
+        for (i in 1:1) {
+          dependent = units$unit[i]
+          dependent_id = units$id[i]
+          
+          res = SimDesign::quiet(compare_methods(data = data,
+                                                 start_time = start_time,
+                                                 end_time = end_time,
+                                                 treat_time = t_treat,
+                                                 dtw1_time = dtw1_time,
+                                                 dependent = dependent,
+                                                 dependent_id = dependent_id,
+                                                 normalize_method = "t",
+                                                 k = k,
+                                                 synth_fun = "simulation",
+                                                 filter_width = width,
+                                                 plot_figures = FALSE,
+                                                 step.pattern = step.pattern))
+          
+          synth_original = res$synth_origin$synthetic
+          synth_new = res$synth_new$synthetic
+          value_raw = res$synth_origin$value
+          
+          mse_original = mean((synth_original - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+          mse_new = mean((synth_new - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+          
+          mse_ratio = mse_new/mse_original
+          
+          
+          mse = data.frame(width = width,
+                           k = k,
+                           step_pattern = search$step_pattern,
+                           dtw1_time = dtw1_time,
+                           dependent = dependent,
+                           mse_original = mse_original,
+                           mse_new = mse_new,
+                           mse_ratio = mse_ratio)
+          
+          ouput[[i]] = list(mse = mse,
+                             synth_original = synth_original,
+                             synth_new = synth_new,
+                             value_raw = value_raw)
+        }
+        ouput
       }
     )
-  
   return(result)
 }
 
@@ -344,55 +354,56 @@ for (i in 1:length(data_list)) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0722_v1.Rds")
+saveRDS(result, "./data/res_simul_0728_v1.Rds")
 
-min_ratio = result %>% 
-  map(
+optimized = result %>% 
+  future_map(
     ~{
-      res = lapply(., "[[", "mse") %>% do.call("rbind", .)
-      min(res$mse_ratio, na.rm = T)
+      res_data = .
+      ratio = res_data %>% 
+        map(
+          ~{
+            item = .
+            mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
+            ratio = sum(mse$mse_ratio[2:5] < 1)/4
+          }
+        ) %>% do.call("c", .)
+      max_ratio = which(ratio == max(ratio, na.rm = T))[1]
+      res_data[[max_ratio]]
     }
-  ) %>% 
-  do.call("c", .)
+  )
 
-log_min_ratio = log(min_ratio)
 
-t.test(log_min_ratio)
-
-boxplot(log_min_ratio, outline = F, 
-        # xlab = "Simulation Data",
-        # ylab = latex2exp::TeX("$log(MSE_{w/ TFDTW}/MSE_{w/o TFDTW})$")
-        ylab = "Log Ratio"
-        )
-abline(h = 0, lty = 5)
-text(1,-0.1,"t test: P = 2.2e-13")
+# min_ratio = result %>% 
+#   map(
+#     ~{
+#       res = lapply(., "[[", "mse") %>% do.call("rbind", .)
+#       min(res$mse_ratio, na.rm = T)
+#     }
+#   ) %>% 
+#   do.call("c", .)
+# 
+# log_min_ratio = log(min_ratio)
+# 
+# t.test(log_min_ratio)
+# 
+# boxplot(log_min_ratio, outline = F, 
+#         # xlab = "Simulation Data",
+#         # ylab = latex2exp::TeX("$log(MSE_{w/ TFDTW}/MSE_{w/o TFDTW})$")
+#         ylab = "Log Ratio"
+#         )
+# abline(h = 0, lty = 5)
+# text(1,-0.1,"t test: P = 2.2e-13")
 
 # placebo test figure
 df = future_map2(
-  result,
-  as.list(1:length(result)),
+  optimized,
+  as.list(1:length(optimized)),
   ~{
-    item = .x
+    item = .x[[1]]
     id = .y
-    mse = item %>%
-      map(
-        ~{
-          synth_original = .[["synth_original"]]
-          synth_new = .[["synth_new"]]
-          value_raw = .[["value_raw"]]
-          mse = .[["mse"]]
-          mse$mse_original = mean((synth_original - value_raw)[1:79]^2, rm.na = T)
-          mse$mse_new = mean((synth_new - value_raw)[1:79]^2, rm.na = T)
-          mse$mse_ratio = mse$mse_new/mse$mse_original
-          # mse$mse_ratio = mean((synth_new - value_raw + cumsum(c(rep(0, 100*4/5),
-          mse
-        }
-      ) %>%
-      do.call("rbind", .)
-    # mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
-    n = which(mse$mse_ratio == min(mse$mse_ratio, na.rm = T))[1]
-    gap_origin = item[[n]][["synth_original"]] - item[[n]][["value_raw"]]
-    gap_new = item[[n]][["synth_new"]] - item[[n]][["value_raw"]]
+    gap_origin =  item[["value_raw"]] - item[["synth_original"]]
+    gap_new = item[["value_raw"]] - item[["synth_new"]]
     data.frame(time = 1:length(gap_new),
                gap_origin = gap_origin,
                gap_new = gap_new,
@@ -400,6 +411,23 @@ df = future_map2(
   }
 ) %>% 
   do.call("rbind", .)
+
+
+a = NULL
+alag = 0
+shock = 5
+length = 100
+beta = 0.9
+trend = c(rep(0, length*4/5),
+          seq(0, shock, length.out = length/20),
+          seq(shock, 0, length.out = length/20),
+          rep(0, length/5-length/10))
+for (j in 1:100) {
+  at = trend[j] + beta*alag 
+  a = c(a, at)
+  alag = at
+}
+
 
 percent = df %>%
   group_by(time) %>% 
@@ -409,10 +437,7 @@ percent = df %>%
             ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
             ci_new_mean = mean(gap_new, na.rm = T),
             ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
-  mutate(artifical_effect = cumsum(c(rep(0, 100*4/5),
-                              seq(0, 5, length.out = 100/20),
-                              seq(5, 0, length.out = 100/20),
-                              rep(0, 100/5-100/10))),
+  mutate(artifical_effect = a,
          id = 0)
 
 
@@ -420,14 +445,14 @@ percent = df %>%
 df %>% 
   # filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
   ggplot(aes(x = time, group = id)) +
-  geom_line(aes(y = -gap_origin), col = "#4d648d", alpha=0.1) +
-  geom_line(aes(y = -gap_new), col = "#feb2a8", alpha=0.1) +
-  geom_line(aes(x = time, y = -ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
-  geom_line(aes(x = time, y = -ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
-  geom_line(aes(x = time, y = -ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
-  geom_line(aes(x = time, y = -ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
-  geom_line(aes(x = time, y = -ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
-  geom_line(aes(x = time, y = -ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
+  geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
+  geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
+  geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
+  geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
+  geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
   geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
   geom_vline(xintercept = 80, linetype="dashed") +
   geom_hline(yintercept = 0, linetype="dashed") +
