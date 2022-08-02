@@ -10,7 +10,7 @@ options(stringsAsFactors = FALSE)
 
 # source("./R/TwoStepDTW_OpenBegin.R")
 # source("./R/TwoStepDTW_Fixed2.R")
-source("./R/TwoStepDTW_Fixed3.R")
+source("./R/TwoStepDTW_Fixed4.R")
 # source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
 # source("./R/comp_methods_OpenBegin.R")
@@ -384,7 +384,7 @@ run_simul = function(data,
         step.pattern = step_pattern_range[[search$step_pattern]]
         dtw1_time = search$dtw1_time
         
-        data = preprocessing(data, filter_width = width)
+        # data = preprocessing(data, filter_width = width)
         
         res = SimDesign::quiet(compare_methods(data = data,
                                                start_time = start_time,
@@ -443,15 +443,15 @@ rnd_shift = sobol_seq[(n_simulation + 1):(2*n_simulation),]
 rnd_trend = sobol_seq[(2*n_simulation + 1):(3*n_simulation),]
 
 
-for (i in 1:n_simulation) {
-  data_list[[i]] = simulate_data_v3(n = 5,
-                                    length = 100,
-                                    rnd_nCycles = rnd_nCycles,
-                                    rnd_shift = rnd_shift,
-                                    rnd_lag = rnd_trend,
-                                    t_treat = 80,
-                                    shock = 5)
-}
+# for (i in 1:n_simulation) {
+#   data_list[[i]] = simulate_data_v3(n = 5,
+#                                     length = 100,
+#                                     rnd_nCycles = rnd_nCycles,
+#                                     rnd_shift = rnd_shift,
+#                                     rnd_lag = rnd_trend,
+#                                     t_treat = 80,
+#                                     shock = 5)
+# }
 
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data_sin_v2(n = 5,
@@ -460,20 +460,20 @@ for (i in 1:n_simulation) {
                                     rnd_shift = rnd_shift[i,],
                                     rnd_trend = rnd_trend[i,],                         
                                     t_treat = 60,
-                                    shock = 0.5)
+                                    shock = 1)
 }
 
 
 
 
-saveRDS(data_list, "./data/simul_data_list_0729.Rds")
+saveRDS(data_list, "./data/simul_data_list_0801.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0727.Rds")
+data_list = readRDS("./data/simul_data_list_0801.Rds")
 result = NULL
 
-for (i in 1:10) {
+for (i in 1:1000) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
@@ -486,7 +486,7 @@ for (i in 1:10) {
   cat("Done.\n")
 }
 
-saveRDS(result, "./data/res_simul_0729_v1.Rds")
+saveRDS(result, "./data/res_simul_0801_v1.Rds")
 
 
 

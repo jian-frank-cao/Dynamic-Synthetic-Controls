@@ -2,7 +2,7 @@ data = data_list[[176]]
 
 data_list[[176]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
-  geom_vline(xintercept = 80, linetype="dashed")
+  geom_vline(xintercept = 60, linetype="dashed")
 
 start_time = 1
 end_time = 100
@@ -10,7 +10,7 @@ treat_time = 60
 dtw1_time = 60
 width = 9
 k = 15
-step.pattern = dtw::symmetricP1
+step.pattern = dtw::symmetricP2
 t_treat = (treat_time - start_time) + 1
 n = (end_time - start_time) + 1
 n_dtw1 = (dtw1_time - start_time) + 1
@@ -21,7 +21,7 @@ result2 = data_list %>%
   future_map(
     ~{
       data = .
-      data = preprocessing(data, filter_width = width)
+      # data = preprocessing(data, filter_width = width)
       res = SimDesign::quiet(compare_methods(data = data,
                                              start_time = start_time,
                                              end_time = end_time,
@@ -472,8 +472,8 @@ percent = df %>%
             ci_new_mean = mean(gap_new, na.rm = T),
             ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
   mutate(artifical_effect = cumsum(c(rep(0, 100*3/5),
-                                     seq(0, 0.5, length.out = 100/20),
-                                     seq(0.5, 0, length.out = 100/20),
+                                     seq(0, 1, length.out = 100/20),
+                                     seq(1, 0, length.out = 100/20),
                                      rep(0, 100*2/5-100/10))),
          id = 0)
 
@@ -497,3 +497,94 @@ df %>%
   xlab("Time") +
   ylab("Synthetic Control - True Value") +
   theme_bw()
+
+
+simulate_data = function(n = 3,
+                         length = 100,
+                         rnd_nCycles = seq(0.1, 0.9, length.out = n),
+                         rnd_shift = seq(0.9, 0.1, length.out = n),
+                         rnd_trend = seq(0.2, 0.8, length.out = n),
+                         nCycles_min = 6,
+                         nCycles_max = 12,
+                         trend_min = 0.01,
+                         trend_max = 0.1,
+                         beta = 1,
+                         t_treat = 60,
+                         length_divide = 50,
+                         shock = 0.5){
+  
+  # prepare random numbers
+  nCycles = rnd_nCycles * (nCycles_max - nCycles_min) + nCycles_min
+  shifts = rnd_shift * 2 * pi
+  trends = rnd_trend * (trend_max - trend_min) + trend_min
+  
+  # simulate
+  data = NULL
+  rnd_ind = round(runif(1, length - t_treat, t_treat - 1), 0)
+  for (i in 1:n) {
+    x = seq(0, nCycles[i] * pi, length.out = length)
+    x = cumsum(sin(x + shifts[i])/2 + 1)/(length/length_divide)
+    y = sin(x)
+    if (i == 1) {
+      trend = rep(trends[i], length) + c(rep(0, length*3/5),
+                                         seq(0, shock, length.out = length/20),
+                                         seq(shock, 0, length.out = length/20),
+                                         rep(0, length*2/5-length/10))
+    }else{
+      trend = rep(trends[i], length)
+    }
+    
+    y1 = NULL
+    y1lag = 1
+    for (j in 1:t_treat) {
+      y1t = trend[j] + beta*y1lag + y[j]
+      y1 <- c(y1, y1t)
+      y1lag = y1t
+    }
+    
+    y2 = NULL
+    y2lag = y1lag
+    for (j in (t_treat+1):length) {
+      y2t = trend[j] + beta*y2lag + y[j - rnd_ind]
+      y2 <- c(y2, y2t)
+      y2lag = y2t
+    }
+    
+    y = c(y1, y2)
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y,
+                            value_raw = y))
+  }
+  return(data)
+}
+
+
+n_simulation = 1000
+n = 5
+length = 100
+t_treat = 60
+shock = 1
+
+# generate sobol sequence
+sobol_seq = qrng::sobol(n_simulation*3, d = n, randomize = "Owen",
+                        seed = 20220401, skip = 100)
+rnd_nCycles = sobol_seq[1:n_simulation,]
+rnd_shift = sobol_seq[(n_simulation + 1):(2*n_simulation),]
+rnd_trend = sobol_seq[(2*n_simulation + 1):(3*n_simulation),]
+
+# generate data
+data_list = NULL
+for (i in 1:n_simulation) {
+  data_list[[i]] = simulate_data(n = n,
+                                 length = length,
+                                 rnd_nCycles = rnd_nCycles[i,],
+                                 rnd_shift = rnd_shift[i,],
+                                 rnd_trend = rnd_trend[i,],                         
+                                 t_treat = t_treat,
+                                 shock = shock)
+}
+
