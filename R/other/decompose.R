@@ -1,0 +1,41 @@
+library(checkpoint)
+checkpoint("2022-04-01")
+
+library(astsa, quietly=TRUE, warn.conflicts=FALSE)
+library(ggplot2)
+library(knitr)
+library(printr)
+library(plyr)
+library(dplyr)
+library(lubridate)
+library(gridExtra)
+library(reshape2)
+library(TTR)
+
+
+kings <- scan('http://robjhyndman.com/tsdldata/misc/kings.dat', skip=3)
+kings <- ts(kings)
+plot.ts(kings)
+kingsSMA3 <- SMA(kings, n=3)
+plot.ts(kingsSMA3)
+kingsSMA3 <- SMA(kings, n=8)
+plot.ts(kingsSMA3)
+
+births <- scan("http://robjhyndman.com/tsdldata/data/nybirths.dat")
+births <- ts(births, frequency = 12, start = c(1946, 1))
+plot.ts(births)
+birthsComp <- decompose(births)
+plot(birthsComp)
+birthsSeasonAdj <- births - birthsComp$seasonal
+plot.ts(birthsSeasonAdj)
+
+gift <- scan("http://robjhyndman.com/tsdldata/data/fancy.dat")
+gift<- ts(gift, frequency=12, start=c(1987,1))
+plot.ts(gift)
+GiftComp <- decompose(gift, type = "multiplicative")
+plot(GiftComp)
+logGift <- log(gift)
+plot.ts(logGift)
+logGiftComp <- decompose(logGift)
+plot(logGiftComp)
+
