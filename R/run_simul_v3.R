@@ -146,7 +146,7 @@ simulate_data_v2 = function(n = 3,
   n_lags = round(rnd_lag * (n_lag_max - n_lag_min) + n_lag_min, 0)
   
   # common exogenous shocks
-  x = arima.sim(list(order = c(1,0,0), ar = ar_x), n = length + extra_x)
+  x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = length + extra_x)
   # x = cumsum(sin(seq(0, 5*pi, length.out = length + n_lag))/2+0.5)
   
   # simulate
