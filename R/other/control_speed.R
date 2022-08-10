@@ -6,7 +6,7 @@ x = arima.sim(list(order = c(1,1,0), ar = c(0.8)),
 plot(x)
 
 # smooth
-xSMA10 = ts(SMA(x, n=10)[-(1:9)])
+xSMA10 = ts(TTR::SMA(x, n=10)[-(1:9)])
 plot(xSMA10)
 
 # diff

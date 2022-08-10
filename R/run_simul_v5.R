@@ -371,14 +371,14 @@ simulate_data_v4 = function(n = 5,
                             t_treat = 0.8*n,
                             shock = 5){
   # common exogenous shocks
-  x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = length + n_SMA - 1)
+  x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = (length + n_SMA))
+  xSMA10 = ts(TTR::SMA(x, n = n_SMA)[-(1:(n_SMA - 1))])
+  xDiff = diff(xSMA10, difference = 1)
 
   # simulate
   data = NULL
   for (i in 1:n) {
     # speed profile
-    xSMA10 = ts(SMA(x, n = n_SMA)[-(1:(n_SMA - 1))])
-    xDiff = diff(xSMA10, difference = 1)
     phi = Diff2PhiUnif(xDiff, speed_upper = speed_upper,
                        speed_lower = speed_lower, rnd = rnds[i])
     
@@ -391,7 +391,7 @@ simulate_data_v4 = function(n = 5,
       treatment = 0
     }
 
-    y = ApplyPhi(x[-(1:9)], phi)
+    y = ApplyPhi(x[-(1:n_SMA)], phi)
     y = y + treatment
     
     data = rbind(data,
@@ -515,12 +515,9 @@ n = 5
 data_list = NULL
 
 # generate sobol sequence
-sobol_seq = qrng::sobol(n_simulation*3, d = n, randomize = "Owen",
+sobol_seq = qrng::sobol(n_simulation*1, d = n - 1, randomize = "Owen",
                         seed = 20220401, skip = 100)
-rnd_nCycles = sobol_seq[1:n_simulation,]
-rnd_shift = sobol_seq[(n_simulation + 1):(2*n_simulation),]
-rnd_trend = sobol_seq[(2*n_simulation + 1):(3*n_simulation),]
-
+rnds = cbind(rep(0.5, n_simulation), sobol_seq*0.7)
 
 # for (i in 1:n_simulation) {
 #   data_list[[i]] = simulate_data_v3(n = 5,
@@ -535,7 +532,7 @@ rnd_trend = sobol_seq[(2*n_simulation + 1):(3*n_simulation),]
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data_v4(n = n,
                                     length = length,
-                                    rnds = rnd_trend[i,],                         
+                                    rnds = rnds[i,],                         
                                     t_treat = 0.8*length,
                                     shock = 5)
 }
