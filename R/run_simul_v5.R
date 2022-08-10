@@ -10,8 +10,9 @@ options(stringsAsFactors = FALSE)
 
 # source("./R/TwoStepDTW_OpenBegin.R")
 # source("./R/TwoStepDTW_Fixed2.R")
-source("./R/TwoStepDTW_Fixed4.R")
+# source("./R/TwoStepDTW_Fixed4.R")
 # source("./R/TwoStepDTW_OpenEnd.R")
+source("./R/TwoStepDTW_OpenEnd.R")
 source("./R/synthetic_control.R")
 # source("./R/comp_methods_OpenBegin.R")
 source("./R/comp_methods2.R")
@@ -415,7 +416,7 @@ run_simul = function(data,
                      # width_range = (1:8)*2+3,
                      # k_range = 4:12,
                      width_range = 9,
-                     k_range = 15,
+                     k_range = 50,
                      dtw1_range = 90,
                      step_pattern_range = list(
                        # symmetricP0 = dtw::symmetricP0, # too bumpy
@@ -547,23 +548,23 @@ for (i in 1:n_simulation) {
 
 
 
-saveRDS(data_list, "./data/simul_data_list_0801.Rds")
+saveRDS(data_list, "./data/simul_data_list_0810.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0801.Rds")
+data_list = readRDS("./data/simul_data_list_0810.Rds")
 result = NULL
 
 for (i in 1:1000) {
   cat(paste0("Simulation ", i, "..."))
   result[[i]] = run_simul(data_list[[i]],
                           start_time = 1,
-                          end_time = 100,
-                          t_treat = 60,
-                          # width_range = (1:3)*2+3,
-                          # k_range = 4:6,
-                          # dtw1_range = 135:140,
-                          n_mse = 30)
+                          end_time = 1000,
+                          t_treat = 800,
+                          width_range = 10,
+                          k_range = 50,
+                          dtw1_range = 900,
+                          n_mse = 300)
   cat("Done.\n")
 }
 
