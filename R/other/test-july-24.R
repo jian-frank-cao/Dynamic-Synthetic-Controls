@@ -1,8 +1,8 @@
 data = data_list[[176]]
 
-data_list[[176]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[59]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
-  geom_vline(xintercept = 60, linetype="dashed")
+  geom_vline(xintercept = 800, linetype="dashed")
 
 start_time = 1
 end_time = 100

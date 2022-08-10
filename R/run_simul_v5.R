@@ -354,7 +354,7 @@ ApplyPhi = function(x, phi){
   for (i in 1:length(phi)) {
     ind = floor(phi[i])
     weight = phi[i] - ind
-    value = weight*(x[ind + 1] - x[ind]) + x[ind]
+    value = weight*(x[ind + 2] - x[ind + 1]) + x[ind + 1]
     output = c(output, value)
   }
   return(output)
@@ -366,9 +366,10 @@ simulate_data_v4 = function(n = 5,
                             rnds = seq(0.1, 0.9, length.out = n),
                             n_SMA = 10,
                             ar_x = 0.9,
+                            reweight = TRUE,
                             speed_upper = 1,
                             speed_lower = 0.5,
-                            t_treat = 0.8*n,
+                            t_treat = 0.8*length,
                             shock = 5){
   # common exogenous shocks
   x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = (length + n_SMA))
@@ -379,8 +380,11 @@ simulate_data_v4 = function(n = 5,
   data = NULL
   for (i in 1:n) {
     # speed profile
-    phi = Diff2PhiUnif(xDiff, speed_upper = speed_upper,
-                       speed_lower = speed_lower, rnd = rnds[i])
+    phi = Diff2PhiUnif(xDiff[1:length], 
+                       reweight = reweight,
+                       speed_upper = speed_upper,
+                       speed_lower = speed_lower,
+                       rnd = rnds[i])
     
     # treatment
     if (i == 1) {
@@ -391,7 +395,7 @@ simulate_data_v4 = function(n = 5,
       treatment = 0
     }
 
-    y = ApplyPhi(x[-(1:n_SMA)], phi)
+    y = ApplyPhi(x[-(1:(n_SMA - 1))], phi)
     y = y + treatment
     
     data = rbind(data,
@@ -517,7 +521,7 @@ data_list = NULL
 # generate sobol sequence
 sobol_seq = qrng::sobol(n_simulation*1, d = n - 1, randomize = "Owen",
                         seed = 20220401, skip = 100)
-rnds = cbind(rep(0.5, n_simulation), sobol_seq*0.7)
+rnds = cbind(rep(0.5, n_simulation), sobol_seq*0.6 + 0.1)
 
 # for (i in 1:n_simulation) {
 #   data_list[[i]] = simulate_data_v3(n = 5,
@@ -532,9 +536,12 @@ rnds = cbind(rep(0.5, n_simulation), sobol_seq*0.7)
 for (i in 1:n_simulation) {
   data_list[[i]] = simulate_data_v4(n = n,
                                     length = length,
-                                    rnds = rnds[i,],                         
+                                    rnds = rnds[i,],  
+                                    reweight = TRUE,
+                                    speed_upper = 1,
+                                    speed_lower = 0.5,
                                     t_treat = 0.8*length,
-                                    shock = 5)
+                                    shock = 50)
 }
 
 
