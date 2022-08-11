@@ -333,7 +333,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   res_2ndDTW = second_dtw(x_post, x_pre, 
                           W_a, k, normalize_method,
                           n_q, n_r, default_margin,
-                          step.pattern = step.pattern, ...)
+                          step.pattern = dtw::asymmetricP2, ...)
   avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
   
   return(list(y = y,
