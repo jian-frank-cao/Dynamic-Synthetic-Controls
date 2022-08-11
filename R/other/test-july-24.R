@@ -1,27 +1,27 @@
-data = data_list[[176]]
+data = data_list[[15]]
 
-data_list[[59]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[15]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 800, linetype="dashed")
 
 start_time = 1
-end_time = 100
-treat_time = 60
-dtw1_time = 60
-width = 9
-k = 15
+end_time = 1000
+treat_time = 800
+dtw1_time = 900
+width = 11
+k = 50
 step.pattern = dtw::symmetricP2
 t_treat = (treat_time - start_time) + 1
 n = (end_time - start_time) + 1
 n_dtw1 = (dtw1_time - start_time) + 1
-n_mse = 30
+n_mse = 300
 ... = NULL
 
 result2 = data_list %>% 
   future_map(
     ~{
       data = .
-      # data = preprocessing(data, filter_width = width)
+      data = preprocessing(data, filter_width = width)
       res = SimDesign::quiet(compare_methods(data = data,
                                              start_time = start_time,
                                              end_time = end_time,

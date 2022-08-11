@@ -700,7 +700,7 @@ do_synth_simul_bak = function(df, dep_var, dependent_id){
 }
 
 do_synth_simul = function(df, dep_var, dependent_id,
-                          n = 100, t_treat = 60, n_mean = 59){
+                          n = 1000, t_treat = 800, n_mean = 799){
   # find v
   dataprep.out <-
     Synth::dataprep(

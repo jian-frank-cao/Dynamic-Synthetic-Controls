@@ -12,10 +12,10 @@ options(stringsAsFactors = FALSE)
 # source("./R/TwoStepDTW_Fixed2.R")
 # source("./R/TwoStepDTW_Fixed4.R")
 # source("./R/TwoStepDTW_OpenEnd.R")
-source("./R/TwoStepDTW_OpenEnd.R")
+source("./R/TwoStepDTW_OpenEnd2.R")
 source("./R/synthetic_control.R")
 # source("./R/comp_methods_OpenBegin.R")
-source("./R/comp_methods2.R")
+source("./R/comp_methods.R")
 set.seed(20220407)
 
 
@@ -416,7 +416,7 @@ run_simul = function(data,
                      # width_range = (1:8)*2+3,
                      # k_range = 4:12,
                      width_range = 9,
-                     k_range = 50,
+                     k_range = 15,
                      dtw1_range = 90,
                      step_pattern_range = list(
                        # symmetricP0 = dtw::symmetricP0, # too bumpy
