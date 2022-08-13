@@ -14,8 +14,8 @@ do_synth = function(df, dep_var, dependent_id, predictors,
       special.predictors = special.predictors,
       treatment.identifier = dependent_id,
       controls.identifier = setdiff(unique(df$id), dependent_id),
-      time.predictors.prior = 1:(t_treat - 1),
-      time.optimize.ssr = 1:(t_treat - 1), 
+      time.predictors.prior = time.predictors.prior,
+      time.optimize.ssr = time.optimize.ssr, 
       unit.names.variable = 2,
       time.plot = sort(unique(df$time))
     )
