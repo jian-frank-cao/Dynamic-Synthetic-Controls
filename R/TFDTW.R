@@ -117,7 +117,7 @@ second_dtw = function(x_post, x_pre,
                       W_a, k, normalize_method = "t",
                       n_q = 1, n_r = 1,
                       default_margin = 3,
-                      step.pattern = dtw::symmetricP2, ...){
+                      step.pattern = dtw::asymmetricP2, ...){
   n_pre = length(x_pre)
   n_post = length(x_post)
   
@@ -204,7 +204,6 @@ second_dtw = function(x_post, x_pre,
     weight = rbind(weight, weight_i)
     
     # next
-    print(i)
     i = i + n_q
   }
   

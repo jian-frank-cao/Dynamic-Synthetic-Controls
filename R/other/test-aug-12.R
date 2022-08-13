@@ -1,4 +1,5 @@
-data = data_list[[211]]
+data = data_list[[981]]
+data %>% ggplot(aes(x = time, y = value, color = unit)) + geom_line()
 start_time = 1
 end_time = 1000
 treat_time = 800
@@ -6,14 +7,30 @@ dtw1_time = 900
 dependent = "A"
 dependent_id = 1
 normalize_method = "t"
-k = k
-synth_fun = "simulation"
-filter_width = width
+k = 15
+filter_width = 10
 plot_figures = T
-step.pattern = dtw::typeIIc
+step.pattern1 = dtw::symmetricP2
+step.pattern2 = dtw::asymmetricP2
 ... = NULL
 dtw_method = "dtw"
-
+t_treat = (treat_time - start_time) + 1
+n = (end_time - start_time) + 1
+n_dtw1 = (dtw1_time - start_time) + 1
+n_mse = 10
+n_q = 1
+n_r = 1
+default_margin = 3
+margin = 10
+legend_position = c(0.3, 0.3)
+predictors.origin = NULL
+special.predictors.origin = list(list("value_raw", 700:799, c("mean")))
+time.predictors.prior.origin = 1:799
+time.optimize.ssr.origin = 1:799
+predictors.new = NULL
+special.predictors.new = list(list("value_warped", 700:799, c("mean")))
+time.predictors.prior.new = 1:799
+time.optimize.ssr.new = 1:799
 
 plot(ts(y_raw))
 lines(x_raw, col = "blue")
@@ -26,11 +43,12 @@ dtw::dtwPlotTwoWay(res_1stDTW$alignment, xts = y_raw[1:800], yts = x_raw[1:900] 
 dtw::dtwPlotTwoWay(alignment, xts = y, yts = x + 10)
 
 i = 1
+x_pre_normalized = normalize(x_pre, normalize_method = normalize_method)
+
 Q = x_post[i:(i + k - 1)]
-Q = normalize(Q, normalize_method)
+Q = normalize(Q, normalize_method, x_pre)
 
 # partial match Q -> x_pre
-x_pre_normalized = normalize(x_pre, normalize_method = normalize_method)
 alignment_qx = dtw::dtw(Q, x_pre_normalized,
                         open.begin = TRUE,
                         open.end = TRUE,

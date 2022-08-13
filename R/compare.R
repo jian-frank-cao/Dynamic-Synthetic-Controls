@@ -7,23 +7,32 @@ compare_methods = function(data,
                            dependent,
                            dependent_id,
                            filter_width = 5,
-                           t_treat = (treat_time - start_time) + 1,
-                           n = (end_time - start_time) + 1,
-                           n_dtw1 = (dtw1_time - start_time) + 1,
-                           synth_fun = "tobacco-89",
-                           n_mse = 10,
-                           k = 6,
+                           n_mse = 100,
+                           k = 15,
                            n_q = 1,
                            n_r = 1,
                            plot_figures = FALSE,
                            normalize_method = "t",
                            dtw_method = "dtw",
                            margin = 10,
-                           step.pattern = dtw::symmetricP2,
+                           step.pattern1 = dtw::symmetricP2,
+                           step.pattern2 = dtw::asymmetricP2,
+                           predictors.origin,
+                           special.predictors.origin,
+                           time.predictors.prior.origin,
+                           time.optimize.ssr.origin,
+                           predictors.new,
+                           special.predictors.new,
+                           time.predictors.prior.new,
+                           time.optimize.ssr.new,
                            legend_position = c(0.3, 0.3), ...){
   
   
   # prepare data
+  t_treat = (treat_time - start_time) + 1
+  n = (end_time - start_time) + 1
+  n_dtw1 = (dtw1_time - start_time) + 1
+  
   y_raw = data %>% 
     filter(unit == dependent &
              time <= end_time) %>%
@@ -135,67 +144,16 @@ compare_methods = function(data,
   df = data.frame(df)
   
   # synthetic control
-  if (synth_fun == "tobacco-89") {
-    synth_origin = do_synth_tobacco_89(df, "value_raw", 
-                                       dependent_id, start_time, n)
-    synth_new = do_synth_tobacco_89(df, "value_warped",
-                                    dependent_id, start_time, n)
-  }else if (synth_fun == "tobacco-87") {
-    synth_origin = do_synth_tobacco_87(df, "value_raw", 
-                                       dependent_id, start_time, n)
-    synth_new = do_synth_tobacco_87(df, "value_warped",
-                                    dependent_id, start_time, n)
-  }else if (synth_fun == "tobacco-86") {
-    synth_origin = do_synth_tobacco_86(df, "value_raw", 
-                                       dependent_id, start_time, n)
-    synth_new = do_synth_tobacco_86(df, "value_warped",
-                                    dependent_id, start_time, n)
-  }else if (synth_fun == "tobacco-85") {
-    synth_origin = do_synth_tobacco_85(df, "value_raw", 
-                                       dependent_id, start_time, n)
-    synth_new = do_synth_tobacco_85(df, "value_warped",
-                                    dependent_id, start_time, n)
-  }else if (synth_fun == "germany-90") {
-    synth_origin = do_synth_90(df, "value_raw", 
-                               dependent_id, start_time, n)
-    synth_new = do_synth_90(df, "value_warped",
-                            dependent_id, start_time, n)
-  }else if (synth_fun == "basque-70") {
-    synth_origin = do_synth_basque_70(df, "value_raw", 
-                                      dependent_id, start_time, n)
-    synth_new = do_synth_basque_70(df, "value_warped",
-                                   dependent_id, start_time, n)
-  }else if (synth_fun == "basque-67") {
-    synth_origin = do_synth_basque_67(df, "value_raw", 
-                                      dependent_id, start_time, n)
-    synth_new = do_synth_basque_67(df, "value_warped",
-                                   dependent_id, start_time, n)
-  }else if (synth_fun == "basque-65") {
-    synth_origin = do_synth_basque_65(df, "value_raw", 
-                                      dependent_id, start_time, n)
-    synth_new = do_synth_basque_65(df, "value_warped",
-                                   dependent_id, start_time, n)
-  }else if (synth_fun == "simulation") {
-    synth_origin = do_synth_simul(df, "value_raw", 
-                                  dependent_id)
-    synth_new = do_synth_simul(df, "value_warped",
-                               dependent_id)
-  }else if (synth_fun == "mexico-86") {
-    synth_origin = do_synth_mexico_86(df, "value_raw", 
-                                      dependent_id)
-    synth_new = do_synth_mexico_86(df, "value_warped",
-                                   dependent_id)
-  }else if (synth_fun == "botswana-79") {
-    synth_origin = do_synth_botswana_79(df, "value_raw", 
-                                        dependent_id)
-    synth_new = do_synth_botswana_79(df, "value_warped",
-                                     dependent_id)
-  }else if (synth_fun == "southafrica-91") {
-    synth_origin = do_synth_southafrica_91(df, "value_raw", 
-                                           dependent_id)
-    synth_new = do_synth_southafrica_91(df, "value_warped",
-                                        dependent_id)
-  }  
+  synth_origin = do_synth(df, "value_raw", dependent_id,
+                          predictors = predictors.origin,
+                          special.predictors = special.predictors.origin,
+                          time.predictors.prior = time.predictors.prior.origin,
+                          time.optimize.ssr = time.optimize.ssr.origin)
+  synth_new = do_synth(df, "value_warped", dependent_id,
+                       predictors = predictors.new,
+                       special.predictors = special.predictors.new,
+                       time.predictors.prior = time.predictors.prior.new,
+                       time.optimize.ssr = time.optimize.ssr.new)
   
   # plot synthetic control
   if (plot_figures) {
