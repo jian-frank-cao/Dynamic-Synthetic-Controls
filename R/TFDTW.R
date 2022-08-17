@@ -2,7 +2,6 @@
 # 1st dtw
 first_dtw = function(x, y, k, n_dtw1, t_treat,
                      normalize_method = "t",
-                     dtw_method = "dtw", 
                      step.pattern = dtw::symmetricP2,
                      plot_figures = FALSE, ...){
   # backup
@@ -218,14 +217,13 @@ second_dtw = function(x_post, x_pre,
 # Two Step DTW
 TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       normalize_method = "t",
-                      dtw_method = "dtw",
                       n_q = 1, n_r = 1, 
                       step.pattern1 = dtw::symmetricP2,
                       step.pattern2 = dtw::asymmetricP2,
                       plot_figures = FALSE, ...){
   # 1st dtw
   res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
-                         normalize_method, dtw_method,
+                         normalize_method, 
                          step.pattern1, plot_figures, ...)
   x_pre = res_1stDTW$x_pre
   x_post = res_1stDTW$x_post
@@ -235,7 +233,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   # 2nd dtw
   res_2ndDTW = second_dtw(x_post, x_pre, 
                           W_a, k, normalize_method,
-                          n_q, step.pattern = step.pattern2, ...)
+                          n_q, n_r, step.pattern = step.pattern2, ...)
   # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
   avg_weight = res_2ndDTW$avg_weight
   
