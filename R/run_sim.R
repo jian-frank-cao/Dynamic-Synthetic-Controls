@@ -23,7 +23,7 @@ n = 5
 # generate sobol sequence
 sobol_seq = qrng::sobol(n_simulation*1, d = n - 1, randomize = "Owen",
                         seed = 20220401, skip = 100)
-rnd_speeds = cbind(rep(0.5, n_simulation), sobol_seq*0.6 + 0.1)
+rnd_speeds = cbind(rep(0.5, n_simulation), sobol_seq*0.5 + 0.1)
 
 # simulate
 data_list = NULL

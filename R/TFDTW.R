@@ -54,72 +54,14 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
 
 
 # 2nd dtw
-# second_dtw = function(x_post, x_pre, W_a, k, normalize_method = "t",
-#                       n_q = 1, step.pattern = dtw::asymmetricP2, ...){
-#   n_pre = length(x_pre)
-#   n_post = length(x_post)
-#   x_pre_normalized = normalize(x_pre, normalize_method = normalize_method)
-#   
-#   # slide target window
-#   i = 1
-#   weight = NULL
-#   while (i <= n_post - k + 1) {
-#     Q = x_post[i:(i + k - 1)]
-#     Q = normalize(Q, normalize_method)
-#     
-#     # partial match Q -> x_pre
-#     alignment_qx = dtw::dtw(Q, x_pre_normalized,
-#                             open.begin = TRUE,
-#                             open.end = TRUE,
-#                             keep = TRUE,
-#                             step.pattern = step.pattern, ...)
-#     
-#     # obtain warping path W_pp_i: x_post -> x_pre
-#     begin_x_pre = min(alignment_qx$index2)
-#     end_x_pre = max(alignment_qx$index2)
-#     W_pp_i = Matrix::sparseMatrix(alignment_qx$index1,
-#                                   alignment_qx$index2 - begin_x_pre + 1)
-#     # plot(ts(x_pre_normalized))
-#     # lines(begin_x_pre:end_x_pre, Q, col = "red")
-#     
-#     # obtain warping path W_b_i: x_post -> y
-#     W_a_Rs = W_a[begin_x_pre:end_x_pre,]
-#     col_sums = colSums(as.matrix(W_a_Rs))
-#     ind_nonzero = which(col_sums > 0)
-#     # n_ind = length(ind_nonzero)
-#     min_ind = min(ind_nonzero)
-#     max_ind = max(ind_nonzero)
-#     # ind_left = min_ind - j_opt
-#     # ind_right = max_ind - (j_opt + kp - 1)
-#     W_a_Rs = W_a_Rs[, min_ind:max_ind]
-#     W_b_i = W_pp_i %*% W_a_Rs
-#     
-#     # convert warping path to weight
-#     weight_i = matrix(rep(NaN, n_post), nrow = 1)
-#     weight_i[1, i:(i + k - 1)] = warping2weight(W_b_i)
-#     
-#     # stack weight
-#     weight = rbind(weight, weight_i)
-#     
-#     # next
-#     i = i + n_q
-#   }
-#   
-#   # average weight
-#   avg_weight = colMeans(weight, na.rm = TRUE)
-#   
-#   return(list(weight = weight,
-#               avg_weight = avg_weight))
-# }
-
 second_dtw = function(x_post, x_pre,
-                      W_a, k, normalize_method = "t",
+                      weight_a, k, normalize_method = "t",
                       n_q = 1, n_r = 1,
                       default_margin = 3,
                       step.pattern = dtw::asymmetricP2, ...){
   n_pre = length(x_pre)
   n_post = length(x_post)
-  
+ 
   # slide target window
   i = 1
   weight = NULL
@@ -178,25 +120,12 @@ second_dtw = function(x_post, x_pre,
     W_pp_i = Matrix::sparseMatrix(alignment_qrs$index1,
                                   alignment_qrs$index2)
     
-    # obtain warping path W_b_i: x_post -> y
-    W_a_Rs = W_a[j_opt:(j_opt + ncol(W_pp_i) - 1),]
-    col_sums = colSums(as.matrix(W_a_Rs))
-    ind_nonzero = which(col_sums > 0)
-    # n_ind = length(ind_nonzero)
-    min_ind = min(ind_nonzero)
-    max_ind = max(ind_nonzero)
-    # ind_left = min_ind - j_opt
-    # ind_right = max_ind - (j_opt + kp - 1)
-    W_a_Rs = W_a_Rs[, min_ind:max_ind]
-    # W_b_i = W_pp_i %*% W_a_Rs
-    
-    # obtain weight_a weight_b
-    weight_a = warping2weight(W_a_Rs)
-    weight_b = as.numeric((W_pp_i %*% weight_a)/rowSums(as.matrix(W_pp_i)))
+    # obtain weight_b
+    weight_a_Rs = weight_a[j_opt:(j_opt + ncol(W_pp_i) - 1)]
+    weight_b = as.numeric((W_pp_i %*% weight_a_Rs)/rowSums(as.matrix(W_pp_i)))
     
     # convert warping path to weight
     weight_i = matrix(rep(NaN, n_post), nrow = 1)
-    # weight_i[1, i:(i + k - 1)] = warping2weight(W_b_i)
     weight_i[1, i:(i + k - 1)] = weight_b
     
     # stack weight
@@ -217,6 +146,7 @@ second_dtw = function(x_post, x_pre,
 # Two Step DTW
 TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       normalize_method = "t",
+                      ma = 3, ma_na = "original",
                       n_q = 1, n_r = 1, 
                       step.pattern1 = dtw::symmetricP2,
                       step.pattern2 = dtw::asymmetricP2,
@@ -230,9 +160,21 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   W_a = res_1stDTW$W_a
   cutoff = res_1stDTW$cutoff
   
+  # compute weight a
+  weight_a_o = warping2weight(W_a)
+  weight_a = as.numeric(stats::filter(weight_a_o, rep(1/ma, ma)))
+  weight_a = zoo::na.locf(weight_a, na.rm = FALSE)
+  if (ma_na == "one") {
+    weight_a[is.na(weight_a)] = 1
+  }else if(ma_na == "first-available") {
+    weight_a[is.na(weight_a)] = weight_a[!is.na(weight_a)][1]
+  }else if (ma_na == "original") {
+    weight_a[is.na(weight_a)] = weight_a_o[is.na(weight_a)]
+  }
+  
   # 2nd dtw
   res_2ndDTW = second_dtw(x_post, x_pre, 
-                          W_a, k, normalize_method,
+                          weight_a, k, normalize_method,
                           n_q, n_r, step.pattern = step.pattern2, ...)
   # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
   avg_weight = res_2ndDTW$avg_weight
@@ -240,6 +182,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   return(list(y = y,
               x = x,
               W_a = W_a,
+              weight_a = weight_a,
               weight = res_2ndDTW$weight,
               avg_weight = avg_weight,
               t_treat = t_treat,

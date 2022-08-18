@@ -31,8 +31,10 @@ normalize_method = "t"
 n_q = 1
 n_r = 1
 default_margin = 3
+ma = 3
+ma_na = "one"
 
-data = data_list[[213]]
+data = data_list[[217]]
 dependent = "A"
 dependent_id = 1
 predictors.origin = NULL
@@ -68,35 +70,47 @@ x_raw = item$value_raw
 y = y_processed
 
 ## Run -------------------------------------------------------------------------
-# res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
-#                        normalize_method, 
-#                        step.pattern1, plot_figures, ...)
-# x_pre = res_1stDTW$x_pre
-# x_post = res_1stDTW$x_post
-# W_a = res_1stDTW$W_a
-# cutoff = res_1stDTW$cutoff
-# 
-# # 2nd dtw
-# res_2ndDTW = second_dtw(x_post, x_pre, 
-#                         W_a, k, normalize_method,
-#                         n_q, n_r, step.pattern = step.pattern2, ...)
-# # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
-# avg_weight = res_2ndDTW$avg_weight
-# 
-# w_2fdtw = cumsum(avg_weight)
-# w_dtw = dtw::warp(dtw::dtw(x_post, y[t_treat:1000], step.pattern = step.pattern2), index.reference = FALSE)
-# 
-# plot(ts(w_dtw))
-# lines(w_2fdtw, 1:207)
-# 
-# x_warp1 = c(warp_ts(W_a, x_raw[1:cutoff]), x_post[w_dtw][-1])
-# x_warp2 = c(warp_ts(W_a, x_raw[1:cutoff]), warp_using_weight(x_raw[-(1:(cutoff - 1))],
-#                                                              avg_weight)[-1])
-# 
-# plot(ts(y_raw))
-# lines(x_raw, col = "blue")
-# lines(x_warp1, col = "green")
-# lines(x_warp2, col = "red")
+res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
+                       normalize_method,
+                       step.pattern1, plot_figures, ...)
+x_pre = res_1stDTW$x_pre
+x_post = res_1stDTW$x_post
+W_a = res_1stDTW$W_a
+cutoff = res_1stDTW$cutoff
+
+# compute weight a
+weight_a_o = warping2weight(W_a)
+weight_a = as.numeric(stats::filter(weight_a_o, rep(1/ma, ma)))
+weight_a = zoo::na.locf(weight_a, na.rm = FALSE)
+if (ma_na == "one") {
+  weight_a[is.na(weight_a)] = 1
+}else if(ma_na == "first-available") {
+  weight_a[is.na(weight_a)] = weight_a[!is.na(weight_a)][1]
+}else if (ma_na == "original") {
+  weight_a[is.na(weight_a)] = weight_a_o[is.na(weight_a)]
+}
+
+# 2nd dtw
+res_2ndDTW = second_dtw(x_post, x_pre, 
+                        weight_a, k, normalize_method,
+                        n_q, n_r, step.pattern = step.pattern2, ...)
+# avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
+avg_weight = res_2ndDTW$avg_weight
+
+w_2fdtw = cumsum(avg_weight)
+w_dtw = dtw::warp(dtw::dtw(x_post, y[t_treat:1000], step.pattern = step.pattern2), index.reference = FALSE)
+
+plot(ts(w_dtw))
+lines(w_2fdtw, 1:length(w_2fdtw))
+
+x_warp1 = c(warp_ts(W_a, x_raw[1:cutoff]), x_post[w_dtw][-1])
+x_warp2 = c(warp_using_weight(x_pre, weight_a)[1:800], warp_using_weight(x_raw[-(1:(cutoff - 1))],
+                                                             avg_weight)[-1])
+
+plot(ts(y_raw))
+lines(x_raw, col = "blue")
+lines(x_warp1, col = "green")
+lines(x_warp2, col = "red")
 
 ## Test ------------------------------------------------------------------------
 res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
