@@ -72,8 +72,8 @@ compare_methods = function(data,
     # x_warped = c(warp_ts(res$W_a, x_raw[1:res$cutoff]),
     #              warp_using_weight(x_raw[-(1:(res$cutoff - 1))],
     #                                res$avg_weight)[-1])
-    x_warp2 = c(warp_using_weight(x_raw[1:res$cutoff], res$weight_a)[1:t_treat],
-                warp_using_weight(x_raw[-(1:(cutoff - 1))], avg_weight)[-1])
+    x_warped = c(warp_using_weight(x_raw[1:res$cutoff], res$weight_a)[1:t_treat],
+                warp_using_weight(x_raw[-(1:(res$cutoff - 1))], res$avg_weight)[-1])
     
     
     if (plot_figures) {
