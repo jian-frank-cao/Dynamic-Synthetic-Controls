@@ -61,7 +61,7 @@ step.pattern1 = dtw::symmetricP2
 step.pattern2 = dtw::asymmetricP2
 legend_position = c(0.3, 0.8)
 
-result = data_list[1:1] %>% 
+result = data_list[100:200] %>% 
   future_map(
     ~{
       data = .
@@ -106,7 +106,7 @@ result = data_list[1:1] %>%
     }
   )
   
-saveRDS(result, "./data/res_sim_0818.Rds")
+saveRDS(result, "./data/res_sim_0819.Rds")
   
 
 ## Plot result -----------------------------------------------------------------
