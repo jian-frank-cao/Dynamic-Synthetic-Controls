@@ -9,6 +9,7 @@ compare_methods = function(data,
                            filter_width = 5,
                            n_mse = 100,
                            k = 15,
+                           dist_quantile = 1,
                            ma = 3,
                            ma_na = "original",
                            n_q = 1,
@@ -68,9 +69,12 @@ compare_methods = function(data,
                      step.pattern2 = step.pattern2, 
                      plot_figures = plot_figures, ...)
     
-    x_warped = c(warp_ts(res$W_a, x_raw[1:res$cutoff]),
-                 warp_using_weight(x_raw[-(1:(res$cutoff - 1))],
-                                   res$avg_weight)[-1])
+    # x_warped = c(warp_ts(res$W_a, x_raw[1:res$cutoff]),
+    #              warp_using_weight(x_raw[-(1:(res$cutoff - 1))],
+    #                                res$avg_weight)[-1])
+    x_warp2 = c(warp_using_weight(x_raw[1:res$cutoff], res$weight_a)[1:t_treat],
+                warp_using_weight(x_raw[-(1:(cutoff - 1))], avg_weight)[-1])
+    
     
     if (plot_figures) {
       df = data.frame(time = 1:length(x_raw),

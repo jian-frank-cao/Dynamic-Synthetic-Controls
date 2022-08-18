@@ -56,6 +56,7 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
 # 2nd dtw
 second_dtw = function(x_post, x_pre,
                       weight_a, k, normalize_method = "t",
+                      dist_quantile = 1,
                       n_q = 1, n_r = 1,
                       default_margin = 3,
                       step.pattern = dtw::asymmetricP2, ...){
@@ -65,6 +66,7 @@ second_dtw = function(x_post, x_pre,
   # slide target window
   i = 1
   weight = NULL
+  distance = NULL
   while (i <= n_post - k + 1) {
     Q = x_post[i:(i + k - 1)]
     Q = normalize(Q, normalize_method)
@@ -131,12 +133,18 @@ second_dtw = function(x_post, x_pre,
     # stack weight
     weight = rbind(weight, weight_i)
     
+    # distance
+    distance = c(distance, alignment_qrs$distance)
+    
     # next
     i = i + n_q
   }
   
   # average weight
+  misfits = which(distance > quantile(distance, dist_quantile))
+  weight = weight[-misfits,]
   avg_weight = colMeans(weight, na.rm = TRUE)
+  avg_weight[is.na(avg_weight)] = 1
   
   return(list(weight = weight,
               avg_weight = avg_weight))
@@ -147,6 +155,7 @@ second_dtw = function(x_post, x_pre,
 TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       normalize_method = "t",
                       ma = 3, ma_na = "original",
+                      dist_quantile = 1,
                       n_q = 1, n_r = 1, 
                       step.pattern1 = dtw::symmetricP2,
                       step.pattern2 = dtw::asymmetricP2,
@@ -175,6 +184,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   # 2nd dtw
   res_2ndDTW = second_dtw(x_post, x_pre, 
                           weight_a, k, normalize_method,
+                          dist_quantile = dist_quantile,
                           n_q, n_r, step.pattern = step.pattern2, ...)
   # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
   avg_weight = res_2ndDTW$avg_weight

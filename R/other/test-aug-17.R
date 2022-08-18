@@ -15,7 +15,7 @@ source("./R/simulate.R")
 set.seed(20220407)
 
 
-data_list = readRDS("./data/simul_data_list_0811.Rds")
+data_list = readRDS("./data/simul_data_list_0818.Rds")
 start_time = 1
 end_time = 1000
 treat_time = 800
@@ -34,7 +34,7 @@ default_margin = 3
 ma = 3
 ma_na = "one"
 
-data = data_list[[217]]
+data = data_list[[219]]
 dependent = "A"
 dependent_id = 1
 predictors.origin = NULL
@@ -121,6 +121,18 @@ x_post = res_1stDTW$x_post
 W_a = res_1stDTW$W_a
 cutoff = res_1stDTW$cutoff
 
+# compute weight a
+weight_a_o = warping2weight(W_a)
+weight_a = as.numeric(stats::filter(weight_a_o, rep(1/ma, ma)))
+weight_a = zoo::na.locf(weight_a, na.rm = FALSE)
+if (ma_na == "one") {
+  weight_a[is.na(weight_a)] = 1
+}else if(ma_na == "first-available") {
+  weight_a[is.na(weight_a)] = weight_a[!is.na(weight_a)][1]
+}else if (ma_na == "original") {
+  weight_a[is.na(weight_a)] = weight_a_o[is.na(weight_a)]
+}
+
 n_pre = length(x_pre)
 n_post = length(x_post)
 # slide target window
@@ -182,14 +194,17 @@ alignment_qrs = dtw::dtw(Q, Rs, open.end = TRUE,
 W_pp_i = Matrix::sparseMatrix(alignment_qrs$index1,
                               alignment_qrs$index2)
 
-# obtain warping path W_b_i: x_post -> y
-W_a_Rs = W_a[j_opt:(j_opt + ncol(W_pp_i) - 1),]
-col_sums = colSums(as.matrix(W_a_Rs))
-ind_nonzero = which(col_sums > 0)
-# n_ind = length(ind_nonzero)
-min_ind = min(ind_nonzero)
-max_ind = max(ind_nonzero)
-# ind_left = min_ind - j_opt
-# ind_right = max_ind - (j_opt + kp - 1)
-W_a_Rs = W_a_Rs[, min_ind:max_ind]
+# obtain weight_b
+weight_a_Rs = weight_a[j_opt:(j_opt + ncol(W_pp_i) - 1)]
+weight_b = as.numeric((W_pp_i %*% weight_a_Rs)/rowSums(as.matrix(W_pp_i)))
+
+# convert warping path to weight
+weight_i = matrix(rep(NaN, n_post), nrow = 1)
+weight_i[1, i:(i + k - 1)] = weight_b
+
+# stack weight
+weight = rbind(weight, weight_i)
+
+# next
+i = i + n_q
 

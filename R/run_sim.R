@@ -28,8 +28,8 @@ rnd_speeds = cbind(rep(0.5, n_simulation), sobol_seq*0.5 + 0.1)
 # simulate
 data_list = NULL
 for (i in 1:n_simulation) {
-  data_list[[i]] = SimData_ShapeSpeed(n = 5,
-                                      length = 1000,
+  data_list[[i]] = SimData_ShapeSpeed(n = n,
+                                      length = length,
                                       rnd_speed = rnd_speeds[i,],
                                       n_SMA = 10,
                                       ar_x = 0.9,
@@ -40,27 +40,28 @@ for (i in 1:n_simulation) {
                                       shock = 50)
 }
 
-data_list[[21]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[339]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 800, linetype="dashed")
 
-saveRDS(data_list, "./data/simul_data_list_0811.Rds")
+saveRDS(data_list, "./data/simul_data_list_0818.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0811.Rds")
+data_list = readRDS("./data/simul_data_list_0818.Rds")
 start_time = 1
 end_time = 1000
 treat_time = 800
 dtw1_time = 900
 n_mse = 100
 k = 15
+dist_quantile = 0.95
 plot_figures = TRUE
 step.pattern1 = dtw::symmetricP2
 step.pattern2 = dtw::asymmetricP2
 legend_position = c(0.3, 0.8)
 
-result = data_list[1:100] %>% 
+result = data_list[1:1] %>% 
   future_map(
     ~{
       data = .
@@ -73,6 +74,7 @@ result = data_list[1:100] %>%
                             dependent_id = 1,
                             n_mse = n_mse,
                             k = k,
+                            dist_quantile = dist_quantile,
                             plot_figures = plot_figures,
                             step.pattern1 = step.pattern1,
                             step.pattern2 = step.pattern2,
@@ -104,7 +106,7 @@ result = data_list[1:100] %>%
     }
   )
   
-saveRDS(result, "./data/res_sim_0813.Rds")
+saveRDS(result, "./data/res_sim_0818.Rds")
   
 
 ## Plot result -----------------------------------------------------------------
