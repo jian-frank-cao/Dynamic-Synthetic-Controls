@@ -32,9 +32,9 @@ n_q = 1
 n_r = 1
 default_margin = 3
 ma = 3
-ma_na = "one"
+ma_na = "original"
 
-data = data_list[[219]]
+data = data_list[[26]]
 dependent = "A"
 dependent_id = 1
 predictors.origin = NULL
@@ -59,8 +59,16 @@ x_list = data %>%
   group_by(unit) %>% 
   group_split(.keep = TRUE)
 
-y_raw = x_list[[4]]$value_raw
-y_processed = x_list[[4]]$value
+y_raw = data %>% 
+  filter(unit == dependent &
+           time <= end_time) %>%
+  .[["value_raw"]]
+y_processed = data %>% 
+  filter(unit == dependent &
+           time <= end_time) %>%
+  .[["value"]]
+# y_raw = x_list[[4]]$value_raw
+# y_processed = x_list[[4]]$value
 
 
 item = x_list[[1]]
@@ -93,6 +101,7 @@ if (ma_na == "one") {
 # 2nd dtw
 res_2ndDTW = second_dtw(x_post, x_pre, 
                         weight_a, k, normalize_method,
+                        dist_quantile = dist_quantile,
                         n_q, n_r, step.pattern = step.pattern2, ...)
 # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
 avg_weight = res_2ndDTW$avg_weight
@@ -207,4 +216,26 @@ weight = rbind(weight, weight_i)
 
 # next
 i = i + n_q
+
+plot(ts(Q))
+lines(Rs, col = "red")
+
+
+
+## -------------------------
+i = 1
+treatment = c(rep(0, 800),
+              seq(0, 50, length.out = 100),
+              rep(50, 100))
+item = result[[i]]
+gap_original = item$value_raw - item$synth_original
+gap_new = item$value_raw - item$synth_new
+plot(ts(gap_original), col = "blue")
+lines(treatment, col = "black")
+lines(gap_new, col = "red")
+i = i+1
+
+data_list[[26]] %>% 
+  ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line()
 

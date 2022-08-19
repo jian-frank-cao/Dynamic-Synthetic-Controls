@@ -56,7 +56,7 @@ dtw1_time = 900
 n_mse = 100
 k = 15
 dist_quantile = 0.95
-plot_figures = TRUE
+plot_figures = FALSE
 step.pattern1 = dtw::symmetricP2
 step.pattern2 = dtw::asymmetricP2
 legend_position = c(0.3, 0.8)
@@ -107,7 +107,7 @@ result = data_list[100:200] %>%
   )
   
 saveRDS(result, "./data/res_sim_0819.Rds")
-  
+# result = readRDS("./data/res_sim_0819.Rds")
 
 ## Plot result -----------------------------------------------------------------
 # placebo test figure
