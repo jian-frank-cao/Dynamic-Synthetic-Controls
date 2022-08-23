@@ -59,16 +59,16 @@ x_list = data %>%
   group_by(unit) %>% 
   group_split(.keep = TRUE)
 
-y_raw = data %>% 
-  filter(unit == dependent &
-           time <= end_time) %>%
-  .[["value_raw"]]
-y_processed = data %>% 
-  filter(unit == dependent &
-           time <= end_time) %>%
-  .[["value"]]
-# y_raw = x_list[[4]]$value_raw
-# y_processed = x_list[[4]]$value
+# y_raw = data %>% 
+#   filter(unit == dependent &
+#            time <= end_time) %>%
+#   .[["value_raw"]]
+# y_processed = data %>% 
+#   filter(unit == dependent &
+#            time <= end_time) %>%
+#   .[["value"]]
+y_raw = x_list[[2]]$value_raw
+y_processed = x_list[[2]]$value
 
 
 item = x_list[[1]]
@@ -76,6 +76,9 @@ unit = as.character(item$unit[1])
 x = item$value
 x_raw = item$value_raw
 y = y_processed
+
+plot(ts(y))
+lines(x, col = "red")
 
 ## Run -------------------------------------------------------------------------
 res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
@@ -142,6 +145,10 @@ if (ma_na == "one") {
   weight_a[is.na(weight_a)] = weight_a_o[is.na(weight_a)]
 }
 
+alignment_b = dtw::dtw(y[t_treat:1000], x_post, step.pattern = step.pattern2,keep = T, open.end = T)
+W_b = Matrix::sparseMatrix(alignment_b$index2, alignment_b$index1)
+weight_b_o = warping2weight(W_b)
+
 n_pre = length(x_pre)
 n_post = length(x_post)
 # slide target window
@@ -207,6 +214,17 @@ W_pp_i = Matrix::sparseMatrix(alignment_qrs$index1,
 weight_a_Rs = weight_a[j_opt:(j_opt + ncol(W_pp_i) - 1)]
 weight_b = as.numeric((W_pp_i %*% weight_a_Rs)/rowSums(as.matrix(W_pp_i)))
 
+W_a_Rs = W_a[j_opt:(j_opt + ncol(W_pp_i) - 1),]
+col_sums = colSums(as.matrix(W_a_Rs))
+ind_nonzero = which(col_sums > 0)
+# n_ind = length(ind_nonzero)
+min_ind = min(ind_nonzero)
+max_ind = max(ind_nonzero)
+# ind_left = min_ind - j_opt
+# ind_right = max_ind - (j_opt + kp - 1)
+W_a_Rs = W_a_Rs[, min_ind:max_ind]
+W_b_i = W_pp_i %*% W_a_Rs
+
 # convert warping path to weight
 weight_i = matrix(rep(NaN, n_post), nrow = 1)
 weight_i[1, i:(i + k - 1)] = weight_b
@@ -214,12 +232,24 @@ weight_i[1, i:(i + k - 1)] = weight_b
 # stack weight
 weight = rbind(weight, weight_i)
 
-# next
-i = i + n_q
 
-plot(ts(Q))
+par(mfrow=c(2,2))
+plot(ts(Q), main = "Window Match")
 lines(Rs, col = "red")
 
+plot(ts(y_raw), main = "Whole Time Series")
+lines(x_raw, col = "blue")
+lines(j_opt:min(j_opt + k + margin_opt - 1, n_pre), x_pre[j_opt:min(j_opt + k + margin_opt - 1, n_pre)], col = "red")
+lines(i:(i + k - 1) + n_pre, x_post[i:(i + k - 1)], col = "red")
+
+plot(ts(weight_b_o[i:(i + k - 1)]))
+lines(weight_b, col = "red")
+
+plot(ts(weight_b_o))
+lines(colMeans(weight, na.rm = T), col = "red")
+
+# next
+i = i + n_q
 
 
 ## -------------------------
