@@ -31,7 +31,7 @@ for (i in 1:n_simulation) {
   data_list[[i]] = SimData_ShapeSpeed(n = n,
                                       length = length,
                                       rnd_speed = rnd_speeds[i,],
-                                      n_SMA = 10,
+                                      n_SMA = 1,
                                       ar_x = 0.9,
                                       weight_speed = TRUE,
                                       speed_upper = 1,
@@ -44,7 +44,7 @@ data_list[[339]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 800, linetype="dashed")
 
-saveRDS(data_list, "./data/simul_data_list_0818.Rds")
+saveRDS(data_list, "./data/simul_data_list_0829.Rds")
 
 
 ## Run -------------------------------------------------------------------------

@@ -140,9 +140,14 @@ second_dtw = function(x_post, x_pre,
     i = i + n_q
   }
   
-  # average weight
+  # handle misfits
   misfits = which(distance > quantile(distance, dist_quantile))
   weight = weight[-misfits,]
+  
+  # handle outliers
+  
+  
+  # average weight
   avg_weight = colMeans(weight, na.rm = TRUE)
   avg_weight[is.na(avg_weight)] = 1
   

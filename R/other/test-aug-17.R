@@ -15,7 +15,7 @@ source("./R/simulate.R")
 set.seed(20220407)
 
 
-data_list = readRDS("./data/simul_data_list_0818.Rds")
+data_list = readRDS("./data/simul_data_list_0829.Rds")
 start_time = 1
 end_time = 1000
 treat_time = 800
@@ -30,11 +30,12 @@ legend_position = c(0.3, 0.8)
 normalize_method = "t"
 n_q = 1
 n_r = 1
+dist_quantile = 0.95
 default_margin = 3
-ma = 3
+ma = 1
 ma_na = "original"
 
-data = data_list[[26]]
+data = data_list[[749]]
 dependent = "A"
 dependent_id = 1
 predictors.origin = NULL
@@ -113,7 +114,8 @@ w_2fdtw = cumsum(avg_weight)
 w_dtw = dtw::warp(dtw::dtw(x_post, y[t_treat:1000], step.pattern = step.pattern2), index.reference = FALSE)
 
 plot(ts(w_dtw))
-lines(w_2fdtw, 1:length(w_2fdtw))
+lines(w_2fdtw, 1:length(w_2fdtw), col = "red")
+lines(1:length(w_dtw), 1:length(w_dtw), col = "grey")
 
 x_warp1 = c(warp_ts(W_a, x_raw[1:cutoff]), x_post[w_dtw][-1])
 x_warp2 = c(warp_using_weight(x_pre, weight_a)[1:800], warp_using_weight(x_raw[-(1:(cutoff - 1))],
@@ -242,10 +244,10 @@ lines(x_raw, col = "blue")
 lines(j_opt:min(j_opt + k + margin_opt - 1, n_pre), x_pre[j_opt:min(j_opt + k + margin_opt - 1, n_pre)], col = "red")
 lines(i:(i + k - 1) + n_pre, x_post[i:(i + k - 1)], col = "red")
 
-plot(ts(weight_b_o[i:(i + k - 1)]))
+plot(ts(weight_b_o[i:(i + k - 1)]), ylim = c(0,2))
 lines(weight_b, col = "red")
 
-plot(ts(weight_b_o))
+plot(ts(weight_b_o), ylim = c(0,2))
 lines(colMeans(weight, na.rm = T), col = "red")
 
 # next
@@ -253,19 +255,11 @@ i = i + n_q
 
 
 ## -------------------------
-i = 1
-treatment = c(rep(0, 800),
-              seq(0, 50, length.out = 100),
-              rep(50, 100))
-item = result[[i]]
-gap_original = item$value_raw - item$synth_original
-gap_new = item$value_raw - item$synth_new
-plot(ts(gap_original), col = "blue")
-lines(treatment, col = "black")
-lines(gap_new, col = "red")
-i = i+1
+plot(y_raw, type = "l")
+abline(v=800, col="grey")
+lines(x_raw, col = "green")
+lines(y_raw[1:800], col = "blue")
+lines(x_pre, col = "red")
 
-data_list[[26]] %>% 
-  ggplot(aes(x = time, y = value, color = unit)) +
-  geom_line()
-
+plot(y_raw[801:1000], type = "l")
+lines(x_post, col = "red")
