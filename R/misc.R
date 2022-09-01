@@ -119,6 +119,19 @@ ref_too_short = function(query, reference,
 }
 
 
+# remove outliers in weight matrix
+RemoveOutliers = function(data, n_IQR = 3){
+  Q1 = quantile(data, 0.25, na.rm = TRUE)
+  Q3 = quantile(data, 0.75, na.rm = TRUE)
+  IQR = Q3 - Q1
+  upper = Q3 + n_IQR*IQR
+  lower = Q1 - n_IQR*IQR
+  data[data > upper] = NaN
+  data[data < lower] = NaN
+  return(data)
+}
+
+
 # plot warped
 plot_warped = function(fig_list, ncol, file_name){
   nrow = ceiling(length(fig_list)/ncol)

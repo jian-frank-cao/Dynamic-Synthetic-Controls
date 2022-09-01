@@ -48,7 +48,7 @@ saveRDS(data_list, "./data/simul_data_list_0829.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0818.Rds")
+data_list = readRDS("./data/simul_data_list_0829.Rds")
 start_time = 1
 end_time = 1000
 treat_time = 800
@@ -56,12 +56,13 @@ dtw1_time = 900
 n_mse = 100
 k = 15
 dist_quantile = 0.95
+n_IQR = 3
 plot_figures = FALSE
 step.pattern1 = dtw::symmetricP2
 step.pattern2 = dtw::asymmetricP2
 legend_position = c(0.3, 0.8)
 
-result = data_list[100:200] %>% 
+result = data_list[1:100] %>% 
   future_map(
     ~{
       data = .
@@ -74,6 +75,7 @@ result = data_list[100:200] %>%
                             dependent_id = 1,
                             n_mse = n_mse,
                             k = k,
+                            n_IQR = n_IQR,
                             dist_quantile = dist_quantile,
                             plot_figures = plot_figures,
                             step.pattern1 = step.pattern1,
@@ -106,7 +108,7 @@ result = data_list[100:200] %>%
     }
   )
   
-saveRDS(result, "./data/res_sim_0819.Rds")
+saveRDS(result, "./data/res_sim_0831.Rds")
 # result = readRDS("./data/res_sim_0819.Rds")
 
 ## Plot result -----------------------------------------------------------------
