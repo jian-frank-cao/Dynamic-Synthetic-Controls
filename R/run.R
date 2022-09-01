@@ -62,22 +62,22 @@ width_range = (1:9)*2+3
 k_range = 4:9
 step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
-  symmetricP05 = dtw::symmetricP05,
-  symmetricP1 = dtw::symmetricP1,
-  symmetricP2 = dtw::symmetricP2,
+  # symmetricP05 = dtw::symmetricP05,
+  # symmetricP1 = dtw::symmetricP1,
+  symmetricP2 = dtw::symmetricP2#,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
-  asymmetricP05 = dtw::asymmetricP05,
-  asymmetricP1 = dtw::asymmetricP1,
-  asymmetricP2 = dtw::asymmetricP2,
-  typeIc = dtw::typeIc,
-  typeIcs = dtw::typeIcs,
+  # asymmetricP05 = dtw::asymmetricP05,
+  # asymmetricP1 = dtw::asymmetricP1,
+  # asymmetricP2 = dtw::asymmetricP2,
+  # typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  typeId = dtw::typeId,
-  typeIds = dtw::typeIds,
+  # typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
-  mori2006 = dtw::mori2006
+  # mori2006 = dtw::mori2006
 )
 
 res_grid = expand.grid(width_range, k_range,
@@ -94,8 +94,8 @@ res_grid = readRDS(res_grid_filename)
 
 # search
 start_time = 1970
-treat_time = 2000
-end_time = 1989
+end_time = 2000
+treat_time = 1989
 dtw1_time = 1994
 n_mse = 10
 n_IQR = 3
@@ -144,6 +144,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        n_mse = n_mse,
                                        k = k,
+                                       filter_width = width,
                                        n_IQR = n_IQR,
                                        dist_quantile = dist_quantile,
                                        plot_figures = plot_figures,

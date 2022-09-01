@@ -325,8 +325,8 @@ run_all_units = function(data,
   # compute log ratio
   mse = lapply(result, '[[', "mse") %>% 
     do.call("rbind", .) %>% 
-    mutate(mse_pre_original = mse1_1,
-           mse_pre_new = mse2_1,
+    mutate(mse_pre_original = mse1_pre,
+           mse_pre_new = mse2_pre,
            ratio = mse2_post/mse1_post,
            log_ratio = log(ratio))
   
