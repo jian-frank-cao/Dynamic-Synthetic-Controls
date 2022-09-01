@@ -24,7 +24,8 @@ data = data %>%
   mutate(time = 1:((2021 - 1989 + 1)*12))
 
 data %>% 
-  filter(country != "Rwanda") %>% 
+  filter(country != "Rwanda") %>%
+  filter(time %in% 1:100) %>%
   ggplot(aes(x = time, y = best, color = country)) +
   geom_line() +
   theme(legend.position="none")

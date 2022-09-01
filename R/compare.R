@@ -249,3 +249,100 @@ preprocessing = function(data,
   
   return(data)
 }
+
+
+# compare methods for all units
+run_all_units = function(data,
+                         start_time,
+                         end_time,
+                         treat_time,
+                         dtw1_time,
+                         predictors.origin,
+                         special.predictors.origin,
+                         time.predictors.prior.origin,
+                         time.optimize.ssr.origin,
+                         predictors.new,
+                         special.predictors.new,
+                         time.predictors.prior.new,
+                         time.optimize.ssr.new,
+                         plot_figures = FALSE, 
+                         normalize_method = "t",
+                         step.pattern1 = dtw::symmetricP2,
+                         step.pattern2 = dtw::asymmetricP2,
+                         legend_position = c(0.3, 0.3),
+                         filter_width = NULL,
+                         n_mse = 10,
+                         k = 6,
+                         n_IQR = 3,
+                         dist_quantile = 0.95,
+                         detail = FALSE
+){
+  # prepare data
+  if (!is.null(filter_width)) {
+    data = preprocessing(data, filter_width)
+  }
+  units = data[c("id", "unit")] %>% distinct
+  
+  # run
+  result = as.list(1:nrow(units)) %>% 
+    future_map(
+      ~{
+        i = .
+        dependent = units$unit[i]
+        dependent_id = units$id[i]
+        res = SimDesign::quiet(compare_methods(data = data,
+                              start_time = start_time,
+                              end_time = end_time,
+                              treat_time = treat_time,
+                              dtw1_time = dtw1_time,
+                              dependent = dependent,
+                              dependent_id = dependent_id,
+                              n_mse = n_mse,
+                              k = k,
+                              n_IQR = n_IQR,
+                              dist_quantile = dist_quantile,
+                              plot_figures = plot_figures,
+                              step.pattern1 = step.pattern1,
+                              step.pattern2 = step.pattern2,
+                              predictors.origin = predictors.origin,
+                              special.predictors.origin = special.predictors.origin,
+                              time.predictors.prior.origin = time.predictors.prior.origin,
+                              time.optimize.ssr.origin = time.optimize.ssr.origin,
+                              predictors.new = predictors.new,
+                              special.predictors.new = special.predictors.new,
+                              time.predictors.prior.new = time.predictors.prior.new,
+                              time.optimize.ssr.new = time.optimize.ssr.new,
+                              legend_position = legend_position))
+        res$mse = res$mse %>% mutate(unit = dependent)
+        if (detail == FALSE) {
+          list(mse = res$mse)
+        }else{
+          res
+        }
+      }
+    )
+  
+  # compute log ratio
+  mse = lapply(result, '[[', "mse") %>% 
+    do.call("rbind", .) %>% 
+    mutate(mse_pre_original = mse1_1,
+           mse_pre_new = mse2_1,
+           ratio = mse2_post/mse1_post,
+           log_ratio = log(ratio))
+  
+  pos_ratio = length(which(mse$log_ratio < 0))/nrow(mse)
+  t_test = t.test(mse$log_ratio)
+  
+  return(list(result = result,
+              width = filter_width,
+              k = k,
+              start_time = start_time,
+              end_time = end_time,
+              treat_time = treat_time,
+              dtw1_time = dtw1_time,
+              mse_pre_original = mse$mse_pre_original,
+              mse_pre_new = mse$mse_pre_new,
+              pos_ratio = pos_ratio,
+              t_test = t_test$p.value))
+}
+
