@@ -325,9 +325,7 @@ run_all_units = function(data,
   # compute log ratio
   mse = lapply(result, '[[', "mse") %>% 
     do.call("rbind", .) %>% 
-    mutate(mse_pre_original = mse1_pre,
-           mse_pre_new = mse2_pre,
-           ratio = mse2_post/mse1_post,
+    mutate(ratio = mse2_post/mse1_post,
            log_ratio = log(ratio))
   
   pos_ratio = length(which(mse$log_ratio < 0))/nrow(mse)
@@ -340,8 +338,7 @@ run_all_units = function(data,
               end_time = end_time,
               treat_time = treat_time,
               dtw1_time = dtw1_time,
-              mse_pre_original = mse$mse_pre_original,
-              mse_pre_new = mse$mse_pre_new,
+              mse = mse,
               pos_ratio = pos_ratio,
               t_test = t_test$p.value))
 }

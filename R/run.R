@@ -58,7 +58,8 @@ data = data %>% mutate(value_raw = value)
 
 ## Grid Search Tobacco ---------------------------------------------------------
 # search space
-width_range = (1:9)*2+3
+# width_range = (1:9)*2+3
+width_range = 5
 k_range = 4:9
 step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
@@ -128,6 +129,7 @@ time.predictors.prior.new = 1970:1988
 time.optimize.ssr.new = 1970:1988
 legend_position = c(0.8, 0.8)
 
+mse_list = NULL
 for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
   width = res_grid$width[i]
   k = res_grid$k[i]
@@ -164,6 +166,7 @@ for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
   res_grid$mse_pre_new[i] = median(res$mse_pre_new)
   res_grid$pos_ratio[i] = res$pos_ratio
   res_grid$t_test[i] = res$t_test
+  mse_list[[i]] = res$mse
   
   cat("Done.\n")
   gc()
