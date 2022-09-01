@@ -128,7 +128,7 @@ time.predictors.prior.new = 1970:1988
 time.optimize.ssr.new = 1970:1988
 legend_position = c(0.8, 0.8)
 
-for (i in which(is.na(res_grid$pos_ratio))) {
+for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
   width = res_grid$width[i]
   k = res_grid$k[i]
   pattern_name = res_grid$step_pattern[i]
@@ -160,8 +160,8 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        time.optimize.ssr.new = time.optimize.ssr.new,
                                        legend_position = legend_position))
   
-  res_grid$mse_pre_original[i] = res$mse_pre_original
-  res_grid$mse_pre_new[i] = res$mse_pre_new
+  res_grid$mse_pre_original[i] = median(res$mse_pre_original)
+  res_grid$mse_pre_new[i] = median(res$mse_pre_new)
   res_grid$pos_ratio[i] = res$pos_ratio
   res_grid$t_test[i] = res$t_test
   
