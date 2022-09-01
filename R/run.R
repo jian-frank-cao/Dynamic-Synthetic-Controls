@@ -86,6 +86,8 @@ res_grid = expand.grid(width_range, k_range,
   `colnames<-`(c("width", "k", "step_pattern")) %>% 
   mutate(mse_pre_original = NA_real_,
          mse_pre_new = NA_real_,
+         mse_post_original = NA_real_,
+         mse_post_new = NA_real_,
          pos_ratio = NA_real_,
          t_test = NA_real_)
 
@@ -130,7 +132,7 @@ time.optimize.ssr.new = 1970:1988
 legend_position = c(0.8, 0.8)
 
 mse_list = NULL
-for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
+for (i in 2:3) {  # which(is.na(res_grid$pos_ratio))
   width = res_grid$width[i]
   k = res_grid$k[i]
   pattern_name = res_grid$step_pattern[i]
@@ -162,8 +164,10 @@ for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
                                        time.optimize.ssr.new = time.optimize.ssr.new,
                                        legend_position = legend_position))
   
-  res_grid$mse_pre_original[i] = median(res$mse_pre_original)
-  res_grid$mse_pre_new[i] = median(res$mse_pre_new)
+  res_grid$mse_pre_original[i] = median(res$mse$mse1_pre)
+  res_grid$mse_pre_new[i] = median(res$mse$mse2_pre)
+  res_grid$mse_post_original[i] = median(res$mse$mse1_post)
+  res_grid$mse_post_new[i] = median(res$mse$mse2_post)
   res_grid$pos_ratio[i] = res$pos_ratio
   res_grid$t_test[i] = res$t_test
   mse_list[[i]] = res$mse

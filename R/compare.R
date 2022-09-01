@@ -63,6 +63,7 @@ compare_methods = function(data,
     res = TwoStepDTW(x, y, t_treat, k, n_dtw1,
                      normalize_method = normalize_method,
                      ma = ma, ma_na = ma_na,
+                     dist_quantile = dist_quantile,
                      step.pattern1 = step.pattern1, 
                      step.pattern2 = step.pattern2, 
                      plot_figures = plot_figures, ...)

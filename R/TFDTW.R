@@ -143,8 +143,10 @@ second_dtw = function(x_post, x_pre,
   
   # handle misfits
   misfits = which(distance > quantile(distance, dist_quantile))
-  weight = weight[-misfits,]
-  
+  if (length(misfits) > 0) {
+    weight = weight[-misfits,]
+  }
+
   # handle outliers
   weight = data.frame(weight) %>% 
     mutate_all(RemoveOutliers, n_IQR = n_IQR)
@@ -197,7 +199,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                           n_q, n_r, step.pattern = step.pattern2, ...)
   # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
   avg_weight = res_2ndDTW$avg_weight
-  
+
   return(list(y = y,
               x = x,
               W_a = W_a,
