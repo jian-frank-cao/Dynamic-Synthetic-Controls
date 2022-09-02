@@ -64,11 +64,11 @@ step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
   # symmetricP1 = dtw::symmetricP1,
-  symmetricP2 = dtw::symmetricP2#,
+  symmetricP2 = dtw::symmetricP2,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   # asymmetricP05 = dtw::asymmetricP05,
   # asymmetricP1 = dtw::asymmetricP1,
-  # asymmetricP2 = dtw::asymmetricP2,
+  asymmetricP2 = dtw::asymmetricP2,
   # typeIc = dtw::typeIc,
   # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
@@ -77,7 +77,7 @@ step_pattern_range = list(
   # typeId = dtw::typeId,
   # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
-  # mori2006 = dtw::mori2006
+  mori2006 = dtw::mori2006
 )
 
 res_grid = expand.grid(width_range, k_range,
@@ -131,7 +131,7 @@ time.optimize.ssr.new = 1970:1988
 legend_position = c(0.8, 0.8)
 
 mse_list = NULL
-for (i in 1:3) {  # which(is.na(res_grid$pos_ratio))
+for (i in which(is.na(res_grid$pos_ratio))) {  
   width = res_grid$width[i]
   k = res_grid$k[i]
   pattern_name = res_grid$step_pattern[i]
@@ -181,13 +181,13 @@ start_time = 1970
 end_time = 2000
 treat_time = 1989
 dtw1_time = 1989
-filter_width = 5
-k = 5
+filter_width = 11
+k = 8
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = TRUE
-step.pattern2 = dtw::asymmetricP2
+step.pattern2 = dtw::symmetricP2
 predictors.origin = NULL
 special.predictors.origin = list(
   list("value_raw", 1988, c("mean")),
@@ -317,7 +317,7 @@ df = result %>%
   )
 
 df %>% 
-  filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>% 
+  # filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>% 
   ggplot(aes(x = time, group = unit)) +
   geom_line(aes(y = gap_origin), col = "#adcbe3") +
   geom_line(aes(y = gap_new), col = "#fec8c1") +
