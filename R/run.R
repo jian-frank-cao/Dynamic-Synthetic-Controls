@@ -183,14 +183,14 @@ start_time = 1970
 end_time = 2000
 treat_time = 1989
 dtw1_time = 1989
-filter_width = 9
+filter_width = 19
 k = 6
 TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = TRUE
-step.pattern1 = dtw::mori2006
+step.pattern1 = dtw::asymmetricP1
 step.pattern2 = dtw::asymmetricP2
 predictors.origin = NULL
 special.predictors.origin = list(
@@ -266,7 +266,7 @@ result = as.list(1:nrow(units)) %>%
     }
   )
 
-saveRDS(result, "./data/grid_search_v6/result_tobacco_89.Rds")
+saveRDS(result, "./data/grid_search_v6/result_tobacco_89_fixed.Rds")
 
 
 # mse
@@ -329,7 +329,7 @@ df = result %>%
   )
 
 df %>% 
-  # filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>% 
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>%
   ggplot(aes(x = time, group = unit)) +
   geom_line(aes(y = gap_origin), col = "#adcbe3") +
   geom_line(aes(y = gap_new), col = "#fec8c1") +
