@@ -63,18 +63,18 @@ k_range = 4:9
 step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
-  # symmetricP1 = dtw::symmetricP1,
+  symmetricP1 = dtw::symmetricP1,
   symmetricP2 = dtw::symmetricP2,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   # asymmetricP05 = dtw::asymmetricP05,
-  # asymmetricP1 = dtw::asymmetricP1,
+  asymmetricP1 = dtw::asymmetricP1,
   asymmetricP2 = dtw::asymmetricP2,
-  # typeIc = dtw::typeIc,
+  typeIc = dtw::typeIc,
   # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  # typeId = dtw::typeId,
+  typeId = dtw::typeId,
   # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
   mori2006 = dtw::mori2006
@@ -90,7 +90,7 @@ res_grid = expand.grid(width_range, k_range,
          pos_ratio = NA_real_,
          t_test = NA_real_)
 
-res_grid_filename = "./data/grid_search_v6/res_grid_tobacco_89.Rds"
+res_grid_filename = "./data/grid_search_v6/res_grid_tobacco_89_fixed.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
@@ -99,6 +99,7 @@ start_time = 1970
 end_time = 2000
 treat_time = 1989
 dtw1_time = 1989
+TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
@@ -128,10 +129,10 @@ special.predictors.new = list(
 )
 time.predictors.prior.new = 1970:1988
 time.optimize.ssr.new = 1970:1988
-legend_position = c(0.8, 0.8)
+legend_position = c(0.3, 0.3)
 
 mse_list = NULL
-for (i in which(is.na(res_grid$pos_ratio))) {  
+for (i in which(is.na(res_grid$pos_ratio))) {  # which(is.na(res_grid$pos_ratio))
   width = res_grid$width[i]
   k = res_grid$k[i]
   pattern_name = res_grid$step_pattern[i]
@@ -147,6 +148,7 @@ for (i in which(is.na(res_grid$pos_ratio))) {
                                        dtw1_time = dtw1_time,
                                        n_mse = n_mse,
                                        k = k,
+                                       TSDTW_type = TSDTW_type,
                                        filter_width = width,
                                        n_IQR = n_IQR,
                                        dist_quantile = dist_quantile,
@@ -181,13 +183,15 @@ start_time = 1970
 end_time = 2000
 treat_time = 1989
 dtw1_time = 1989
-filter_width = 11
-k = 8
+filter_width = 9
+k = 6
+TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = TRUE
-step.pattern2 = dtw::symmetricP2
+step.pattern1 = dtw::mori2006
+step.pattern2 = dtw::asymmetricP2
 predictors.origin = NULL
 special.predictors.origin = list(
   list("value_raw", 1988, c("mean")),
@@ -213,6 +217,13 @@ special.predictors.new = list(
 time.predictors.prior.new = 1970:1988
 time.optimize.ssr.new = 1970:1988
 legend_position = c(0.3, 0.3)
+... = NULL
+normalize_method = "t"
+ma = 3
+ma_na = "original"
+n_q = 1
+n_r = 1
+
 
 data = preprocessing(data, filter_width)
 units = data[c("id", "unit")] %>% distinct
@@ -234,6 +245,7 @@ result = as.list(1:nrow(units)) %>%
                                              dependent_id = dependent_id,
                                              n_mse = n_mse,
                                              k = k,
+                                             TSDTW_type = TSDTW_type,
                                              n_IQR = n_IQR,
                                              dist_quantile = dist_quantile,
                                              plot_figures = plot_figures,

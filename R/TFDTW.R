@@ -2,6 +2,7 @@
 # 1st dtw
 first_dtw = function(x, y, k, n_dtw1, t_treat,
                      normalize_method = "t",
+                     type = "fixed",
                      step.pattern = dtw::symmetricP2,
                      plot_figures = FALSE, ...){
   # backup
@@ -12,18 +13,25 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
   y = normalize(y_bak[1:t_treat], normalize_method)
   x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
   
-  # check if x is too short
-  x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
-  while(x_too_short & n_dtw1 < length(x_bak)){
-    n_dtw1 = n_dtw1 + 1
-    x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
+  if (type == "fixed") {
+    alignment = dtw::dtw(y, x, keep = TRUE,
+                         step.pattern = step.pattern,
+                         open.end = FALSE, ...)
+  }else if(type == "open end"){
+    # check if x is too short
     x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
+    while(x_too_short & n_dtw1 < length(x_bak)){
+      n_dtw1 = n_dtw1 + 1
+      x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
+      x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
+    }
+    
+    # dtw
+    alignment = dtw::dtw(y, x, keep = TRUE,
+                         step.pattern = step.pattern,
+                         open.end = TRUE, ...)
   }
   
-  # dtw
-  alignment = dtw::dtw(y, x, keep = TRUE,
-                       step.pattern = step.pattern,
-                       open.end = TRUE, ...)
   if (plot_figures) {
     fig_ThreeWay = dtw::dtwPlotThreeWay(alignment)
   }
