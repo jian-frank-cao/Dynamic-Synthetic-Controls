@@ -15,40 +15,6 @@ source("./R/compare.R")
 set.seed(20220407)
 
 
-## Basque Terrorism Data --------------------------------------------------
-data(basque, package = "Synth")
-data = basque
-colnames(data)[1:4] = c("id", "unit", "time", "value")
-data = data %>% mutate(invest_ratio = invest/value,
-                       value_raw = value)
-# data = data %>% filter(unit != "Basque Country (Pais Vasco)")
-
-
-## California Tobacco Data -----------------------------------------------------
-load("./data/smoking.rda")
-prop99 = read.csv("./data/prop99.csv")
-
-exclude_states = c("Massachusetts", "Arizona", "Oregon", "Florida",
-                   "Alaska", "Hawaii", "Maryland", "Michigan",
-                   "New Jersey", "New York",
-                   "Washington", "District of Columbia")
-include_states = sort(setdiff(unique(prop99$LocationDesc),
-                              exclude_states))
-states = data.frame(id = 1:length(include_states),
-                    unit = include_states)
-smoking = smoking %>% mutate_all(as.numeric)
-colnames(smoking)[1:3] = c("id", "time", "value")
-smoking = right_join(states, smoking, by = "id")
-smoking = smoking %>%
-  mutate(value_raw = value,
-         age15to24 = age15to24*100) #%>% 
-#filter(unit != "Rhode Island")
-
-data = smoking
-# data = data %>% filter(unit != "California")
-
-
-
 ## Germany Reunification Data --------------------------------------------------
 data = foreign::read.dta("./data/repgermany.dta")
 colnames(data)[1:4] = c("id", "unit", "time", "value")
@@ -90,7 +56,7 @@ res_grid = expand.grid(width_range, k_range,
          pos_ratio = NA_real_,
          t_test = NA_real_)
 
-res_grid_filename = "./data/grid_search_v6/res_grid_tobacco_89_fixed.Rds"
+res_grid_filename = "./data/grid_search_v6/res_grid_germany_90_fixed.Rds"
 # saveRDS(res_grid, res_grid_filename)
 res_grid = readRDS(res_grid_filename)
 
