@@ -61,41 +61,33 @@ res_grid_filename = "./data/grid_search_v6/res_grid_germany_90_fixed.Rds"
 res_grid = readRDS(res_grid_filename)
 
 # search
-start_time = 1970
-end_time = 2000
-treat_time = 1989
-dtw1_time = 1989
+start_time = 1960
+end_time = 2003
+treat_time = 1990
+dtw1_time = 1990
 TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = FALSE
 step.pattern2 = dtw::asymmetricP2
-predictors.origin = NULL
+predictors.origin = c("value_raw","trade","infrate")
 special.predictors.origin = list(
-  list("value_raw", 1988, c("mean")),
-  list("value_raw", 1980, c("mean")),
-  list("value_raw", 1975, c("mean")),
-  list("beer", 1984:1988, c("mean")),
-  list("lnincome", 1980:1988, c("mean")),
-  list("age15to24", 1980:1988, c("mean")),
-  list("retprice", 1980:1988, c("mean"))
+  list("industry", 1981:1989, c("mean")),
+  list("schooling",c(1980,1985), c("mean")),
+  list("invest80" ,1980, c("mean"))
 )
-time.predictors.prior.origin = 1970:1988
-time.optimize.ssr.origin = 1970:1988
-predictors.new = NULL
+time.predictors.prior.origin = 1981:1989
+time.optimize.ssr.origin = 1960:1989
+predictors.new = c("value_warped","trade","infrate")
 special.predictors.new = list(
-  list("value_warped", 1988, c("mean")),
-  list("value_warped", 1980, c("mean")),
-  list("value_warped", 1975, c("mean")),
-  list("beer", 1984:1988, c("mean")),
-  list("lnincome", 1980:1988, c("mean")),
-  list("age15to24", 1980:1988, c("mean")),
-  list("retprice", 1980:1988, c("mean"))
+  list("industry", 1981:1989, c("mean")),
+  list("schooling",c(1980,1985), c("mean")),
+  list("invest80" ,1980, c("mean"))
 )
-time.predictors.prior.new = 1970:1988
-time.optimize.ssr.new = 1970:1988
-legend_position = c(0.3, 0.3)
+time.predictors.prior.new = 1981:1989
+time.optimize.ssr.new = 1960:1989
+legend_position = c(0.3, 0.8)
 
 mse_list = NULL
 for (i in which(is.na(res_grid$pos_ratio))) {  # which(is.na(res_grid$pos_ratio))
