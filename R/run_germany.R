@@ -22,7 +22,7 @@ data = data %>% mutate(value_raw = value)
 # data = data %>% filter(unit != "West Germany")
 
 
-## Grid Search Tobacco ---------------------------------------------------------
+## Grid Search Germany ---------------------------------------------------------
 # search space
 width_range = (1:9)*2+3
 k_range = 4:9
@@ -135,46 +135,38 @@ for (i in which(is.na(res_grid$pos_ratio))) {  # which(is.na(res_grid$pos_ratio)
   gc()
 }
 
-## Optimal Run Tobacco ---------------------------------------------------------
+## Optimal Run Germany ---------------------------------------------------------
 # prepare data
-start_time = 1970
-end_time = 2000
-treat_time = 1989
-dtw1_time = 1989
-filter_width = 19
-k = 6
+start_time = 1960
+end_time = 2003
+treat_time = 1990
+dtw1_time = 1990
+filter_width = 13
+k = 5
 TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = TRUE
-step.pattern1 = dtw::asymmetricP1
+step.pattern1 = dtw::mori2006
 step.pattern2 = dtw::asymmetricP2
-predictors.origin = NULL
+predictors.origin = c("value_raw","trade","infrate")
 special.predictors.origin = list(
-  list("value_raw", 1988, c("mean")),
-  list("value_raw", 1980, c("mean")),
-  list("value_raw", 1975, c("mean")),
-  list("beer", 1984:1988, c("mean")),
-  list("lnincome", 1980:1988, c("mean")),
-  list("age15to24", 1980:1988, c("mean")),
-  list("retprice", 1980:1988, c("mean"))
+  list("industry", 1981:1989, c("mean")),
+  list("schooling",c(1980,1985), c("mean")),
+  list("invest80" ,1980, c("mean"))
 )
-time.predictors.prior.origin = 1970:1988
-time.optimize.ssr.origin = 1970:1988
-predictors.new = NULL
+time.predictors.prior.origin = 1981:1989
+time.optimize.ssr.origin = 1960:1989
+predictors.new = c("value_warped","trade","infrate")
 special.predictors.new = list(
-  list("value_warped", 1988, c("mean")),
-  list("value_warped", 1980, c("mean")),
-  list("value_warped", 1975, c("mean")),
-  list("beer", 1984:1988, c("mean")),
-  list("lnincome", 1980:1988, c("mean")),
-  list("age15to24", 1980:1988, c("mean")),
-  list("retprice", 1980:1988, c("mean"))
+  list("industry", 1981:1989, c("mean")),
+  list("schooling",c(1980,1985), c("mean")),
+  list("invest80" ,1980, c("mean"))
 )
-time.predictors.prior.new = 1970:1988
-time.optimize.ssr.new = 1970:1988
-legend_position = c(0.3, 0.3)
+time.predictors.prior.new = 1981:1989
+time.optimize.ssr.new = 1960:1989
+legend_position = c(0.3, 0.8)
 ... = NULL
 normalize_method = "t"
 ma = 3
@@ -224,7 +216,7 @@ result = as.list(1:nrow(units)) %>%
     }
   )
 
-saveRDS(result, "./data/grid_search_v6/result_tobacco_89_fixed.Rds")
+saveRDS(result, "./data/grid_search_v6/result_germany_90_fixed.Rds")
 
 
 # mse
@@ -233,69 +225,73 @@ mse = result %>%
   do.call("rbind", .) %>% 
   mutate(ratio = mse2_post/mse1_post,
          log_ratio = log(ratio))
-mse = mse %>% filter(dependent != "California")
-# mse = mse %>% filter(mse1_pre < 5*3)
+mse = mse %>% filter(dependent != "West Germany")
 length(which(mse$log_ratio < 0))/nrow(mse)
 boxplot(mse$log_ratio, outline = FALSE)
 abline(h = 0, lty = 5)
 
 t.test(mse$log_ratio)
 
-saveRDS(mse, "./data/grid_search_v6/mse_tobacco_89.Rds")
+saveRDS(mse, "./data/grid_search_v6/mse_germany_90.Rds")
 
 
 # plot time series figure
-df = rbind(data.frame(unit = "California",
-                      time = 1970:2000,
-                      value = result[[3]]$synth_origin$value),
+df = rbind(data.frame(unit = "West Germany",
+                      time = 1960:2000,
+                      value = result[[17]]$synth_origin$value[-c(42:44)]),
            data.frame(unit = "Synthetic Control w/o TFDTW",
-                      time = 1970:2000,
-                      value = result[[3]]$synth_origin$synthetic),
+                      time = 1960:2000,
+                      value = result[[17]]$synth_origin$synthetic[-c(42:44)]),
            data.frame(unit = "Synthetic Control w/ TFDTW",
-                      time = 1970:2000,
-                      value = result[[3]]$synth_new$synthetic))
+                      time = 1960:2000,
+                      value = result[[17]]$synth_new$synthetic[-c(42:44)]))
+
+df$unit = factor(df$unit, levels = c("West Germany",
+                                     "Synthetic Control w/o TFDTW",
+                                     "Synthetic Control w/ TFDTW"))
 
 fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   geom_line() + 
-  geom_vline(xintercept = 1988, linetype="dashed") +
+  geom_vline(xintercept = 1990, linetype="dashed") +
   theme_bw() +
   scale_color_manual(values=c("grey40", "#fe4a49","#2ab7ca")) +
   xlab("Time") +
-  ylab("Cigarette Sale Per Capita (in Packs)") + 
+  ylab("Per Capita GDP (PPP, 2002 USD)") + 
   theme(legend.title=element_blank(),
-        legend.position = c(0.2, 0.2))
+        legend.position = c(0.3, 0.8))
 
-saveRDS(fig, "./data/grid_search_v2/fig_comp_method_tobacco_89.Rds")
+saveRDS(fig, "./data/grid_search_v6/fig_comp_method_germany_90.Rds")
+
 
 # plot placebo figure
 df = result %>% 
   map(
     ~{
       data.frame(unit = .[["mse"]][["dependent"]],
-                 time = 1970:2000,
-                 value = .[["synth_origin"]][["value"]],
-                 synth_origin = .[["synth_origin"]][["synthetic"]],
-                 synth_new = .[["synth_new"]][["synthetic"]])
+                 time = 1960:2000,
+                 value = .[["synth_origin"]][["value"]][-c(42:44)],
+                 synth_origin = .[["synth_origin"]][["synthetic"]][-c(42:44)],
+                 synth_new = .[["synth_new"]][["synthetic"]][-c(42:44)])
     }
   ) %>% 
   do.call("rbind", .) %>% 
   mutate(
-    color = case_when(unit == "California" ~ "black",
+    color = case_when(unit == "West Germany" ~ "black",
                       TRUE ~ "grey 70"),
     gap_origin = value - synth_origin,
     gap_new = value - synth_new
   )
 
 df %>% 
-  filter(unit %in% (mse %>% filter(mse1_pre < 2*3) %>% .[["dependent"]])) %>%
+  filter(unit %in% (mse %>% filter(mse1_pre < 2*10000) %>% .[["dependent"]])) %>% 
   ggplot(aes(x = time, group = unit)) +
   geom_line(aes(y = gap_origin), col = "#adcbe3") +
   geom_line(aes(y = gap_new), col = "#fec8c1") +
-  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "California"), col = "#2ab7ca", size = 1) +
-  geom_line(aes(y = gap_new), data = df %>% filter(unit == "California"), col = "#fe4a49", size = 1) +
-  geom_vline(xintercept = 1988, linetype="dashed") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "West Germany"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "West Germany"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1990, linetype="dashed") +
   geom_hline(yintercept = 0, linetype="dashed") +
-  coord_cartesian(ylim=c(-32, 32)) +
+  # coord_cartesian(ylim=c(-32, 32)) +
   xlab("year") +
   ylab("gap in per-capita cigarette sales (in packs)") +
   theme_bw()

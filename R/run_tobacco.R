@@ -183,14 +183,14 @@ start_time = 1970
 end_time = 2000
 treat_time = 1989
 dtw1_time = 1989
-filter_width = 15
-k = 7
+filter_width = 13
+k = 6
 TSDTW_type = "fixed"
 n_mse = 10
 n_IQR = 3
 dist_quantile = 0.95
 plot_figures = TRUE
-step.pattern1 = dtw::symmetricP1
+step.pattern1 = dtw::mori2006
 step.pattern2 = dtw::asymmetricP2
 predictors.origin = NULL
 special.predictors.origin = list(
@@ -307,7 +307,7 @@ fig = ggplot(df, aes(x = time, y = value, color = unit)) +
   theme(legend.title=element_blank(),
         legend.position = c(0.2, 0.2))
 
-saveRDS(fig, "./data/grid_search_v2/fig_comp_method_tobacco_89.Rds")
+saveRDS(fig, "./data/grid_search_v6/fig_comp_method_tobacco_89.Rds")
 
 # plot placebo figure
 df = result %>% 
