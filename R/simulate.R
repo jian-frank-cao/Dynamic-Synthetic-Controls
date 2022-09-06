@@ -86,6 +86,68 @@ SimData_ShapeSpeed = function(n = 5,
 }
 
 
+SimData_Lags = function(n = 3,
+                        length = 100,
+                        rnd_nCycles = seq(0.1, 0.9, length.out = n),
+                        rnd_shift = seq(0.9, 0.1, length.out = n),
+                        rnd_lag = seq(0.1, 0.9, length.out = n),
+                        nCycles_min = 6,
+                        nCycles_max = 12,
+                        noise_mean = 0,
+                        noise_sd = 0.01,
+                        n_lag_min = 5,
+                        n_lag_max = 15,
+                        extra_x = 20,
+                        beta = 0.9,
+                        ar_x = 0.9,
+                        t_treat = 80,
+                        shock = 5){
+  
+  # prepare random numbers
+  nCycles = rnd_nCycles * (nCycles_max - nCycles_min) + nCycles_min
+  shifts = rnd_shift * 2 * pi
+  n_lags = round(rnd_lag * (n_lag_max - n_lag_min) + n_lag_min, 0)
+  
+  # common exogenous shocks
+  x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = length + extra_x)
+  # x = cumsum(sin(seq(0, 5*pi, length.out = length + n_lag))/2+0.5)
+  
+  # simulate
+  data = NULL
+  
+  for (i in 1:n) {
+    # speed profile
+    phi = sin(seq(0, nCycles[i] * pi, length.out = length) + shifts[i])
+    # trend
+    if (i == 1) {
+      trend = rep(0, length) + c(rep(0, length*4/5),
+                                 seq(0, shock, length.out = length/20),
+                                 seq(shock, 0, length.out = length/20),
+                                 rep(0, length/5-length/10))
+    }else{
+      trend = rep(0, length)
+    }
+    y = NULL
+    ylag = 1
+    for (j in 1:length) {
+      yt = trend[j] + beta*ylag + phi[j]*x[j + n_lags[i]] +
+        (1 - phi[j])*x[j] + 
+        rnorm(n = 1, mean = noise_mean, sd = noise_sd)
+      y <- c(y, yt)
+      ylag = yt
+    }
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y,
+                            value_raw = y))
+  }
+  return(data)
+}
+
+
 run_simul = function(data, 
                      start_time = 1,
                      end_time = 100,
@@ -97,11 +159,11 @@ run_simul = function(data,
                      ma_na = "original",
                      step_pattern_range = list(
                        # symmetricP0 = dtw::symmetricP0, # too bumpy
-                       symmetricP05 = dtw::symmetricP05,
+                       # symmetricP05 = dtw::symmetricP05,
                        symmetricP1 = dtw::symmetricP1,
                        symmetricP2 = dtw::symmetricP2,
                        # asymmetricP0 = dtw::asymmetricP0, # too bumpy
-                       asymmetricP05 = dtw::asymmetricP05,
+                       # asymmetricP05 = dtw::asymmetricP05,
                        asymmetricP1 = dtw::asymmetricP1,
                        asymmetricP2 = dtw::asymmetricP2,
                        # typeIc = dtw::typeIc,

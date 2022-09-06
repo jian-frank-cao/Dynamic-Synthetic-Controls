@@ -17,43 +17,54 @@ set.seed(20220407)
 
 ## Data Simulation -------------------------------------------------------------
 n_simulation = 1000
-length = 1000
+length = 100
 n = 5
 
 # generate sobol sequence
-sobol_seq = qrng::sobol(n_simulation*1, d = n - 1, randomize = "Owen",
+sobol_seq = qrng::sobol(n_simulation*3, d = n - 1, randomize = "Owen",
                         seed = 20220401, skip = 100)
-rnd_speeds = cbind(rep(0.5, n_simulation), sobol_seq*0.5 + 0.1)
+rnd_nCycles = cbind(rep(0.9, n_simulation),
+                    sobol_seq[1:n_simulation,])
+rnd_shift = cbind(rep(0.9, n_simulation),
+                  sobol_seq[(n_simulation + 1):(2*n_simulation),])
+rnd_lag = cbind(rep(0.9, n_simulation),
+                sobol_seq[(2*n_simulation + 1):(3*n_simulation),])
 
 # simulate
 data_list = NULL
 for (i in 1:n_simulation) {
-  data_list[[i]] = SimData_ShapeSpeed(n = n,
-                                      length = length,
-                                      rnd_speed = rnd_speeds[i,],
-                                      n_SMA = 1,
-                                      ar_x = 0.9,
-                                      weight_speed = TRUE,
-                                      speed_upper = 1,
-                                      speed_lower = 0.5,
-                                      t_treat = 800,
-                                      shock = 50)
+  data_list[[i]] = SimData_Lags(n = n,
+                                length = length,
+                                rnd_nCycles = rnd_nCycles[i,],
+                                rnd_shift = rnd_shift[i,],
+                                rnd_lag = rnd_lag[i,],
+                                nCycles_min = 6,
+                                nCycles_max = 12,
+                                noise_mean = 0,
+                                noise_sd = 0.01,
+                                n_lag_min = 5,
+                                n_lag_max = 15,
+                                extra_x = 20,
+                                beta = 0.9,
+                                ar_x = 0.9,
+                                t_treat = 80,
+                                shock = 50)
 }
 
-data_list[[339]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[169]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
-  geom_vline(xintercept = 800, linetype="dashed")
+  geom_vline(xintercept = 80, linetype="dashed")
 
-saveRDS(data_list, "./data/simul_data_list_0829.Rds")
+saveRDS(data_list, "./data/simul_data_list_0906.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0829.Rds")
+data_list = readRDS("./data/simul_data_list_0906.Rds")
 start_time = 1
-end_time = 1000
-treat_time = 800
-dtw1_time = 900
-n_mse = 100
+end_time = 100
+treat_time = 80
+dtw1_time = 90
+n_mse = 10
 k = 15
 dist_quantile = 0.95
 n_IQR = 3
