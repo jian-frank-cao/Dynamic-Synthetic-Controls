@@ -42,6 +42,11 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
   # partition warping path W
   W_a = W[1:cutoff, 1:t_treat]
   
+  # cut x
+  x_pre = x_bak[1:cutoff]
+  # x_post = x_bak[-(1:(cutoff - k + 2))]
+  x_post = x_bak[-(1:(cutoff - 1))]
+  
   return(list(x = x_bak,
               y = y_bak,
               k = k,
@@ -50,7 +55,9 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
               alignment = alignment,
               wr = wr,
               W_a = W_a,
-              cutoff = cutoff))
+              cutoff = cutoff,
+              x_pre = x_pre,
+              x_post = x_post))
 }
 
 
@@ -167,7 +174,7 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                       ma = 3, ma_na = "original",
                       dist_quantile = 1,
                       type_dtw1 = "fixed",
-                      n_IQR = 3, n_burn = 3,
+                      n_IQR = 3,
                       n_q = 1, n_r = 1, 
                       step.pattern1 = dtw::symmetricP2,
                       step.pattern2 = dtw::asymmetricP2,
@@ -177,13 +184,10 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
                          type_dtw1 = type_dtw1,
                          normalize_method, 
                          step.pattern1, plot_figures, ...)
-  
-  # cut x
-  n_x = length(x)
-  cutoff = res_1stDTW$cutoff
-  x_pre = x[1:cutoff]
-  x_post = x[(cutoff - n_burn):n_x]
+  x_pre = res_1stDTW$x_pre
+  x_post = res_1stDTW$x_post
   W_a = res_1stDTW$W_a
+  cutoff = res_1stDTW$cutoff
   
   # compute weight a
   weight_a_o = warping2weight(W_a)
@@ -198,21 +202,20 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   }
   
   # 2nd dtw
-  res_2ndDTW = second_dtw(x_post, x_pre, weight_a, k,
-                          normalize_method = normalize_method,
+  res_2ndDTW = second_dtw(x_post, x_pre, 
+                          weight_a, k, normalize_method,
                           dist_quantile = dist_quantile,
                           n_IQR = n_IQR,
-                          n_q = n_q, n_r = n_r,
-                          step.pattern = step.pattern2, ...)
-  avg_weight = res_2ndDTW$avg_weight[(n_burn + 1):length(res_2ndDTW$avg_weight)]
-  
+                          n_q, n_r, step.pattern = step.pattern2, ...)
+  # avg_weight = res_2ndDTW$avg_weight[-(1:(k - 3))]
+  avg_weight = res_2ndDTW$avg_weight
+
   return(list(y = y,
               x = x,
               W_a = W_a,
               weight_a = weight_a,
               weight_stacked = res_2ndDTW$weight_stacked,
               avg_weight = avg_weight,
-              n_burn = n_burn,
               t_treat = t_treat,
               cutoff = cutoff))
 }

@@ -151,10 +151,19 @@ SimData_Lags = function(n = 3,
 run_simul = function(data, 
                      start_time = 1,
                      end_time = 100,
-                     t_treat = 80,
-                     width_range = (1:8)*2+3,
+                     treat_time = 80,
+                     width_range = (1:9)*2+3,
                      k_range = 4:12,
                      dtw1_range = 90,
+                     dependent = "A",
+                     dependent_id = 1,
+                     type_dtw1 = "open-end",
+                     n_mse = 10,
+                     n_IQR = 3,
+                     step.pattern2 = dtw::asymmetricP2,
+                     dist_quantile = 0.95,
+                     plot_figures = FALSE,
+                     legend_position = c(0.3, 0.3),
                      ma = 3,
                      ma_na = "original",
                      step_pattern_range = list(
@@ -176,43 +185,67 @@ run_simul = function(data,
                        # typeIId = dtw::typeIId, # jumps
                        mori2006 = dtw::mori2006
                      ),
-                     n_mse = 20
+                     predictors.origin = NULL,
+                     special.predictors.origin = list(list("value_raw", 70:79, c("mean")),
+                                                      list("value_raw", 60:69, c("mean")),
+                                                      list("value_raw", 50:59, c("mean"))),
+                     time.predictors.prior.origin = 1:79,
+                     time.optimize.ssr.origin = 1:79,
+                     predictors.new = NULL,
+                     special.predictors.new = list(list("value_warped", 70:79, c("mean")),
+                                                   list("value_warped", 60:69, c("mean")),
+                                                   list("value_warped", 50:59, c("mean"))),
+                     time.predictors.prior.new = 1:79,
+                     time.optimize.ssr.new = 1:79
 ){
-  # grid search
-  grid_search = expand.grid(width_range, k_range,
-                            names(step_pattern_range)) %>% 
+  # grid
+  res_grid = expand.grid(width_range, k_range,
+                         names(step_pattern_range)) %>% 
     `colnames<-`(c("width", "k", "step_pattern")) %>% 
-    mutate(mse_original = NA_real_,
-           mse_new = NA_real_,
-           mse_ratio = NA_real_)
+    mutate(mse_pre_original = NA_real_,
+           mse_pre_new = NA_real_,
+           mse_post_original = NA_real_,
+           mse_post_new = NA_real_,
+           pos_ratio = NA_real_,
+           t_test = NA_real_)
   grid_search = grid_search %>% 
     split(., seq(nrow(grid_search)))
   
+  # search
   result = grid_search %>% 
     future_map(
       ~{
         search = .
         width = search$width
         k = search$k
-        step.pattern = step_pattern_range[[search$step_pattern]]
+        step.pattern1 = step_pattern_range[[search$step_pattern]]
         
         data = preprocessing(data, filter_width = width)
         
         res = SimDesign::quiet(compare_methods(data = data,
                                                start_time = start_time,
                                                end_time = end_time,
-                                               treat_time = t_treat,
+                                               treat_time = treat_time,
                                                dtw1_time = dtw1_time,
-                                               dependent = "A",
-                                               dependent_id = 1,
-                                               normalize_method = "t",
+                                               dependent = dependent,
+                                               dependent_id = dependent_id,
+                                               type_dtw1 = type_dtw1,
+                                               n_mse = n_mse,
                                                k = k,
-                                               ma = ma,
-                                               ma_na = ma_na,
-                                               synth_fun = "simulation",
-                                               filter_width = width,
-                                               plot_figures = FALSE,
-                                               step.pattern = step.pattern))
+                                               n_IQR = n_IQR,
+                                               dist_quantile = dist_quantile,
+                                               plot_figures = plot_figures,
+                                               step.pattern1 = step.pattern1,
+                                               step.pattern2 = step.pattern2,
+                                               predictors.origin = predictors.origin,
+                                               special.predictors.origin = special.predictors.origin,
+                                               time.predictors.prior.origin = time.predictors.prior.origin,
+                                               time.optimize.ssr.origin = time.optimize.ssr.origin,
+                                               predictors.new = predictors.new,
+                                               special.predictors.new = special.predictors.new,
+                                               time.predictors.prior.new = time.predictors.prior.new,
+                                               time.optimize.ssr.new = time.optimize.ssr.new,
+                                               legend_position = legend_position))
         
         synth_original = res$synth_origin$synthetic
         synth_new = res$synth_new$synthetic

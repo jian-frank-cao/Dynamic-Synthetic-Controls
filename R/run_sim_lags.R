@@ -51,15 +51,50 @@ for (i in 1:n_simulation) {
                                 shock = 50)
 }
 
-data_list[[169]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[694]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 80, linetype="dashed")
 
-saveRDS(data_list, "./data/simul_data_list_0906.Rds")
+saveRDS(data_list, "./data/simul_data_list_0907.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0906.Rds")
+data_list = readRDS("./data/simul_data_list_0907.Rds")
+
+# search grid
+width_range = (1:9)*2+3
+k_range = 4:10
+step_pattern_range = list(
+  # symmetricP0 = dtw::symmetricP0, # too bumpy
+  # symmetricP05 = dtw::symmetricP05,
+  symmetricP1 = dtw::symmetricP1,
+  symmetricP2 = dtw::symmetricP2,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+  # asymmetricP05 = dtw::asymmetricP05,
+  asymmetricP1 = dtw::asymmetricP1,
+  asymmetricP2 = dtw::asymmetricP2,
+  typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
+  # typeIIc = dtw::typeIIc,  # jumps
+  # typeIIIc = dtw::typeIIIc, # jumps
+  # typeIVc = dtw::typeIVc,  # jumps
+  typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
+  # typeIId = dtw::typeIId, # jumps
+  mori2006 = dtw::mori2006
+)
+
+res_grid = expand.grid(width_range, k_range,
+                       names(step_pattern_range)) %>% 
+  `colnames<-`(c("width", "k", "step_pattern")) %>% 
+  mutate(mse_pre_original = NA_real_,
+         mse_pre_new = NA_real_,
+         mse_post_original = NA_real_,
+         mse_post_new = NA_real_,
+         pos_ratio = NA_real_,
+         t_test = NA_real_)
+
+# parameters
 start_time = 1
 end_time = 100
 treat_time = 80
@@ -72,6 +107,17 @@ plot_figures = FALSE
 step.pattern1 = dtw::symmetricP2
 step.pattern2 = dtw::asymmetricP2
 legend_position = c(0.3, 0.8)
+
+# search start
+for (i in 1:length(data_list)) {
+  data = data_list[[i]]
+  res = res_grid
+  
+}
+
+
+
+
 
 result = data_list[1:100] %>% 
   future_map(
