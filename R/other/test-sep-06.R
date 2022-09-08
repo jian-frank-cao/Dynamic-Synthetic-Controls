@@ -37,3 +37,5 @@ print(paste0("t_treat=", t_treat))
 print(paste0("normalize_method=", normalize_method))
 print(step.pattern)
 print(paste0("plot_figures=", plot_figures))
+
+

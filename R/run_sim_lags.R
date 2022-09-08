@@ -61,9 +61,40 @@ saveRDS(data_list, "./data/simul_data_list_0907.Rds")
 ## Run -------------------------------------------------------------------------
 data_list = readRDS("./data/simul_data_list_0907.Rds")
 
-# search grid
+# parameters
+start_time = 1
+end_time = 100
+treat_time = 80
+dtw1_time = 90
+dependent = "A"
+dependent_id = 1
+dtw1_method = "open-end"
+n_mse = 10
+n_IQR = 3
+n_burn = 3
+normalize_method = "t"
+step.pattern2 = dtw::asymmetricP2
+dist_quantile = 0.95
+plot_figures = FALSE
+legend_position = c(0.3, 0.3)
+ma = 3
+ma_na = "original"
+predictors.origin = NULL
+special.predictors.origin = list(list("value_raw", 70:79, c("mean")),
+                                 list("value_raw", 60:69, c("mean")),
+                                 list("value_raw", 50:59, c("mean")))
+time.predictors.prior.origin = 1:79
+time.optimize.ssr.origin = 1:79
+predictors.new = NULL
+special.predictors.new = list(list("value_warped", 70:79, c("mean")),
+                              list("value_warped", 60:69, c("mean")),
+                              list("value_warped", 50:59, c("mean")))
+time.predictors.prior.new = 1:79
+time.optimize.ssr.new = 1:79
+
+# grid
 width_range = (1:9)*2+3
-k_range = 4:10
+k_range = 4:12
 step_pattern_range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
@@ -73,100 +104,58 @@ step_pattern_range = list(
   # asymmetricP05 = dtw::asymmetricP05,
   asymmetricP1 = dtw::asymmetricP1,
   asymmetricP2 = dtw::asymmetricP2,
-  typeIc = dtw::typeIc,
-  # typeIcs = dtw::typeIcs,
+  # typeIc = dtw::typeIc,
+  typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  typeId = dtw::typeId,
-  # typeIds = dtw::typeIds,
+  # typeId = dtw::typeId,
+  typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
   mori2006 = dtw::mori2006
 )
 
-res_grid = expand.grid(width_range, k_range,
-                       names(step_pattern_range)) %>% 
-  `colnames<-`(c("width", "k", "step_pattern")) %>% 
-  mutate(mse_pre_original = NA_real_,
-         mse_pre_new = NA_real_,
-         mse_post_original = NA_real_,
-         mse_post_new = NA_real_,
-         pos_ratio = NA_real_,
-         t_test = NA_real_)
-
-# parameters
-start_time = 1
-end_time = 100
-treat_time = 80
-dtw1_time = 90
-n_mse = 10
-k = 15
-dist_quantile = 0.95
-n_IQR = 3
-plot_figures = FALSE
-step.pattern1 = dtw::symmetricP2
-step.pattern2 = dtw::asymmetricP2
-legend_position = c(0.3, 0.8)
 
 # search start
-for (i in 1:length(data_list)) {
+result = NULL
+
+for (i in 1:100) {
+  cat(paste0("Simulation data set ", i, "......"))
   data = data_list[[i]]
-  res = res_grid
-  
+  result[[i]] = SimDesign::quiet(run_simul(data = data,
+                                           start_time = start_time,
+                                           end_time = end_time,
+                                           treat_time = treat_time,
+                                           dtw1_time = dtw1_time,
+                                           dependent = dependent,
+                                           dependent_id = dependent_id,
+                                           width_range = width_range,
+                                           k_range = k_range,
+                                           step_pattern_range = step_pattern_range,
+                                           dtw1_method = dtw1_method,
+                                           n_mse = n_mse,
+                                           n_IQR = n_IQR,
+                                           n_burn = n_burn,
+                                           dist_quantile = dist_quantile,
+                                           normalize_method = normalize_method,
+                                           plot_figures = plot_figures,
+                                           ma = ma,
+                                           ma_na = ma_na,
+                                           step.pattern2 = step.pattern2,
+                                           predictors.origin = predictors.origin,
+                                           special.predictors.origin = special.predictors.origin,
+                                           time.predictors.prior.origin = time.predictors.prior.origin,
+                                           time.optimize.ssr.origin = time.optimize.ssr.origin,
+                                           predictors.new = predictors.new,
+                                           special.predictors.new = special.predictors.new,
+                                           time.predictors.prior.new = time.predictors.prior.new,
+                                           time.optimize.ssr.new = time.optimize.ssr.new,
+                                           legend_position = legend_position))
+  cat("Done.\n")
 }
-
-
-
-
-
-result = data_list[1:100] %>% 
-  future_map(
-    ~{
-      data = .
-      res = SimDesign::quiet(compare_methods(data = data,
-                            start_time = start_time,
-                            end_time = end_time,
-                            treat_time = treat_time,
-                            dtw1_time = dtw1_time,
-                            dependent = "A",
-                            dependent_id = 1,
-                            n_mse = n_mse,
-                            k = k,
-                            n_IQR = n_IQR,
-                            dist_quantile = dist_quantile,
-                            plot_figures = plot_figures,
-                            step.pattern1 = step.pattern1,
-                            step.pattern2 = step.pattern2,
-                            predictors.origin = NULL,
-                            special.predictors.origin = list(list("value_raw", 700:799, c("mean"))),
-                            time.predictors.prior.origin = 1:799,
-                            time.optimize.ssr.origin = 1:799,
-                            predictors.new = NULL,
-                            special.predictors.new = list(list("value_warped", 700:799, c("mean"))),
-                            time.predictors.prior.new = 1:799,
-                            time.optimize.ssr.new = 1:799,
-                            legend_position = legend_position))
-      
-      synth_original = res$synth_origin$synthetic
-      synth_new = res$synth_new$synthetic
-      value_raw = res$synth_origin$value
-      
-      mse_original = mean((synth_original - value_raw)[1:(treat_time - 1)]^2, rm.na = T)
-      mse_new = mean((synth_new - value_raw)[1:(treat_time - 1)]^2, rm.na = T)
-      
-      mse_ratio = mse_new/mse_original
-
-      list(mse_original = mse_original,
-           mse_new = mse_new,
-           mse_ratio = mse_ratio,
-           synth_original = synth_original,
-           synth_new = synth_new,
-           value_raw = value_raw)
-    }
-  )
   
-saveRDS(result, "./data/res_sim_0831.Rds")
-# result = readRDS("./data/res_sim_0819.Rds")
+saveRDS(result, "./data/res_sim_0908.Rds")
+# result = readRDS("./data/res_sim_0908.Rds")
 
 ## Plot result -----------------------------------------------------------------
 # placebo test figure
