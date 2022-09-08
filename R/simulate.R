@@ -148,20 +148,26 @@ SimData_Lags = function(n = 3,
 }
 
 
+
+
+
+
 run_simul = function(data, 
                      start_time = 1,
                      end_time = 100,
                      treat_time = 80,
                      width_range = (1:9)*2+3,
                      k_range = 4:12,
-                     dtw1_range = 90,
+                     dtw1_time = 90,
                      dependent = "A",
                      dependent_id = 1,
-                     type_dtw1 = "open-end",
+                     dtw1_method = "open-end",
                      n_mse = 10,
                      n_IQR = 3,
+                     n_burn = 3,
+                     normalize_method = "t",
                      step.pattern2 = dtw::asymmetricP2,
-                     dist_quantile = 0.95,
+                     dist_quantile = 1,
                      plot_figures = FALSE,
                      legend_position = c(0.3, 0.3),
                      ma = 3,
@@ -199,7 +205,7 @@ run_simul = function(data,
                      time.optimize.ssr.new = 1:79
 ){
   # grid
-  res_grid = expand.grid(width_range, k_range,
+  grid_search = expand.grid(width_range, k_range,
                          names(step_pattern_range)) %>% 
     `colnames<-`(c("width", "k", "step_pattern")) %>% 
     mutate(mse_pre_original = NA_real_,
@@ -221,7 +227,7 @@ run_simul = function(data,
         step.pattern1 = step_pattern_range[[search$step_pattern]]
         
         data = preprocessing(data, filter_width = width)
-        
+
         res = SimDesign::quiet(compare_methods(data = data,
                                                start_time = start_time,
                                                end_time = end_time,
@@ -229,10 +235,13 @@ run_simul = function(data,
                                                dtw1_time = dtw1_time,
                                                dependent = dependent,
                                                dependent_id = dependent_id,
-                                               type_dtw1 = type_dtw1,
+                                               dtw1_method = dtw1_method,
                                                n_mse = n_mse,
                                                k = k,
                                                n_IQR = n_IQR,
+                                               n_burn = n_burn,
+                                               ma = ma,
+                                               ma_na = ma_na,
                                                dist_quantile = dist_quantile,
                                                plot_figures = plot_figures,
                                                step.pattern1 = step.pattern1,
@@ -251,8 +260,11 @@ run_simul = function(data,
         synth_new = res$synth_new$synthetic
         value_raw = res$synth_origin$value
         
-        mse_original = mean((synth_original - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
-        mse_new = mean((synth_new - value_raw)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+        gap_original = synth_original - value_raw
+        gap_new = synth_new - value_raw
+        
+        mse_original = mean((gap_original)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+        mse_new = mean((gap_new)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
         
         mse_ratio = mse_new/mse_original
         
@@ -261,14 +273,18 @@ run_simul = function(data,
                          k = k,
                          step_pattern = search$step_pattern,
                          dtw1_time = dtw1_time,
-                         mse_original = mse_original,
-                         mse_new = mse_new,
+                         mse_pre_original = res$mse$mse1_pre,
+                         mse_pre_new = res$mse$mse2_pre,
+                         mse_post_original = mse_original,
+                         mse_post_new = mse_new,
                          mse_ratio = mse_ratio)
         
         list(mse = mse,
              synth_original = synth_original,
              synth_new = synth_new,
-             value_raw = value_raw)
+             value_raw = value_raw,
+             gap_original = gap_original,
+             gap_new = gap_new)
       }
     )
   

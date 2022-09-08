@@ -6,10 +6,11 @@ compare_methods = function(data,
                            dtw1_time,
                            dependent,
                            dependent_id,
-                           type_dtw1 = "fixed",
+                           dtw1_method = "fixed",
                            filter_width = 5,
-                           n_mse = 100,
-                           k = 15,
+                           k = 5,
+                           n_mse = 10,
+                           n_IQR = 3,
                            n_burn = 3,
                            dist_quantile = 1,
                            ma = 3,
@@ -62,22 +63,20 @@ compare_methods = function(data,
     x_raw = item$value_raw
     y = y_processed
     
-    res = TwoStepDTW(x, y, t_treat, k, n_dtw1,
+    res = TwoStepDTW(x = x, y = y, k = k,
+                     n_dtw1 = n_dtw1, t_treat = t_treat, 
                      normalize_method = normalize_method,
-                     ma = ma, ma_na = ma_na,
-                     n_burn = n_burn,
-                     type_dtw1 = type_dtw1,
-                     dist_quantile = dist_quantile,
+                     dtw1_method = dtw1_method,
                      step.pattern1 = step.pattern1, 
+                     plot_figures = plot_figures,
+                     n_burn = n_burn,
+                     ma = ma, ma_na = ma_na,
                      step.pattern2 = step.pattern2, 
-                     plot_figures = plot_figures, ...)
+                     dist_quantile = dist_quantile,
+                     n_IQR = n_IQR, ...)
     
-    # x_warped = c(warp_using_weight(x_raw[1:res$cutoff], res$weight_a)[1:t_treat],
-    #              warp_using_weight(x_raw[-(1:(res$cutoff - 1))],
-    #                                res$avg_weight)[-1])
     x_warped = c(warp_using_weight(x_raw[1:res$cutoff], res$weight_a)[1:t_treat],
                 warp_using_weight(x_raw[res$cutoff:length(x)], res$avg_weight)[-1])
-    
     
     if (plot_figures) {
       df = data.frame(time = 1:length(x_raw),
@@ -256,6 +255,8 @@ preprocessing = function(data,
 }
 
 
+
+
 # compare methods for all units
 run_all_units = function(data,
                          start_time,
@@ -270,17 +271,21 @@ run_all_units = function(data,
                          special.predictors.new,
                          time.predictors.prior.new,
                          time.optimize.ssr.new,
-                         type_dtw1 = "fixed",
+                         filter_width = NULL,
+                         k = 6,
+                         dtw1_method = "fixed",
                          plot_figures = FALSE, 
                          normalize_method = "t",
                          step.pattern1 = dtw::symmetricP2,
                          step.pattern2 = dtw::asymmetricP2,
                          legend_position = c(0.3, 0.3),
-                         filter_width = NULL,
                          n_mse = 10,
-                         k = 6,
                          n_IQR = 3,
-                         dist_quantile = 0.95,
+                         n_burn = 3,
+                         dist_quantile = 1,
+                         ma = 3,
+                         ma_na = "original",
+                         margin = 10,
                          detail = FALSE
 ){
   # prepare data
@@ -303,11 +308,16 @@ run_all_units = function(data,
                               dtw1_time = dtw1_time,
                               dependent = dependent,
                               dependent_id = dependent_id,
-                              type_dtw1 = type_dtw1,
-                              n_mse = n_mse,
+                              dtw1_method = dtw1_method,
+                              filter_width = filter_width,
                               k = k,
+                              n_mse = n_mse,
                               n_IQR = n_IQR,
+                              n_burn = n_burn,
                               dist_quantile = dist_quantile,
+                              ma = ma,
+                              ma_na = ma_na,
+                              normalize_method = normalize_method,
                               plot_figures = plot_figures,
                               step.pattern1 = step.pattern1,
                               step.pattern2 = step.pattern2,

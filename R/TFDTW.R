@@ -2,7 +2,7 @@
 # 1st dtw
 first_dtw = function(x, y, k, n_dtw1, t_treat,
                      normalize_method = "t",
-                     type_dtw1 = "fixed",
+                     dtw1_method = "fixed",
                      step.pattern = dtw::symmetricP2,
                      plot_figures = FALSE, ...){
   # backup
@@ -13,11 +13,11 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
   y = normalize(y_bak[1:t_treat], normalize_method)
   x = normalize(x_bak[1:n_dtw1], normalize_method, x_bak[1:t_treat])
   
-  if (type_dtw1 == "fixed") {
+  if (dtw1_method == "fixed") {
     alignment = dtw::dtw(y, x, keep = TRUE,
                          step.pattern = step.pattern,
                          open.end = FALSE, ...)
-  }else if(type_dtw1 == "open-end"){
+  }else if(dtw1_method == "open-end"){
     # check if x is too short
     x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
     while(x_too_short & n_dtw1 < length(x_bak)){
@@ -55,13 +55,13 @@ first_dtw = function(x, y, k, n_dtw1, t_treat,
 
 
 # 2nd dtw
-second_dtw = function(x_post, x_pre,
-                      weight_a, k, normalize_method = "t",
-                      dist_quantile = 1,
-                      n_IQR = 3,
-                      n_q = 1, n_r = 1,
+second_dtw = function(x_post, x_pre, k, weight_a, 
+                      normalize_method = "t",
                       default_margin = 3,
-                      step.pattern = dtw::asymmetricP2, ...){
+                      n_q = 1, n_r = 1,
+                      step.pattern = dtw::asymmetricP2,
+                      dist_quantile = 1,
+                      n_IQR = 3, ...){
   n_pre = length(x_pre)
   n_post = length(x_post)
  
@@ -162,19 +162,26 @@ second_dtw = function(x_post, x_pre,
 
 
 # Two Step DTW
-TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
+TwoStepDTW = function(x, y, k, n_dtw1, t_treat, 
                       normalize_method = "t",
-                      ma = 3, ma_na = "original",
-                      dist_quantile = 1,
-                      type_dtw1 = "fixed",
-                      n_IQR = 3, n_burn = 3,
-                      n_q = 1, n_r = 1, 
+                      dtw1_method = "fixed",
                       step.pattern1 = dtw::symmetricP2,
+                      plot_figures = FALSE, n_burn = 3,
+                      ma = 3, ma_na = "original",
+                      n_q = 1, n_r = 1, 
                       step.pattern2 = dtw::asymmetricP2,
-                      plot_figures = FALSE, ...){
+                      dist_quantile = 1,
+                      n_IQR = 3, ...){
   # 1st dtw
+  # res_1stDTW = first_dtw(x = x, y = y, k = k,
+  #                        n_dtw1 = n_dtw1, t_treat = t_treat,
+  #                        normalize_method = normalize_method, 
+  #                        dtw1_method = dtw1_method,
+  #                        step.pattern1 = step.pattern1,
+  #                        plot_figures = plot_figures, ...)
+  
   res_1stDTW = first_dtw(x, y, k, n_dtw1, t_treat,
-                         type_dtw1 = type_dtw1,
+                         dtw1_method = dtw1_method,
                          normalize_method, 
                          step.pattern1, plot_figures, ...)
   
@@ -198,12 +205,13 @@ TwoStepDTW = function(x, y, t_treat, k, n_dtw1,
   }
   
   # 2nd dtw
-  res_2ndDTW = second_dtw(x_post, x_pre, weight_a, k,
+  res_2ndDTW = second_dtw(x_post = x_post, x_pre = x_pre,
+                          k = k, weight_a = weight_a, 
                           normalize_method = normalize_method,
-                          dist_quantile = dist_quantile,
-                          n_IQR = n_IQR,
                           n_q = n_q, n_r = n_r,
-                          step.pattern = step.pattern2, ...)
+                          step.pattern = step.pattern2,
+                          dist_quantile = dist_quantile,
+                          n_IQR = n_IQR, ...)
   avg_weight = res_2ndDTW$avg_weight[(n_burn + 1):length(res_2ndDTW$avg_weight)]
   
   return(list(y = y,
