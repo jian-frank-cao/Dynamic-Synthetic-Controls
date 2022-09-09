@@ -263,8 +263,8 @@ run_simul = function(data,
         gap_original = synth_original - value_raw
         gap_new = synth_new - value_raw
         
-        mse_original = mean((gap_original)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
-        mse_new = mean((gap_new)[t_treat:(t_treat + n_mse)]^2, rm.na = T)
+        mse_original = mean((gap_original)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+        mse_new = mean((gap_new)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
         
         mse_ratio = mse_new/mse_original
         

@@ -119,7 +119,7 @@ step_pattern_range = list(
 # search start
 result = NULL
 
-for (i in 1:100) {
+for (i in 32:100) {
   cat(paste0("Simulation data set ", i, "......"))
   data = data_list[[i]]
   result[[i]] = SimDesign::quiet(run_simul(data = data,
@@ -158,6 +158,24 @@ saveRDS(result, "./data/res_sim_0908.Rds")
 # result = readRDS("./data/res_sim_0908.Rds")
 
 ## Plot result -----------------------------------------------------------------
+length = 100
+shock = 50
+treatment = c(rep(0, length*4/5),
+              seq(0, shock, length.out = length/20),
+              seq(shock, 0, length.out = length/20),
+              rep(0, length/5-length/10))
+
+causal_effect = NULL
+causal_effect_lag = 0
+beta = 0.9
+treat_time = 80
+n_mse = 10
+for (j in 1:length) {
+  temp = treatment[j] + beta*causal_effect_lag
+  causal_effect <- c(causal_effect, temp)
+  causal_effect_lag = temp
+}
+
 # placebo test figure
 df = future_map2(
   result,
@@ -165,20 +183,39 @@ df = future_map2(
   ~{
     item = .x
     id = .y
-    gap_origin =  item[["value_raw"]] - item[["synth_original"]]
-    gap_new = item[["value_raw"]] - item[["synth_new"]]
-    data.frame(time = 1:length(gap_new),
-               gap_origin = gap_origin,
-               gap_new = gap_new,
-               id = id)
+    mse = lapply(item, "[[", "mse") %>% do.call("rbind", .)
+    min_ind = which(mse$mse_pre_new == min(mse$mse_pre_new, na.rm = T))[1]
+    # min_ind = 82
+    # gap_origin =  -item[[min_ind]][["gap_original"]]
+    # gap_new = -item[[min_ind]][["gap_new"]]
+    # data.frame(time = 1:length(gap_new),
+    #            gap_origin = gap_origin,
+    #            gap_new = gap_new,
+    #            id = id)
+    
+    temp = mse[min_ind,]
+    synth_original = item[[min_ind]][["synth_original"]]
+    synth_new = item[[min_ind]][["synth_new"]]
+    value_raw = item[[min_ind]][["value_raw"]]
+    
+    diff_original = value_raw - synth_original - causal_effect
+    diff_new = value_raw - synth_new - causal_effect
+    
+    mse_original = mean((diff_original)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+    mse_new = mean((diff_new)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+    temp$mse_original = mse_original
+    temp$mse_new = mse_new
+    temp
   }
 ) %>% 
   do.call("rbind", .)
 
+df = df %>% mutate(log_ratio = log(mse_new/mse_original))
+t.test(df$log_ratio)
 
-treatment = c(rep(0, 800),
-              seq(0, 50, length.out = 100),
-              rep(50, 100))
+treatment = c(rep(0, 80),
+              seq(0, 50, length.out = 10),
+              rep(50, 10))
 
 percent = df %>%
   group_by(time) %>% 
@@ -202,7 +239,7 @@ fig = df %>%
   geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
   geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
   geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
-  geom_vline(xintercept = 800, linetype="dashed") +
+  geom_vline(xintercept = 80, linetype="dashed") +
   geom_hline(yintercept = 0, linetype="dashed") +
   xlab("Time") +
   ylab("Synthetic Control - True Value") +
