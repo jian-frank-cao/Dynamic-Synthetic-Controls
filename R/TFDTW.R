@@ -165,7 +165,7 @@ second_dtw = function(x.post, x.pre, k, weight.a,
 
 
 # Two Step DTW
-TwoStepDTW = function(x, y, k, buffer, t.treat, 
+TFDTW = function(x, y, k, t.treat, buffer, 
                       norm.method = "t",
                       match.method = "fixed",
                       step.pattern1 = dtw::symmetricP2,
@@ -175,7 +175,8 @@ TwoStepDTW = function(x, y, k, buffer, t.treat,
                       dist.quant = 1, n.IQR = 3, ...){
   # 1st dtw
   res.1stDTW = first.dtw(x = x, y = y, k = k,
-                         t.treat = t.treat, buffer = buffer, 
+                         t.treat = t.treat, 
+                         buffer = buffer, 
                          norm.method = norm.method, 
                          match.method = match.method,
                          step.pattern = step.pattern1,
