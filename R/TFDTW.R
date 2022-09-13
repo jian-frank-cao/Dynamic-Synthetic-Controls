@@ -5,13 +5,13 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
                      step.pattern = dtw::symmetricP2,
                      plot.figures = FALSE){
   # backup
-  y_bak = y
-  x_bak = x
+  y.bak = y
+  x.bak = x
   
   # normalize
-  y = normalize(y_bak[1:t.treat], norm.method)
-  x = normalize(x_bak[1:(t.treat + buffer)],
-                norm.method, x_bak[1:t.treat])
+  y = normalize(y.bak[1:t.treat], norm.method)
+  x = normalize(x.bak[1:(t.treat + buffer)],
+                norm.method, x.bak[1:t.treat])
   
   if (match.method == "fixed") {
     alignment = dtw::dtw(y, x, keep = TRUE,
@@ -19,12 +19,12 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
                          open.end = FALSE)
   }else if(match.method == "open.end"){
     # check if x is too short
-    x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
-    while(x_too_short & (t.treat + buffer) < length(x_bak)){
+    x.too.short = RefTooShort(y, x, step.pattern = step.pattern)
+    while(x.too.short & (t.treat + buffer) < length(x.bak)){
       buffer = buffer + 1
-      x = normalize(x_bak[1:(t.treat + buffer)],
-                    norm.method, x_bak[1:t.treat])
-      x_too_short = ref_too_short(y, x, step.pattern = step.pattern)
+      x = normalize(x.bak[1:(t.treat + buffer)],
+                    norm.method, x.bak[1:t.treat])
+      x.too.short = RefTooShort(y, x, step.pattern = step.pattern)
     }
     
     # dtw
@@ -43,7 +43,7 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
   # partition warping path W
   W.a = W[1:cutoff, 1:t.treat]
   
-  return(list(x = x_bak, y = y_bak, k = k,
+  return(list(x = x.bak, y = y.bak, k = k,
               t.treat = t.treat,
               buffer = buffer,
               step.pattern = step.pattern,
@@ -54,7 +54,7 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
 
 
 # 2nd dtw
-second_dtw = function(x.post, x.pre, k, weight.a, 
+second.dtw = function(x.post, x.pre, k, weight.a, 
                       norm.method = "t",
                       default.margin = 3,
                       n.q = 1, n.r = 1,
@@ -86,8 +86,8 @@ second_dtw = function(x.post, x.pre, k, weight.a,
       R = x.pre[j:min(j + k + margin - 1, n.pre)]
       R = normalize(R, norm.method)
       # check if R is too short
-      R_too_short = ref_too_short(Q, R, step.pattern = step.pattern)
-      if (R_too_short) {
+      R.too.short = RefTooShort(Q, R, step.pattern = step.pattern)
+      if (R.too.short) {
         # check if the R can be extended
         if (j < n.pre - k - margin + 1) {
           margin = margin + 1
@@ -187,7 +187,7 @@ TFDTW = function(x, y, k, t.treat, buffer,
   W.a = res.1stDTW$W.a
   
   # compute weight a
-  weight.a.o = warping2weight(W.a)
+  weight.a.o = warp2weight(W.a)
   weight.a = as.numeric(stats::filter(weight.a.o, rep(1/ma, ma)))
   weight.a = zoo::na.locf(weight.a, na.rm = FALSE)
   if (ma.na == "one") {
@@ -199,7 +199,7 @@ TFDTW = function(x, y, k, t.treat, buffer,
   }
   
   # 2nd dtw
-  res.2ndDTW = second_dtw(x.post = x.post, x.pre = x.pre,
+  res.2ndDTW = second.dtw(x.post = x.post, x.pre = x.pre,
                           k = k, weight.a = weight.a, 
                           norm.method = norm.method,
                           step.pattern = step.pattern2,
