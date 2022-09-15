@@ -48,6 +48,7 @@ grid.search = function(filter.width.range, k.range, step.pattern.range,
       }
     )
   
+  return(results)
 }
 
 
