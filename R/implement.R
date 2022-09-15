@@ -114,7 +114,7 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
     mse.preT.raw = mean(gap.raw[1:(t.treat-1)]^2, na.rm = T),
     mse.preT.TFDTW = mean(gap.TFDTW[1:(t.treat-1)]^2, na.rm = T),
     mse.postT.raw = mean(gap.raw[(t.treat+1):(t.treat+n.mse)]^2, na.rm = T),
-    mse.postT.TFDTW = mean(gap.TFDTW[(t.treat+1):(t.treat+n.mse)]^2, na.rm = T),
+    mse.postT.TFDTW = mean(gap.TFDTW[(t.treat+1):(t.treat+n.mse)]^2, na.rm = T)
   )
   
   return(list(dependent = dependent, dependent.id = dependent.id,
@@ -123,14 +123,14 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
               res.synth.raw = res.synth.raw,
               res.synth.TFDTW = res.synth.TFDTW,
               gap.raw = gap.raw, gap.TFDTW = gap.TFDTW,
-              mse))
+              mse = mse))
 }
 
 
-TFDTW.synth.all.units = function(data,
-                                 target,
-                                 res.synth.raw.list,
+TFDTW.synth.all.units = function(data, target, 
                                  args.TFDTW.synth,
+                                 filter.width = NULL,
+                                 res.synth.raw.list = NULL,
                                  all.units.parallel = FALSE){
   # prepare data
   if (!is.null(filter.width)) {
@@ -156,7 +156,7 @@ TFDTW.synth.all.units = function(data,
         args.TFDTW.synth[["dependent"]] = dependent
         args.TFDTW.synth[["dependent.id"]] = dependent.id
         args.TFDTW.synth[["res.synth.raw"]] = res.synth.raw.list[[dependent]]
-        res = do.call(TFDTW.synth, args.TFDTW.synth)
+        do.call(TFDTW.synth, args.TFDTW.synth)
       }
     )
   
@@ -169,7 +169,7 @@ TFDTW.synth.all.units = function(data,
   
   # tests
   neg.ratio = sum(mse$log.ratio < 0)/nrow(mse)
-  p.value = t.test(mse$log_ratio)$p.value
+  p.value = t.test(mse$log.ratio)$p.value
   
   return(list(target = target,
               filter.width = filter.width,

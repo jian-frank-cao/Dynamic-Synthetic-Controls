@@ -1,9 +1,11 @@
 ## Functions -------------------------------------------------------------------
 # 1st dtw
-first.dtw = function(x, y, k, t.treat, buffer = 10, 
+first.dtw = function(x, y, t.treat, buffer = 10, 
                      norm.method = "t", match.method = "fixed",
                      step.pattern = dtw::symmetricP2,
-                     plot.figures = FALSE){
+                     window.type = "none",
+                     window.size = NULL,
+                     plot.figures = FALSE, ...){
   # backup
   y.bak = y
   x.bak = x
@@ -16,7 +18,9 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
   if (match.method == "fixed") {
     alignment = dtw::dtw(y, x, keep = TRUE,
                          step.pattern = step.pattern,
-                         open.end = FALSE)
+                         window.type = window.type,
+                         window.size = window.size,
+                         open.end = FALSE, ...)
   }else if(match.method == "open.end"){
     # check if x is too short
     x.too.short = RefTooShort(y, x, step.pattern = step.pattern)
@@ -30,7 +34,9 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
     # dtw
     alignment = dtw::dtw(y, x, keep = TRUE,
                          step.pattern = step.pattern,
-                         open.end = TRUE)
+                         window.type = window.type,
+                         window.size = window.size,
+                         open.end = TRUE, ...)
   }
   
   if (plot.figures) {
@@ -43,7 +49,7 @@ first.dtw = function(x, y, k, t.treat, buffer = 10,
   # partition warping path W
   W.a = W[1:cutoff, 1:t.treat]
   
-  return(list(x = x.bak, y = y.bak, k = k,
+  return(list(x = x.bak, y = y.bak,
               t.treat = t.treat,
               buffer = buffer,
               step.pattern = step.pattern,
@@ -59,7 +65,9 @@ second.dtw = function(x.post, x.pre, k, weight.a,
                       default.margin = 3,
                       n.q = 1, n.r = 1,
                       step.pattern = dtw::asymmetricP2,
-                      dist.quant = 1, n.IQR = 3){
+                      window.type = "none",
+                      window.size = NULL,
+                      dist.quant = 1, n.IQR = 3, ...){
   n.pre = length(x.pre)
   n.post = length(x.post)
  
@@ -101,7 +109,9 @@ second.dtw = function(x.post, x.pre, k, weight.a,
       # match Q and R
       alignment.qr = dtw::dtw(Q, R, open.end = TRUE,
                               step.pattern = step.pattern,
-                              distance.only = TRUE)
+                              window.type = window.type,
+                              window.size = window.size,
+                              distance.only = TRUE, ...)
       costs.qr = rbind(costs.qr,
                        data.frame(cost = alignment.qr$distance,
                                   j = j,
@@ -118,7 +128,9 @@ second.dtw = function(x.post, x.pre, k, weight.a,
     Rs = x.pre[j.opt:min(j.opt + k + margin.opt - 1, n.pre)]
     Rs = normalize(Rs, norm.method)
     alignment.qrs = dtw::dtw(Q, Rs, open.end = TRUE,
-                             step.pattern = step.pattern, ...)
+                             step.pattern = step.pattern,
+                             window.type = window.type,
+                             window.size = window.size, ...)
     W.pp.i = Matrix::sparseMatrix(alignment.qrs$index1,
                                   alignment.qrs$index2)
     
@@ -166,21 +178,34 @@ second.dtw = function(x.post, x.pre, k, weight.a,
 
 # Two Step DTW
 TFDTW = function(x, y, k, t.treat, buffer, 
-                      norm.method = "t",
-                      match.method = "fixed",
-                      step.pattern1 = dtw::symmetricP2,
-                      step.pattern2 = dtw::asymmetricP2,
-                      plot.figures = FALSE, n.burn = 3,
-                      ma = 3, ma.na = "original",
-                      dist.quant = 1, n.IQR = 3, ...){
+                 norm.method = "t",
+                 match.method = "fixed",
+                 step.pattern1 = dtw::symmetricP2,
+                 step.pattern2 = dtw::asymmetricP2,
+                 plot.figures = FALSE, n.burn = 3,
+                 ma = 3, ma.na = "original",
+                 dist.quant = 1, n.IQR = 3,
+                 window.type = "none",
+                 default.margin = 3,
+                 n.q = 1, n.r = 1, ...){
+  # window size
+  if (window.type == "sakoechiba") {
+    window.size1 = as.integer(t.treat/2)
+    window.size2 = as.integer(k/2)
+  }else{
+    window.size = NULL
+  }
+  
   # 1st dtw
-  res.1stDTW = first.dtw(x = x, y = y, k = k,
+  res.1stDTW = first.dtw(x = x, y = y,
                          t.treat = t.treat, 
                          buffer = buffer, 
                          norm.method = norm.method, 
                          match.method = match.method,
                          step.pattern = step.pattern1,
-                         plot.figures = plot.figures)
+                         window.type = window.type,
+                         window.size = window.size1,
+                         plot.figures = plot.figures, ...)
   cutoff = res.1stDTW$cutoff
   x.pre = x[1:cutoff]
   x.post = x[(cutoff - n.burn):length(x)]
@@ -204,7 +229,11 @@ TFDTW = function(x, y, k, t.treat, buffer,
                           norm.method = norm.method,
                           step.pattern = step.pattern2,
                           dist.quant = dist.quant,
-                          n.IQR = n.IQR, ...)
+                          n.IQR = n.IQR, 
+                          window.type = window.type,
+                          window.size = window.size2,
+                          default.margin = default.margin,
+                          n.q = n.q, n.r = n.r, ...)
   avg.weight = res.2ndDTW$avg.weight
   avg.weight = avg.weight[(n.burn + 1):length(avg.weight)]
   

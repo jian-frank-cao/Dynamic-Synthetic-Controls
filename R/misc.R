@@ -152,9 +152,13 @@ warpWITHpath = function(w, ts){
 
 # check if reference is too short in dtw
 RefTooShort = function(query, reference, 
-                       step.pattern = dtw::symmetricP2){
+                       step.pattern = dtw::symmetricP2,
+                       window.type = "none",
+                       window.size = NULL){
   alignment = tryCatch(dtw::dtw(reference, query,
                                 step.pattern = step.pattern,
+                                window.type = window.type,
+                                window.size = window.size,
                                 open.end = TRUE),
                        error = function(e) return(NULL))
   if (is.null(alignment)) {
@@ -233,8 +237,9 @@ plot.synth = function(res.synth.raw, res.synth.TFDTW,
   synth.TFDTW = res.synth.TFDTW$synthetic
   
   df = data.frame(time = rep(start.time:end.time, 5),
-                  unit = c(dependent, "avg.raw", "avg.TFDTW",
+                  unit = rep(c(dependent, "avg.raw", "avg.TFDTW",
                            "synth.raw", "synth.TFDTW"),
+                           each = length(value)),
                   value = c(value, avg.raw, avg.TFDTW,
                             synth.raw, synth.TFDTW))
   df$unit = factor(df$unit, levels = c(dependent, "avg.raw", "avg.TFDTW",

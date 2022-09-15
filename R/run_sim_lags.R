@@ -10,7 +10,7 @@ options(stringsAsFactors = FALSE)
 source("./R/misc.R")
 source("./R/TFDTW.R")
 source("./R/synth.R")
-source("./R/compare.R")
+source("./R/implement.R")
 source("./R/simulate.R")
 set.seed(20220407)
 
