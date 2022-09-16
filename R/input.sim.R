@@ -73,6 +73,15 @@ for (i in 1:5) {
   cat("Done.\n")
 }
 
+saveRDS(results, "./data/res_sim_0916.Rds")
+
+res = lapply(results[[2]], "[[", "neg.ratio") %>% do.call("c", .)
+
+ind = as.numeric(which(res == max(res)))
+
+p.values = lapply(results[[2]][ind], "[[", "p.value") %>% do.call("c", .)
+
+
 # # # check res.synth.raw.list
 # # res = res.synth.raw.list$E
 # # plot(ts(res$value))
