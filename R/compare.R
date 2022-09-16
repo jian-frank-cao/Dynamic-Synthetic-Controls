@@ -1,5 +1,5 @@
 ## Functions -------------------------------------------------------------------
-compare_methods = function(data,
+compare.methods = function(data,
                            start.time,
                            end.time,
                            treat.time,
@@ -11,7 +11,7 @@ compare_methods = function(data,
                            # k = 5,
                            args.TFDTW,
                            args.synth,
-                           n_mse = 10,
+                           n.mse = 10,
                            # n_IQR = 3,
                            # n_burn = 3,
                            # dist_quantile = 1,
@@ -37,7 +37,7 @@ compare_methods = function(data,
   
   # prepare data
   t.treat = (treat.time - start.time) + 1
-  n = (end.time - start.time) + 1
+  # n = (end.time - start.time) + 1
   # n_dtw1 = (dtw1_time - start.time) + 1
   
   y.raw = data %>% 
@@ -61,7 +61,7 @@ compare_methods = function(data,
     # x = item$value
     # x.raw = item$value_raw
     # y = y.processed
-    args.TFDTW[["x"]] = tem$value
+    args.TFDTW[["x"]] = item$value
     args.TFDTW[["y"]] = y.processed
     args.TFDTW[["t.treat"]] = t.treat
     args.TFDTW[["plot.figures"]] = plot.figures
@@ -80,8 +80,8 @@ compare_methods = function(data,
     res = do.call(TFDTW, args.TFDTW)
     
     x_warped = c(
-      warp_using_weight(x.raw[1:res$cutoff], res$weight_a)[1:t.treat],
-      warp_using_weight(x.raw[res$cutoff:length(x.raw)], res$avg_weight)[-1]
+      warpWITHweight(x.raw[1:res$cutoff], res$weight_a)[1:t.treat],
+      warpWITHweight(x.raw[res$cutoff:length(x.raw)], res$avg_weight)[-1]
     )
     
     if (plot.figures) {
@@ -123,7 +123,7 @@ compare_methods = function(data,
                                 k, end.time, treat.time,
                                 dtw1_time), collapse = "-"),
                        ".pdf")
-    plot_warped(lapply(results,"[[","fig.warp"),
+    plot.warped(lapply(results,"[[","fig.warp"),
                 ncol = 3,
                 file_name)
   }
@@ -198,8 +198,8 @@ compare_methods = function(data,
   mse1_1 = mean(diff1[1:(t.treat - 1)]^2, na.rm = T)
   mse2_1 = mean(diff2[1:(t.treat - 1)]^2, na.rm = T)
   
-  mse1_2 = mean(diff1[t.treat:(t.treat + n_mse - 1)]^2, na.rm = T)
-  mse2_2 = mean(diff2[t.treat:(t.treat + n_mse - 1)]^2, na.rm = T)
+  mse1_2 = mean(diff1[t.treat:(t.treat + n.mse - 1)]^2, na.rm = T)
+  mse2_2 = mean(diff2[t.treat:(t.treat + n.mse - 1)]^2, na.rm = T)
   
   
   return(list(
@@ -235,7 +235,7 @@ preprocessing = function(data,
   # add buffer
   n_buffer = (filter_width - 1)/2
   values_w_buffer = sapply(values %>% select(-time),
-                           add_buffer, n = n_buffer) %>% 
+                           add.buffer, n = n_buffer) %>% 
     data.frame(.)
   
   # derivative
@@ -285,7 +285,7 @@ run_all_units = function(data,
                          step.pattern1 = dtw::symmetricP2,
                          step.pattern2 = dtw::asymmetricP2,
                          legend.position = c(0.3, 0.3),
-                         n_mse = 10,
+                         n.mse = 10,
                          n_IQR = 3,
                          n_burn = 3,
                          dist_quantile = 1,
@@ -317,7 +317,7 @@ run_all_units = function(data,
                               dtw1_method = dtw1_method,
                               filter_width = filter_width,
                               k = k,
-                              n_mse = n_mse,
+                              n.mse = n.mse,
                               n_IQR = n_IQR,
                               n_burn = n_burn,
                               dist_quantile = dist_quantile,
