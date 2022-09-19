@@ -2,16 +2,16 @@
 grid.search = function(filter.width.range, k.range, step.pattern.range,
                        args.TFDTW.synth.all.units,
                        grid.search.parallel = TRUE){
-  # vanilla synthetic control
-  data = args.TFDTW.synth.all.units[["data"]]
-  units = data[c("id", "unit")] %>% distinct
-  units.list = units %>% split(., seq(nrow(units)))
-  
   if (grid.search.parallel) {
     fun.map = furrr::future_map
   }else{
     fun.map = purrr::map
   }
+
+  # vanilla synthetic control
+  data = args.TFDTW.synth.all.units[["data"]]
+  units = data[c("id", "unit")] %>% distinct
+  units.list = units %>% split(., seq(nrow(units)))
   
   args.synth = args.TFDTW.synth.all.units$args.TFDTW.synth$args.synth
   args.synth[["df"]] = data
@@ -22,7 +22,6 @@ grid.search = function(filter.width.range, k.range, step.pattern.range,
     fun.map(
       ~{
         item = .
-        dependent = item$unit
         dependent.id = item$id
         args.synth[["dependent.id"]] = dependent.id
         res = do.call(do.synth, args.synth)
