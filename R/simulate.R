@@ -118,6 +118,7 @@ SimData_Lags = function(n = 3,
   for (i in 1:n) {
     # speed profile
     phi = sin(seq(0, nCycles[i] * pi, length.out = length) + shifts[i])
+    phi = phi/2 + 0.5
     # trend
     if (i == 1) {
       trend = rep(0, length) + c(rep(0, length*4/5),

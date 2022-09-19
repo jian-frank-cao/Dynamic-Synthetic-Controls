@@ -4,7 +4,7 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 11)
+plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 source("./R/misc.R")
@@ -12,7 +12,7 @@ source("./R/TFDTW.R")
 source("./R/synth.R")
 source("./R/implement.R")
 source("./R/simulate.R")
-source("./R/grid.search2.R")
+source("./R/grid.search.R")
 set.seed(20220407)
 
 
@@ -23,21 +23,21 @@ n = 10
 rescale = 0.7
 
 # generate sobol sequence
-# sobol_seq = qrng::sobol(n_simulation*3, d = n - 1, randomize = "Owen",
-#                         seed = 20220401, skip = 100)
-# rnd_nCycles = cbind(rep(0.9, n_simulation),
-#                     sobol_seq[1:n_simulation,]*rescale)
-# rnd_shift = cbind(rep(0.9, n_simulation),
-#                   sobol_seq[(n_simulation + 1):(2*n_simulation),]*rescale)
-# rnd_lag = cbind(rep(0.9, n_simulation),
-#                 sobol_seq[(2*n_simulation + 1):(3*n_simulation),]*rescale)
-
+sobol_seq = qrng::sobol(n_simulation*3, d = n - 1, randomize = "Owen",
+                        seed = 20220401, skip = 100)
 rnd_nCycles = cbind(rep(0.9, n_simulation),
-                    matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
+                    sobol_seq[1:n_simulation,]*rescale)
 rnd_shift = cbind(rep(0.9, n_simulation),
-                  matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
+                  sobol_seq[(n_simulation + 1):(2*n_simulation),]*rescale)
 rnd_lag = cbind(rep(0.9, n_simulation),
-                matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
+                sobol_seq[(2*n_simulation + 1):(3*n_simulation),]*rescale)
+
+# rnd_nCycles = cbind(rep(0.9, n_simulation),
+#                     matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
+# rnd_shift = cbind(rep(0.9, n_simulation),
+#                   matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
+# rnd_lag = cbind(rep(0.9, n_simulation),
+#                 matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
 
 # simulate
 data_list = NULL
@@ -60,15 +60,15 @@ for (i in 1:n_simulation) {
                                 shock = 50)
 }
 
-data_list[[694]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+data_list[[1]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 80, linetype="dashed")
 
-saveRDS(data_list, "./data/simul_data_list_0915.Rds")
+saveRDS(data_list, "./data/simul_data_list_0916.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0915.Rds")
+data_list = readRDS("./data/simul_data_list_0916.Rds")
 
 # parameters
 start_time = 1

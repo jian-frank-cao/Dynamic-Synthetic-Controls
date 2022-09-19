@@ -1,5 +1,5 @@
 # data
-data_list = readRDS("./data/simul_data_list_0915.Rds")
+data_list = readRDS("./data/simul_data_list_0916.Rds")
 # data = data_list[[694]]
 
 # parameters
@@ -51,7 +51,7 @@ args.TFDTW.synth = list(start.time = 1, end.time = 100, treat.time = 80,
                         ## 2nd
                         n.mse = 10, 
                         ## other
-                        plot.figures = FALSE,
+                        plot.figures = TRUE,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.3))
 
@@ -75,11 +75,11 @@ for (i in 1:5) {
 
 saveRDS(results, "./data/res_sim_0916.Rds")
 
-res = lapply(results[[2]], "[[", "neg.ratio") %>% do.call("c", .)
+res = lapply(results[[1]], "[[", "neg.ratio") %>% do.call("c", .)
 
 ind = as.numeric(which(res == max(res)))
 
-p.values = lapply(results[[2]][ind], "[[", "p.value") %>% do.call("c", .)
+p.values = lapply(results[[1]][ind], "[[", "p.value") %>% do.call("c", .)
 
 
 # # # check res.synth.raw.list
