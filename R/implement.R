@@ -118,8 +118,8 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
   )
   
   return(list(dependent = dependent, dependent.id = dependent.id,
-              args.TFDTW = args.TFDTW, args.synth = args.synth,
-              results.TFDTW = results, df.synth = df.synth,
+              # args.TFDTW = args.TFDTW, args.synth = args.synth,
+              # results.TFDTW = results, df.synth = df.synth,
               res.synth.raw = res.synth.raw,
               res.synth.TFDTW = res.synth.TFDTW,
               gap.raw = gap.raw, gap.TFDTW = gap.TFDTW,
@@ -173,8 +173,10 @@ TFDTW.synth.all.units = function(data, target,
   
   return(list(target = target,
               filter.width = filter.width,
-              args.TFDTW.synth = args.TFDTW.synth,
-              results.TFDTW.synth = results,
+              # args.TFDTW.synth = args.TFDTW.synth,
+              # results.TFDTW.synth = results,
+              res.synth.target.raw = results[[target]]$res.synth.raw,  #
+              res.synth.target.TFDTW = results[[target]]$res.synth.TFDTW,  #
               mse = mse,
               neg.ratio = neg.ratio,
               p.value = p.value))

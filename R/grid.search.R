@@ -34,6 +34,7 @@ grid.search = function(filter.width.range, k.range, step.pattern.range,
     `colnames<-`(c("filter.width", "k", "step.pattern"))
   search.grid.list = search.grid %>% split(., seq(nrow(search.grid)))
   
+  # search start
   results = search.grid.list %>% 
     fun.map(
       ~{

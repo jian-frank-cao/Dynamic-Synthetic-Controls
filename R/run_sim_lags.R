@@ -32,13 +32,6 @@ rnd_shift = cbind(rep(0.9, n_simulation),
 rnd_lag = cbind(rep(0.9, n_simulation),
                 sobol_seq[(2*n_simulation + 1):(3*n_simulation),]*rescale)
 
-# rnd_nCycles = cbind(rep(0.9, n_simulation),
-#                     matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
-# rnd_shift = cbind(rep(0.9, n_simulation),
-#                   matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
-# rnd_lag = cbind(rep(0.9, n_simulation),
-#                 matrix(runif(n_simulation*(n-1))*rescale, ncol = n-1))
-
 # simulate
 data_list = NULL
 for (i in 1:n_simulation) {
@@ -68,43 +61,12 @@ saveRDS(data_list, "./data/simul_data_list_0916.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data_list = readRDS("./data/simul_data_list_0916.Rds")
+data_list = readRDS("./data/simul_data_list_0919.Rds")
 
 # parameters
-start_time = 1
-end_time = 100
-treat_time = 80
-dtw1_time = 90
-dependent = "A"
-dependent_id = 1
-dtw1_method = "open-end"
-n_mse = 10
-n_IQR = 3
-n_burn = 3
-normalize_method = "t"
-step.pattern2 = dtw::asymmetricP2
-dist_quantile = 0.95
-plot_figures = FALSE
-legend_position = c(0.3, 0.3)
-ma = 3
-ma_na = "original"
-predictors.origin = NULL
-special.predictors.origin = list(list("value_raw", 70:79, c("mean")),
-                                 list("value_raw", 60:69, c("mean")),
-                                 list("value_raw", 50:59, c("mean")))
-time.predictors.prior.origin = 1:79
-time.optimize.ssr.origin = 1:79
-predictors.new = NULL
-special.predictors.new = list(list("value_warped", 70:79, c("mean")),
-                              list("value_warped", 60:69, c("mean")),
-                              list("value_warped", 50:59, c("mean")))
-time.predictors.prior.new = 1:79
-time.optimize.ssr.new = 1:79
-
-# grid
-width_range = (1:9)*2+3
-k_range = 4:12
-step_pattern_range = list(
+filter.width.range = (1:9)*2+3
+k.range = 4:9
+step.pattern.range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
   symmetricP1 = dtw::symmetricP1,
@@ -113,60 +75,72 @@ step_pattern_range = list(
   # asymmetricP05 = dtw::asymmetricP05,
   asymmetricP1 = dtw::asymmetricP1,
   asymmetricP2 = dtw::asymmetricP2,
-  # typeIc = dtw::typeIc,
-  typeIcs = dtw::typeIcs,
+  typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  # typeId = dtw::typeId,
-  typeIds = dtw::typeIds,
+  typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
   mori2006 = dtw::mori2006
 )
+grid.search.parallel = TRUE
 
 
-# search start
-result = NULL
+args.TFDTW = list(buffer = 0, match.method = "fixed",
+                  dist.quant = 0.95, 
+                  window.type = "sakoechiba",
+                  ## other
+                  norm.method = "t",
+                  step.pattern2 = dtw::asymmetricP2,
+                  n.burn = 3, n.IQR = 3,
+                  ma = 3, ma.na = "original",
+                  default.margin = 3,
+                  n.q = 1, n.r = 1)
 
-for (i in 32:100) {
-  cat(paste0("Simulation data set ", i, "......"))
-  data = data_list[[i]]
-  result[[i]] = SimDesign::quiet(run_simul(data = data,
-                                           start_time = start_time,
-                                           end_time = end_time,
-                                           treat_time = treat_time,
-                                           dtw1_time = dtw1_time,
-                                           dependent = dependent,
-                                           dependent_id = dependent_id,
-                                           width_range = width_range,
-                                           k_range = k_range,
-                                           step_pattern_range = step_pattern_range,
-                                           dtw1_method = dtw1_method,
-                                           n_mse = n_mse,
-                                           n_IQR = n_IQR,
-                                           n_burn = n_burn,
-                                           dist_quantile = dist_quantile,
-                                           normalize_method = normalize_method,
-                                           plot_figures = plot_figures,
-                                           ma = ma,
-                                           ma_na = ma_na,
-                                           step.pattern2 = step.pattern2,
-                                           predictors.origin = predictors.origin,
-                                           special.predictors.origin = special.predictors.origin,
-                                           time.predictors.prior.origin = time.predictors.prior.origin,
-                                           time.optimize.ssr.origin = time.optimize.ssr.origin,
-                                           predictors.new = predictors.new,
-                                           special.predictors.new = special.predictors.new,
-                                           time.predictors.prior.new = time.predictors.prior.new,
-                                           time.optimize.ssr.new = time.optimize.ssr.new,
-                                           legend_position = legend_position))
+args.synth = list(predictors = NULL,
+                  special.predictors = 
+                    expression(list(list(dep.var, 70:79, c("mean")),
+                                    list(dep.var, 60:69, c("mean")),
+                                    list(dep.var, 50:59, c("mean")))),
+                  time.predictors.prior = 1:79,
+                  time.optimize.ssr = 1:79)
+
+args.TFDTW.synth = list(start.time = 1, end.time = 100, treat.time = 80,
+                        args.TFDTW = args.TFDTW, args.synth = args.synth,
+                        ## 2nd
+                        n.mse = 10, 
+                        ## other
+                        plot.figures = TRUE,
+                        plot.path = "./figures/",
+                        legend.pos = c(0.3, 0.3))
+
+args.TFDTW.synth.all.units = list(target = "A",
+                                  # data = data, 
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  ## 2nd
+                                  all.units.parallel = FALSE)
+
+results = NULL
+for (i in 1:5) {
+  cat("Simulation data set ", i, "...")
+  args.TFDTW.synth.all.units[["data"]] = data_list[[i]]
+  results[[i]] = SimDesign::quiet(
+    grid.search(filter.width.range = filter.width.range,
+                k.range = k.range,
+                step.pattern.range = step.pattern.range,
+                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                grid.search.parallel = grid.search.parallel)
+  )
   cat("Done.\n")
 }
-  
-saveRDS(result, "./data/res_sim_0908.Rds")
-# result = readRDS("./data/res_sim_0908.Rds")
+
+saveRDS(results, "./data/res_sim_0916.Rds")
+
 
 ## Plot result -----------------------------------------------------------------
+results = readRDS("./data/res_sim_0916.Rds")
 length = 100
 shock = 50
 treatment = c(rep(0, length*4/5),
