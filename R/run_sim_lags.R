@@ -174,17 +174,13 @@ res = future_map2(
     item = .x
     id = .y
     neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-    max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
-    # min_ind = 82
-    # gap_origin =  -item[[min_ind]][["gap_original"]]
-    # gap_new = -item[[min_ind]][["gap_new"]]
-    # data.frame(time = 1:length(gap_new),
-    #            gap_origin = gap_origin,
-    #            gap_new = gap_new,
-    #            id = id)
-    synth_original = item[[min_ind]][["res.synth.target.raw"]][["synthetic"]]
-    synth_new = item[[min_ind]][["res.synth.target.TFDTW"]][["synthetic"]]
-    value_raw = item[[min_ind]][["res.synth.target.raw"]][["value"]]
+    ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
+    # neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
+    # ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
+    
+    synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
+    synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
+    value_raw = item[[ind]][["res.synth.target.raw"]][["value"]]
     
     gap_original = value_raw - synth_original
     gap_new = value_raw - synth_new
