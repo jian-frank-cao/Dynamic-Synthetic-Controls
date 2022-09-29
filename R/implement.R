@@ -164,12 +164,11 @@ TFDTW.synth.all.units = function(data, target,
   mse = lapply(results, '[[', "mse") %>% 
     do.call("rbind", .) %>%
     mutate(ratio = mse.postT.TFDTW/mse.postT.raw,
-           log.ratio = log(ratio)) %>% 
-    filter(unit != target)
+           log.ratio = log(ratio))
   
   # tests
-  neg.ratio = sum(mse$log.ratio < 0)/nrow(mse)
-  p.value = t.test(mse$log.ratio)$p.value
+  neg.ratio = sum(mse %>% filter(unit != target) %>% .[["log.ratio"]] < 0)/(nrow(mse) - 1)
+  p.value = t.test(mse %>% filter(unit != target) %>% .[["log.ratio"]])$p.value
   
   return(list(target = target,
               filter.width = filter.width,

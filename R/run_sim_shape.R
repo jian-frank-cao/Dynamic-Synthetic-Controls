@@ -21,36 +21,36 @@ set.seed(20220407)
 
 
 ## Data Simulation -------------------------------------------------------------
-# n.simulation = 1000
-# length = 100
-# n = 10
-# 
-# # generate sobol sequence
-# sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
-#                         seed = 20220401, skip = 100)
-# rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
-# 
-# # simulate
-# data.list = NULL
-# for (i in 1:n.simulation) {
-#   data.list[[i]] = SimData.Shape(n = n,
-#                                  length = length,
-#                                  rnd.speed = rnd.speeds[i,],
-#                                  n.SMA = 1,
-#                                  ar.x = 0.9,
-#                                  beta = 1,
-#                                  reweight = TRUE,
-#                                  speed.upper = 1,
-#                                  speed.lower = 0.5,
-#                                  t.treat = 80,
-#                                  shock = 30)
-# }
-# 
-# data.list[[739]] %>% ggplot(aes(x = time, y = value, color = unit)) +
-#   geom_line() +
-#   geom_vline(xintercept = 80, linetype="dashed")
-# 
-# saveRDS(data.list, "./data/simul_data_list_0926.Rds")
+n.simulation = 1000
+length = 100
+n = 10
+
+# generate sobol sequence
+sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
+                        seed = 20220401, skip = 100)
+rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
+
+# simulate
+data.list = NULL
+for (i in 1:n.simulation) {
+  data.list[[i]] = SimData.Shape(n = n,
+                                 length = length,
+                                 rnd.speed = rnd.speeds[i,],
+                                 n.SMA = 1,
+                                 ar.x = 0.9,
+                                 beta = 1,
+                                 reweight = TRUE,
+                                 speed.upper = 1,
+                                 speed.lower = 0.5,
+                                 t.treat = 80,
+                                 shock = 30)
+}
+
+data.list[[18]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line() +
+  geom_vline(xintercept = 80, linetype="dashed")
+
+saveRDS(data.list, "./data/simul_data_list_0926.Rds")
 
 
 ## Run -------------------------------------------------------------------------
@@ -156,8 +156,7 @@ res = future_map2(
     id = .y
     neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
     ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
-    # neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-    # ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
+    # mse = lapply(item, "[[")
 
     synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
     synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
