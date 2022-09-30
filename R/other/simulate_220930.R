@@ -15,6 +15,7 @@ Diff2PhiUnif = function(xDiff,
   }else{
     pos.speed = 1 + speed
     neg.speed = 1 - speed
+    
   }
   phi = rep(0, length(xDiff))
   phi[pos.deriv] = pos.speed
@@ -33,6 +34,55 @@ ApplyPhi = function(x, phi){
     output = c(output, value)
   }
   return(output)
+}
+
+
+SimData_ShapeSpeed = function(n = 5,
+                              length = 1000,
+                              rnd_speed = seq(0.1, 0.9, length.out = n),
+                              n_SMA = 10,
+                              ar_x = 0.9,
+                              weight_speed = TRUE,
+                              speed_upper = 1,
+                              speed_lower = 0.5,
+                              extra_x = round(0.2*length),
+                              t_treat = 800,
+                              shock = 50){
+  # common exogenous shocks
+  x = arima.sim(list(order = c(1,1,0), ar = ar_x), n = length + extra_x + n_SMA)
+  xSMA10 = ts(TTR::SMA(x, n = n_SMA)[-(1:(n_SMA - 1))])
+  xDiff = diff(xSMA10, difference = 1)
+  
+  # simulate
+  data = NULL
+  for (i in 1:n) {
+    # speed profile
+    phi = Diff2PhiUnif(xDiff[1:(length + extra_x)], 
+                       weight_speed = weight_speed,
+                       speed_upper = speed_upper,
+                       speed_lower = speed_lower,
+                       rnd = rnd_speed[i])
+    
+    # treatment
+    if (i == 1) {
+      treatment = c(rep(0, t_treat),
+                    seq(0, shock, length.out = round(0.1*length)),
+                    rep(shock, round(0.9*length + extra_x - t_treat)))
+    }else{
+      treatment = 0
+    }
+    
+    y = ApplyPhi(x[-(1:(n_SMA - 1))], phi)
+    y = y + treatment
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y[1:length],
+                            value_raw = y[1:length]))
+  }
+  return(data)
 }
 
 

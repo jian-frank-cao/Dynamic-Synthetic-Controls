@@ -13,6 +13,8 @@ set.seed(20220407)
 
 
 data.list = readRDS("./data/simul_data_list_0926.Rds")
+i = 200
+
 
 # parameters
 filter.width.range = (1:9)*2+3
@@ -73,6 +75,96 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   ## 2nd
                                   all.units.parallel = TRUE)
 
-args.TFDTW.synth.all.units[["data"]] = data.list[[24]]
+args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
 
-task = search.grid.list[[1]]
+if (grid.search.parallel) {
+  fun.map = furrr::future_map
+}else{
+  fun.map = purrr::map
+}
+
+# vanilla synthetic control
+data = args.TFDTW.synth.all.units[["data"]]
+units = data[c("id", "unit")] %>% distinct
+units.list = units %>% split(., seq(nrow(units)))
+
+args.synth = args.TFDTW.synth.all.units$args.TFDTW.synth$args.synth
+args.synth[["df"]] = data
+args.synth[["dep.var"]] = "value_raw"
+
+res.synth.raw.list = units.list %>% 
+  set_names(units$unit) %>% 
+  fun.map(
+    ~{
+      item = .
+      dependent.id = item$id
+      args.synth[["dependent.id"]] = dependent.id
+      res = do.call(do.synth, args.synth)
+    }
+  )
+
+# grid search space
+search.grid = expand.grid(filter.width.range, k.range,
+                          names(step.pattern.range)) %>% 
+  `colnames<-`(c("filter.width", "k", "step.pattern"))
+search.grid.list = search.grid %>% split(., seq(nrow(search.grid)))
+
+task = search.grid.list[[200]]
+
+args.TFDTW.synth.all.units[["filter.width"]] = task$filter.width
+args.TFDTW.synth.all.units$args.TFDTW.synth$args.TFDTW[["k"]] = task$k
+args.TFDTW.synth.all.units$args.TFDTW.synth$args.TFDTW[["step.pattern1"]] =
+  step.pattern.range[[task$step.pattern]]
+args.TFDTW.synth.all.units[["res.synth.raw.list"]] = res.synth.raw.list
+# res.TFDTW.synth.all.units = do.call(TFDTW.synth.all.units, args.TFDTW.synth.all.units)
+
+target = args.TFDTW.synth.all.units$target
+args.TFDTW.synth = args.TFDTW.synth.all.units$args.TFDTW.synth
+all.units.parallel = args.TFDTW.synth.all.units$all.units.parallel
+data = args.TFDTW.synth.all.units$data
+filter.width = args.TFDTW.synth.all.units$filter.width
+res.synth.raw.list = args.TFDTW.synth.all.units$res.synth.raw.list
+
+if (!is.null(filter.width)) {
+  data = preprocessing(data, filter.width)
+}
+args.TFDTW.synth[["data"]] = data
+units = data[c("id", "unit")] %>% distinct
+units.list = units %>% split(., seq(nrow(units)))
+
+# run TFDTW.synth
+if (all.units.parallel) {
+  fun.map = furrr::future_map
+}else{
+  fun.map = purrr::map
+}
+
+item = units.list[[1]]
+
+dependent = item$unit
+dependent.id = item$id
+args.TFDTW.synth[["dependent"]] = dependent
+args.TFDTW.synth[["dependent.id"]] = dependent.id
+args.TFDTW.synth[["res.synth.raw"]] = res.synth.raw.list[[dependent]]
+# res.TFDTW.synth = do.call(TFDTW.synth, args.TFDTW.synth)
+
+start.time = args.TFDTW.synth$start.time
+end.time = args.TFDTW.synth$end.time
+treat.time = args.TFDTW.synth$treat.time
+args.TFDTW = args.TFDTW.synth$args.TFDTW
+args.synth = args.TFDTW.synth$args.synth
+n.mse = args.TFDTW.synth$n.mse
+plot.figures = args.TFDTW.synth$plot.figures
+args.TFDTW.synth$plot.path
+args.TFDTW.synth$legend.pos
+args.TFDTW.synth$data
+args.TFDTW.synth$dependent
+args.TFDTW.synth$dependent.id
+args.TFDTW.synth$res.synth.raw
+
+
+dtw::dtwPlotTwoWay(res.1stDTW$alignment, 
+                   xts = data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80],
+                   yts = data %>% filter(unit == "E") %>% .[["value_raw"]] %>% .[1:90] + 50)
+plot(ts(data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80]))
+
