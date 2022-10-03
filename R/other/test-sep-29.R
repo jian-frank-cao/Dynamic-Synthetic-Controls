@@ -52,7 +52,7 @@ args.TFDTW = list(buffer = 10, match.method = "open.end",
                   default.margin = 3,
                   n.q = 1, n.r = 1)
 
-args.synth = list(predictors = NULL,
+args.synth = list(predictors = expression(c(dep.var)),
                   special.predictors = 
                     expression(list(list(dep.var, 70:79, c("mean")),
                                     list(dep.var, 60:69, c("mean")),
@@ -146,25 +146,20 @@ dependent.id = item$id
 args.TFDTW.synth[["dependent"]] = dependent
 args.TFDTW.synth[["dependent.id"]] = dependent.id
 args.TFDTW.synth[["res.synth.raw"]] = res.synth.raw.list[[dependent]]
-# res.TFDTW.synth = do.call(TFDTW.synth, args.TFDTW.synth)
-
-start.time = args.TFDTW.synth$start.time
-end.time = args.TFDTW.synth$end.time
-treat.time = args.TFDTW.synth$treat.time
-args.TFDTW = args.TFDTW.synth$args.TFDTW
-args.synth = args.TFDTW.synth$args.synth
-n.mse = args.TFDTW.synth$n.mse
-plot.figures = args.TFDTW.synth$plot.figures
-args.TFDTW.synth$plot.path
-args.TFDTW.synth$legend.pos
-args.TFDTW.synth$data
-args.TFDTW.synth$dependent
-args.TFDTW.synth$dependent.id
-args.TFDTW.synth$res.synth.raw
+res.TFDTW.synth = do.call(TFDTW.synth, args.TFDTW.synth)
 
 
-dtw::dtwPlotTwoWay(res.1stDTW$alignment, 
-                   xts = data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80],
-                   yts = data %>% filter(unit == "E") %>% .[["value_raw"]] %>% .[1:90] + 50)
-plot(ts(data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80]))
 
+
+# dtw::dtwPlotTwoWay(res.1stDTW$alignment, 
+#                    xts = data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80],
+#                    yts = data %>% filter(unit == "E") %>% .[["value_raw"]] %>% .[1:90] + 50)
+# plot(ts(data %>% filter(unit == "A") %>% .[["value_raw"]] %>% .[1:80]))
+
+a = data %>% filter(id == 1) %>% .[["value_raw"]]
+b = data %>% filter(id == 7) %>% .[["value_raw"]]
+c = res$synthetic
+
+plot(ts(a))
+lines(b, col = "blue")
+lines(c, col = "red")
