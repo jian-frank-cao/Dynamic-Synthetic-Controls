@@ -39,17 +39,20 @@ set.seed(20220407)
 #                             n.SMA = 1, n.diff = 1,
 #                             speed.upper = 2,
 #                             speed.lower = 0.5,
-#                             reweight = TRUE, beta = 1)
+#                             reweight = TRUE,
+#                             rescale = TRUE,
+#                             rescale.multiplier = 20,
+#                             beta = 1)
 # }
 # 
-# data.list[[1]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+# data.list[[3]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_list_1003.Rds")
+# saveRDS(data.list, "./data/simul_data_list_1006.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_list_1003.Rds")
+data.list = readRDS("./data/simul_data_list_1006.Rds")
 
 # parameters
 filter.width.range = (1:9)*2+3
@@ -121,103 +124,103 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, paste0("./data/res_sim_1003_", i, ".Rds"))
+saveRDS(results, paste0("./data/res_sim_1006_", i, ".Rds"))
 job.end = Sys.time()
 print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
-results = NULL
-res.files = list.files("./data/res_sim")
-res.files = setdiff(res.files, "old")
-for (res.file in res.files) {
-  results = c(results, list(readRDS(paste0("./data/res_sim/", res.file))))
-}
-
-length = 100
-shock = 10
-treat_time = 60
-n_mse = 10
-
-causal_effect = c(rep(0, length*4/5),
-              seq(0, shock, length.out = length/10),
-              rep(shock, length/10))
-
-# placebo test figure
-res = future_map2(
-  results,
-  as.list(1:length(results)),
-  ~{
-    item = .x
-    id = .y
-    neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-    ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
-    # mse = lapply(item, "[[")
-    # p.value = lapply(item, "[[", "p.value") %>% do.call("c", .)
-
-    synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
-    synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
-    value_raw = item[[ind]][["res.synth.target.raw"]][["value"]]
-
-    gap_original = value_raw - synth_original
-    gap_new = value_raw - synth_new
-
-    diff_original = value_raw - synth_original - causal_effect
-    diff_new = value_raw - synth_new - causal_effect
-
-    mse_original = mean((diff_original)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
-    mse_new = mean((diff_new)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
-    mse = data.frame(mse_original = mse_original,
-                     mse_new = mse_new,
-                     log_ratio = log(mse_new/mse_original))
-    list(df = data.frame(time = 1:length(value_raw),
-                         id = id,
-                         value_raw = value_raw,
-                         synth_original = synth_original,
-                         synth_new = synth_new,
-                         gap_origin = gap_original,
-                         gap_new = gap_new,
-                         diff_original = diff_original,
-                         diff_new = diff_new),
-         mse = mse)
-  }
-)
-
-mse = lapply(res, "[[", "mse") %>% do.call("rbind", .)
-t.test(mse$log_ratio)
-
-df = lapply(res, "[[", "df") %>% do.call("rbind", .)
-
-
-
-percent = df %>%
-  group_by(time) %>%
-  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
-            ci_origin_mean = mean(gap_origin, na.rm = T),
-            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
-            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
-            ci_new_mean = mean(gap_new, na.rm = T),
-            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
-  mutate(artifical_effect = causal_effect,
-         id = 0)
-
-fig = df %>%
-  ggplot(aes(x = time, group = id)) +
-  geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
-  geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
-  geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
-  geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
-  geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
-  geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
-  geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
-  geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
-  geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
-  geom_vline(xintercept = 80, linetype="dashed") +
-  geom_hline(yintercept = 0, linetype="dashed") +
-  xlab("Time") +
-  ylab("Synthetic Control - True Value") +
-  theme_bw()
-
-ggsave("./figures/placebo_sim_0813.pdf",
-       fig, width = 6, height = 4,
-       units = "in", limitsize = FALSE)
+# results = NULL
+# res.files = list.files("./data/res_sim")
+# res.files = setdiff(res.files, "old")
+# for (res.file in res.files) {
+#   results = c(results, list(readRDS(paste0("./data/res_sim/", res.file))))
+# }
+# 
+# length = 100
+# shock = 10
+# treat_time = 60
+# n_mse = 10
+# 
+# causal_effect = c(rep(0, length*4/5),
+#               seq(0, shock, length.out = length/10),
+#               rep(shock, length/10))
+# 
+# # placebo test figure
+# res = future_map2(
+#   results,
+#   as.list(1:length(results)),
+#   ~{
+#     item = .x
+#     id = .y
+#     neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
+#     ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
+#     # mse = lapply(item, "[[")
+#     # p.value = lapply(item, "[[", "p.value") %>% do.call("c", .)
+# 
+#     synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
+#     synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
+#     value_raw = item[[ind]][["res.synth.target.raw"]][["value"]]
+# 
+#     gap_original = value_raw - synth_original
+#     gap_new = value_raw - synth_new
+# 
+#     diff_original = value_raw - synth_original - causal_effect
+#     diff_new = value_raw - synth_new - causal_effect
+# 
+#     mse_original = mean((diff_original)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+#     mse_new = mean((diff_new)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+#     mse = data.frame(mse_original = mse_original,
+#                      mse_new = mse_new,
+#                      log_ratio = log(mse_new/mse_original))
+#     list(df = data.frame(time = 1:length(value_raw),
+#                          id = id,
+#                          value_raw = value_raw,
+#                          synth_original = synth_original,
+#                          synth_new = synth_new,
+#                          gap_origin = gap_original,
+#                          gap_new = gap_new,
+#                          diff_original = diff_original,
+#                          diff_new = diff_new),
+#          mse = mse)
+#   }
+# )
+# 
+# mse = lapply(res, "[[", "mse") %>% do.call("rbind", .)
+# t.test(mse$log_ratio)
+# 
+# df = lapply(res, "[[", "df") %>% do.call("rbind", .)
+# 
+# 
+# 
+# percent = df %>%
+#   group_by(time) %>%
+#   summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+#             ci_origin_mean = mean(gap_origin, na.rm = T),
+#             ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+#             ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+#             ci_new_mean = mean(gap_new, na.rm = T),
+#             ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
+#   mutate(artifical_effect = causal_effect,
+#          id = 0)
+# 
+# fig = df %>%
+#   ggplot(aes(x = time, group = id)) +
+#   geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
+#   geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
+#   geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
+#   geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
+#   geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
+#   geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
+#   geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
+#   geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
+#   geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
+#   geom_vline(xintercept = 80, linetype="dashed") +
+#   geom_hline(yintercept = 0, linetype="dashed") +
+#   xlab("Time") +
+#   ylab("Synthetic Control - True Value") +
+#   theme_bw()
+# 
+# ggsave("./figures/placebo_sim_0813.pdf",
+#        fig, width = 6, height = 4,
+#        units = "in", limitsize = FALSE)
 

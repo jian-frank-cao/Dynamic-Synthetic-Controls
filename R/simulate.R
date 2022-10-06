@@ -39,7 +39,8 @@ ApplyPhi = function(x, phi){
 sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
                     t.treat = 60, shock = 10, ar.x = 0.6, n.SMA = 1,
                     n.diff = 1, speed.upper = 2, speed.lower = 0.5,
-                    reweight = TRUE, beta = 1){
+                    reweight = TRUE, rescale = TRUE, 
+                    rescale.multiplier = 20, beta = 1){
   # common exogenous shocks
   x = arima.sim(list(order = c(1,1,0), ar = ar.x),
                 n = length + extra.x + n.SMA + n.diff - 2)
@@ -100,6 +101,11 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
     phi = beta*phi.shape + (1 - beta)*phi.random
     
     y = warpWITHweight(x[1:(length + extra.x)], phi)[1:length]
+    
+    if (rescale) {
+      y = minmax.normalize(y, reference = y[1:t.treat])*rescale.multiplier
+    }
+    
     y = y + treatment
     
     data = rbind(data,
