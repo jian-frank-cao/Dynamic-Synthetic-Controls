@@ -42,17 +42,17 @@ set.seed(20220407)
 #                             reweight = TRUE,
 #                             rescale = TRUE,
 #                             rescale.multiplier = 20,
-#                             beta = 1)
+#                             beta = 0.5)
 # }
 # 
-# data.list[[3]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+# data.list[[5]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_list_1006.Rds")
+# saveRDS(data.list, "./data/simul_data_list_1010.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_list_1006.Rds")
+data.list = readRDS("./data/simul_data_list_1010.Rds")
 
 # parameters
 filter.width.range = (1:9)*2+3
@@ -124,7 +124,7 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, paste0("./data/res_sim_1006_", i, ".Rds"))
+saveRDS(results, paste0("./data/res_sim_1010_", i, ".Rds"))
 job.end = Sys.time()
 print(job.end - job.start)
 
@@ -141,9 +141,9 @@ print(job.end - job.start)
 # treat_time = 60
 # n_mse = 10
 # 
-# causal_effect = c(rep(0, length*4/5),
-#               seq(0, shock, length.out = length/10),
-#               rep(shock, length/10))
+# causal_effect = c(rep(0, treat_time),
+#                   seq(0, shock, length.out = round(0.1*length)),
+#                   rep(shock, round(0.9*length - treat_time)))
 # 
 # # placebo test figure
 # res = future_map2(
@@ -153,9 +153,17 @@ print(job.end - job.start)
 #     item = .x
 #     id = .y
 #     neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-#     ind = which(neg.ratio == max(neg.ratio, na.rm = T))[1]
-#     # mse = lapply(item, "[[")
-#     # p.value = lapply(item, "[[", "p.value") %>% do.call("c", .)
+#     # neg.ratio.rank = rank(neg.ratio, ties.method = "max")
+#     ind.max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))
+#     p.value = lapply(item, "[[", "p.value") %>% do.call("c", .) %>% .[ind.max.neg.ratio]
+#     # p.value.rank = rank(1 - p.value, ties.method = "max")
+#     ind.min.p.value = which(p.value == min(p.value, na.rm = T))[1]
+#     # mse.pre = lapply(item, "[[", "mse") %>% do.call("rbind", .) %>%
+#     #   filter(unit == "A") %>% .[["mse.preT.TFDTW"]] %>% .[ind.max.neg.ratio]
+#     # mse.pre.rank = rank(1 - mse.pre, ties.method = "max")
+#     # score = neg.ratio.rank*3 + p.value.rank*2 + mse.pre.rank
+#     # ind = which(score == max(score, na.rm = T))[1]
+#     ind = ind.max.neg.ratio[1]
 # 
 #     synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
 #     synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
@@ -214,7 +222,7 @@ print(job.end - job.start)
 #   geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
 #   geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
 #   geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
-#   geom_vline(xintercept = 80, linetype="dashed") +
+#   geom_vline(xintercept = 60, linetype="dashed") +
 #   geom_hline(yintercept = 0, linetype="dashed") +
 #   xlab("Time") +
 #   ylab("Synthetic Control - True Value") +
