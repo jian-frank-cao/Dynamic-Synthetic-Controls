@@ -42,17 +42,17 @@ set.seed(20220407)
 #                             reweight = TRUE,
 #                             rescale = TRUE,
 #                             rescale.multiplier = 20,
-#                             beta = 0.5)
+#                             beta = 0)
 # }
 # 
-# data.list[[5]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+# data.list[[1]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_list_1010.Rds")
+# saveRDS(data.list, "./data/simul_data_list_1011.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_list_1010.Rds")
+data.list = readRDS("./data/simul_data_list_1011.Rds")
 
 # parameters
 filter.width.range = (1:9)*2+3
@@ -124,7 +124,7 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, paste0("./data/res_sim_1010_", i, ".Rds"))
+saveRDS(results, paste0("./data/res_sim_1011_", i, ".Rds"))
 job.end = Sys.time()
 print(job.end - job.start)
 
@@ -231,4 +231,12 @@ print(job.end - job.start)
 # ggsave("./figures/placebo_sim_0813.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
+# 
+# 
+# # F test
+# df2 = df %>% filter(time %in% 60:75)
+# original = df2$diff_original
+# new = df2$diff_new
+# 
+# var.test(new, original, alternative = "less")
 
