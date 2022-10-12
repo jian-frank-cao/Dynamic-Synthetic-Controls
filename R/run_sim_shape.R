@@ -235,7 +235,7 @@ fig = df %>%
 
 
 # F test
-df2 = df %>% filter(time %in% 60:70)
+df2 = df %>% filter(time %in% 60:75)
 original = df2$diff_original
 new = df2$diff_new
 
