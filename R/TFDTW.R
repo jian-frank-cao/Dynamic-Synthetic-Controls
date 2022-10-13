@@ -193,7 +193,8 @@ TFDTW = function(x, y, k, t.treat, buffer,
     window.size1 = as.integer(t.treat/2)
     window.size2 = as.integer(k/2)
   }else{
-    window.size = NULL
+    window.size1 = NULL
+    window.size2 = NULL
   }
   
   # 1st dtw
