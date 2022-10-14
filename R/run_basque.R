@@ -31,7 +31,7 @@ df.rescale = data %>%
   group_by(unit) %>% 
   summarise(value.min = min(value),
             value.max = max(value),
-            multiplier = 15000/(value.max - value.min)) %>% 
+            multiplier = 5/(value.max - value.min)) %>% 
   ungroup()
 
 data = left_join(data, df.rescale, by = "unit")
