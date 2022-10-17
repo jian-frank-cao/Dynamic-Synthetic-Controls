@@ -109,10 +109,24 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, paste0("./data/res_germany_1013", i, ".Rds"))
+saveRDS(results, "./data/res_germany_1013.Rds")
 job.end = Sys.time()
 print(job.end - job.start)
 
+## Result ----------------------------------------------------------------------
+results = readRDS("./data/res_germany_1013.Rds")
+neg.ratio = lapply(results, "[[", "neg.ratio") %>% 
+  do.call("c", .)
+p.value = lapply(results, "[[", "p.value") %>% 
+  do.call("c", .)
+max.neg = which(neg.ratio == max(neg.ratio))
+min.p = which(p.value == min(p.value))
+
+neg.ratio[max.neg]
+p.value[max.neg]
+
+neg.ratio[min.p]
+p.value[min.p]
 
 ## Optimal Run Germany ---------------------------------------------------------
 # # prepare data

@@ -200,28 +200,27 @@ t.test(mse$log_ratio)
 
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
 
-df2 = df %>% filter(time %in% 60:75)
-# original = df2$diff_original
-# new = df2$diff_new
-# 
-# res.f.test = var.test(new, original, alternative = "two.sided")
-# f.value = round(res.f.test$statistic, 4)
-# p.value = res.f.test$p.value
-n = nrow(df2)/16
+t.interval = 60:75
+df2 = df %>% filter(time %in% t.interval)
+n.t = length(t.interval)
+n.datasets = nrow(df2)/16
+
 var.original = df2 %>% group_by(id) %>% 
-  summarise(variance = var(diff_original)*15) %>% 
+  summarise(variance = var(diff_original)*(n.t - 1)) %>% 
   ungroup %>% 
   .[["variance"]] %>% 
-  sum(., na.rm = T)/(29*15)
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
 
 var.new = df2 %>% group_by(id) %>% 
-  summarise(variance = var(diff_new)*15) %>% 
+  summarise(variance = var(diff_new)*(n.t - 1)) %>% 
   ungroup %>% 
   .[["variance"]] %>% 
-  sum(., na.rm = T)/(29*15)
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
 
 f.value = var.new/var.original
-p.value = pf(f.value, n - 1, n - 1, lower.tail = TRUE)
+f.value = round(f.value, 4)
+p.value = pf(f.value, n.datasets*(n.t - 1),
+             n.datasets*(n.t - 1), lower.tail = TRUE)*2
 
 
 percent = df %>%
