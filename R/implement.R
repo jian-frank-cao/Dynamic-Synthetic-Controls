@@ -131,6 +131,7 @@ TFDTW.synth.all.units = function(data, target,
                                  args.TFDTW.synth,
                                  filter.width = NULL,
                                  res.synth.raw.list = NULL,
+                                 detailed.output = FALSE,
                                  all.units.parallel = FALSE){
   # prepare data
   if (!is.null(filter.width)) {
@@ -170,12 +171,20 @@ TFDTW.synth.all.units = function(data, target,
   neg.ratio = sum(mse %>% filter(unit != target) %>% .[["log.ratio"]] < 0)/(nrow(mse) - 1)
   p.value = t.test(mse %>% filter(unit != target) %>% .[["log.ratio"]])$p.value
   
+  # output
+  res.synth.target.raw = results[[target]]$res.synth.raw
+  res.synth.target.TFDTW = results[[target]]$res.synth.TFDTW
+  if (!detailed.output) {
+    args.TFDTW.synth = NULL
+    results = NULL
+  }
+  
   return(list(target = target,
               filter.width = filter.width,
-              # args.TFDTW.synth = args.TFDTW.synth,
-              # results.TFDTW.synth = results,
-              res.synth.target.raw = results[[target]]$res.synth.raw,  #
-              res.synth.target.TFDTW = results[[target]]$res.synth.TFDTW,  #
+              args.TFDTW.synth = args.TFDTW.synth,
+              results.TFDTW.synth = results,
+              res.synth.target.raw = res.synth.target.raw,
+              res.synth.target.TFDTW = res.synth.target.TFDTW,
               mse = mse,
               neg.ratio = neg.ratio,
               p.value = p.value))

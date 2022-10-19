@@ -27,11 +27,11 @@ data = data %>% mutate(invest_ratio = invest/value,
 
 # rescale
 df.rescale = data %>% 
-  filter(time <= 1990) %>% 
+  filter(time <= 1970) %>% 
   group_by(unit) %>% 
   summarise(value.min = min(value),
             value.max = max(value),
-            multiplier = 5/(value.max - value.min)) %>% 
+            multiplier = 2.2/(value.max - value.min)) %>% 
   ungroup()
 
 data = left_join(data, df.rescale, by = "unit")
@@ -98,7 +98,7 @@ args.synth = list(predictors = NULL,
                   time.predictors.prior = 1955:1969,
                   time.optimize.ssr = 1955:1969)
 
-args.TFDTW.synth = list(start.time = 1955, end.time = 1990, treat.time = 1970,
+args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
                         args.TFDTW = args.TFDTW, args.synth = args.synth,
                         ## 2nd
                         n.mse = 10, 
@@ -124,12 +124,12 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, "./data/res_basque_1013.Rds")
+saveRDS(results, "./data/res_basque_1018.Rds")
 job.end = Sys.time()
 print(job.end - job.start)
 
 ## Result ----------------------------------------------------------------------
-results = readRDS("./data/res_basque_1013.Rds")
+results = readRDS("./data/res_basque_1018.Rds")
 neg.ratio = lapply(results, "[[", "neg.ratio") %>% 
   do.call("c", .)
 p.value = lapply(results, "[[", "p.value") %>% 
@@ -144,7 +144,143 @@ neg.ratio[min.p]
 p.value[min.p]
 
 
-## Optimal Run Tobacco ---------------------------------------------------------
+## Optimal Run -----------------------------------------------------------------
+# parameters
+filter.width.range = 19
+k.range = 5
+step.pattern.range = list(
+  # symmetricP0 = dtw::symmetricP0, # too bumpy
+  # symmetricP05 = dtw::symmetricP05,
+  # symmetricP1 = dtw::symmetricP1,
+  # symmetricP2 = dtw::symmetricP2,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+  # asymmetricP05 = dtw::asymmetricP05,
+  asymmetricP1 = dtw::asymmetricP1#,
+  # asymmetricP2 = dtw::asymmetricP2,
+  # typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
+  # typeIIc = dtw::typeIIc,  # jumps
+  # typeIIIc = dtw::typeIIIc, # jumps
+  # typeIVc = dtw::typeIVc,  # jumps
+  # typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
+  # typeIId = dtw::typeIId, # jumps
+  # mori2006 = dtw::mori2006
+)
+grid.search.parallel = FALSE
+
+
+args.TFDTW = list(buffer = 0, match.method = "fixed",
+                  dist.quant = 0.95, 
+                  window.type = "none",
+                  ## other
+                  norm.method = "t",
+                  step.pattern2 = dtw::asymmetricP2,
+                  n.burn = 3, n.IQR = 3,
+                  ma = 3, ma.na = "original",
+                  default.margin = 3,
+                  n.q = 1, n.r = 1)
+
+args.synth = list(predictors = NULL,
+                  special.predictors = 
+                    expression(list(
+                      list(dep.var, 1960:1969, c("mean")),
+                      list("invest_ratio", 1964:1969, c("mean")),
+                      list("popdens", 1969, c("mean")),
+                      list("sec.agriculture", 1961:1969, c("mean")),
+                      list("sec.energy", 1961:1969, c("mean")),
+                      list("sec.industry", 1961:1969, c("mean")),
+                      list("sec.construction", 1961:1969, c("mean")),
+                      list("sec.services.venta", 1961:1969, c("mean")),
+                      list("sec.services.nonventa", 1961:1969, c("mean")),
+                      list("school.illit", 1964:1969, c("mean")),
+                      list("school.prim", 1964:1969, c("mean")),
+                      list("school.med", 1964:1969, c("mean")),
+                      list("school.high", 1964:1969, c("mean")),
+                      list("school.post.high", 1964:1969, c("mean"))
+                    )),
+                  time.predictors.prior = 1955:1969,
+                  time.optimize.ssr = 1955:1969)
+
+args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
+                        args.TFDTW = args.TFDTW, args.synth = args.synth,
+                        ## 2nd
+                        n.mse = 10, 
+                        ## other
+                        plot.figures = TRUE,
+                        plot.path = "./figures/",
+                        legend.pos = c(0.3, 0.3))
+
+args.TFDTW.synth.all.units = list(target = "Basque Country (Pais Vasco)",
+                                  # data = data, 
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  detailed.output = TRUE,
+                                  ## 2nd
+                                  all.units.parallel = TRUE)
+
+cat("Start...")
+args.TFDTW.synth.all.units[["data"]] = data
+results = SimDesign::quiet(
+  grid.search(filter.width.range = filter.width.range,
+              k.range = k.range,
+              step.pattern.range = step.pattern.range,
+              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+              grid.search.parallel = grid.search.parallel)
+)
+cat("Done.\n")
+
+saveRDS(results, "./data/res_basque_optimal_1019.Rds")
+
+# plot placebo figure
+df = results[[1]][["results.TFDTW.synth"]] %>%
+  map(
+    ~{
+      item = .
+      data.frame(unit = item[["dependent"]],
+                 time = 1955:1997,
+                 value = item$res.synth.raw$value,
+                 synth_origin = item$res.synth.raw$synthetic,
+                 synth_new = item$res.synth.TFDTW$synthetic)
+    }
+  ) %>%
+  do.call("rbind", .) %>%
+  mutate(
+    color = case_when(unit == "Basque Country (Pais Vasco)" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df = left_join(df, df.rescale, by = "unit")
+df = df %>% 
+  mutate(gap_origin = gap_origin/multiplier,
+         gap_new = gap_new/multiplier)
+
+mse = results[["1"]][["mse"]]
+
+fig = df %>%
+  filter(unit %in% (mse %>% filter(mse.preT.raw < 5*9 & unit != "Basque Country (Pais Vasco)") %>% .[["unit"]])) %>%
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1970, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("Year") +
+  ylab("True Data - Synthetic Control") +
+  ggtitle(paste0("Percent=", round(results[[1]]$neg.ratio, 4), ", P.value=", round(results[[1]]$p.value, 4))) +
+  theme_bw()
+
+ggsave("./figures/placebo_basque_1019.pdf",
+       fig, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
+
+
+
+
+
 # # prepare data
 # start_time = 1955
 # end_time = 1990

@@ -129,6 +129,125 @@ neg.ratio[min.p]
 p.value[min.p]
 
 ## Optimal Run Germany ---------------------------------------------------------
+# parameters
+filter.width.range = 5
+k.range = 6
+step.pattern.range = list(
+  # symmetricP0 = dtw::symmetricP0, # too bumpy
+  # symmetricP05 = dtw::symmetricP05,
+  symmetricP1 = dtw::symmetricP1#,
+  # symmetricP2 = dtw::symmetricP2,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+  # asymmetricP05 = dtw::asymmetricP05,
+  # asymmetricP1 = dtw::asymmetricP1,
+  # asymmetricP2 = dtw::asymmetricP2,
+  # typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
+  # typeIIc = dtw::typeIIc,  # jumps
+  # typeIIIc = dtw::typeIIIc, # jumps
+  # typeIVc = dtw::typeIVc,  # jumps
+  # typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
+  # typeIId = dtw::typeIId, # jumps
+  # mori2006 = dtw::mori2006
+)
+grid.search.parallel = FALSE
+
+
+args.TFDTW = list(buffer = 0, match.method = "fixed",
+                  dist.quant = 0.95, 
+                  window.type = "none",
+                  ## other
+                  norm.method = "t",
+                  step.pattern2 = dtw::asymmetricP2,
+                  n.burn = 3, n.IQR = 3,
+                  ma = 3, ma.na = "original",
+                  default.margin = 3,
+                  n.q = 1, n.r = 1)
+
+args.synth = list(predictors = expression(c(dep.var,"trade","infrate")),
+                  special.predictors = 
+                    expression(list(list("industry", 1981:1989, c("mean")),
+                                    list("schooling",c(1980,1985), c("mean")),
+                                    list("invest80" ,1980, c("mean")))),
+                  time.predictors.prior = 1981:1989,
+                  time.optimize.ssr = 1960:1989)
+
+args.TFDTW.synth = list(start.time = 1960, end.time = 2003, treat.time = 1990,
+                        args.TFDTW = args.TFDTW, args.synth = args.synth,
+                        ## 2nd
+                        n.mse = 10, 
+                        ## other
+                        plot.figures = TRUE,
+                        plot.path = "./figures/",
+                        legend.pos = c(0.3, 0.8))
+
+args.TFDTW.synth.all.units = list(target = "West Germany",
+                                  # data = data, 
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  detailed.output = TRUE,
+                                  ## 2nd
+                                  all.units.parallel = TRUE)
+
+cat("Start...")
+args.TFDTW.synth.all.units[["data"]] = data
+results = SimDesign::quiet(
+  grid.search(filter.width.range = filter.width.range,
+              k.range = k.range,
+              step.pattern.range = step.pattern.range,
+              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+              grid.search.parallel = grid.search.parallel)
+)
+cat("Done.\n")
+
+saveRDS(results, "./data/res_germany_optimal_1018.Rds")
+
+# plot placebo figure
+df = results[[1]][["results.TFDTW.synth"]] %>%
+  map(
+    ~{
+      item = .
+      data.frame(unit = item[["dependent"]],
+                 time = 1960:2000,
+                 value = item$res.synth.raw$value[-c(42:44)],
+                 synth_origin = item$res.synth.raw$synthetic[-c(42:44)],
+                 synth_new = item$res.synth.TFDTW$synthetic[-c(42:44)])
+    }
+  ) %>%
+  do.call("rbind", .) %>%
+  mutate(
+    color = case_when(unit == "West Germany" ~ "black",
+                      TRUE ~ "grey 70"),
+    gap_origin = value - synth_origin,
+    gap_new = value - synth_new
+  )
+
+df = left_join(df, df.rescale, by = "unit")
+df = df %>% 
+  mutate(gap_origin = gap_origin/multiplier,
+         gap_new = gap_new/multiplier)
+
+mse = results[["1"]][["mse"]]
+
+fig = df %>%
+  filter(unit %in% (mse %>% filter(mse.preT.raw < 10*5000 & unit != "West Germany") %>% .[["unit"]])) %>%
+  ggplot(aes(x = time, group = unit)) +
+  geom_line(aes(y = gap_origin), col = "#adcbe3") +
+  geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_line(aes(y = gap_origin), data = df %>% filter(unit == "West Germany"), col = "#2ab7ca", size = 1) +
+  geom_line(aes(y = gap_new), data = df %>% filter(unit == "West Germany"), col = "#fe4a49", size = 1) +
+  geom_vline(xintercept = 1990, linetype="dashed") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  # coord_cartesian(ylim=c(-32, 32)) +
+  xlab("Year") +
+  ylab("True Data - Synthetic Control") +
+  ggtitle(paste0("Percent=", results[[1]]$neg.ratio, ", P.value=", round(results[[1]]$p.value, 4))) +
+  theme_bw()
+
+ggsave("./figures/placebo_germany_1018.pdf",
+       fig, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
+
 # # prepare data
 # start_time = 1960
 # end_time = 2003
