@@ -44,15 +44,23 @@ df.rescale = data %>%
   filter(time <= 1989) %>% 
   group_by(unit) %>% 
   summarise(value.min = min(value),
-            value.max = max(value),
-            multiplier = 45/(value.max - value.min)) %>% 
+            value.max = max(value)) %>% 
   ungroup()
 
-data = left_join(data, df.rescale, by = "unit")
-data = data %>% mutate(value.bak = value_raw,
-                       value_raw = (value_raw - value.min)*multiplier,
-                       value = value_raw)
+mean.diff = mean(df.rescale$value.max - df.rescale$value.min)
 
+df.rescale = df.rescale %>% 
+  mutate(
+    multiplier = mean.diff/(value.max - value.min)
+  )
+
+data = left_join(data, df.rescale, by = "unit")
+data = data %>% 
+  mutate(
+    value.bak = value_raw,
+    value_raw = (value_raw - value.min)*multiplier,
+    value = value_raw
+  )
 
 ## Grid Search Tobacco ---------------------------------------------------------
 # parameters
@@ -120,7 +128,6 @@ args.TFDTW.synth.all.units = list(target = "California",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -129,14 +136,13 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_tobacco_1013.Rds")
+saveRDS(results, "./data/res_tobacco_1019.Rds")
 job.end = Sys.time()
 print(job.end - job.start)
 
 ## Result ----------------------------------------------------------------------
-results = readRDS("./data/res_tobacco_1013.Rds")
+results = readRDS("./data/res_tobacco_1019.Rds")
 neg.ratio = lapply(results, "[[", "neg.ratio") %>% 
   do.call("c", .)
 p.value = lapply(results, "[[", "p.value") %>% 
@@ -152,8 +158,8 @@ p.value[min.p]
 
 ## Optimal Run Tobacco ---------------------------------------------------------
 # parameters
-filter.width.range = 13
-k.range = 8
+filter.width.range = 15
+k.range = 7
 step.pattern.range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
@@ -163,12 +169,12 @@ step.pattern.range = list(
   # asymmetricP05 = dtw::asymmetricP05,
   # asymmetricP1 = dtw::asymmetricP1,
   # asymmetricP2 = dtw::asymmetricP2,
-  # typeIc = dtw::typeIc,
+  typeIc = dtw::typeIc#,
   # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  typeId = dtw::typeId#,
+  # typeId = dtw::typeId,
   # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
   # mori2006 = dtw::mori2006
@@ -217,7 +223,6 @@ args.TFDTW.synth.all.units = list(target = "California",
                                   ## 2nd
                                   all.units.parallel = TRUE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -226,9 +231,8 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_tobacco_optimal_1018.Rds")
+saveRDS(results, "./data/res_tobacco_optimal_1020.Rds")
 
 # plot placebo figure
 df = results[[1]][["results.TFDTW.synth"]] %>%
@@ -272,7 +276,7 @@ fig = df %>%
   ggtitle(paste0("Percent=", round(results[[1]]$neg.ratio, 4), ", P.value=", round(results[[1]]$p.value, 4))) +
   theme_bw()
 
-ggsave("./figures/placebo_tobacco_1018.pdf",
+ggsave("./figures/placebo_tobacco_1020.pdf",
        fig, width = 6, height = 4,
        units = "in", limitsize = FALSE)
 

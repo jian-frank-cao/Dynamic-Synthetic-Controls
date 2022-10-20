@@ -30,15 +30,23 @@ df.rescale = data %>%
   filter(time <= 1970) %>% 
   group_by(unit) %>% 
   summarise(value.min = min(value),
-            value.max = max(value),
-            multiplier = 2.2/(value.max - value.min)) %>% 
+            value.max = max(value)) %>% 
   ungroup()
 
-data = left_join(data, df.rescale, by = "unit")
-data = data %>% mutate(value.bak = value_raw,
-                       value_raw = (value_raw - value.min)*multiplier,
-                       value = value_raw)
+mean.diff = mean(df.rescale$value.max - df.rescale$value.min)
 
+df.rescale = df.rescale %>% 
+  mutate(
+    multiplier = mean.diff/(value.max - value.min)
+  )
+
+data = left_join(data, df.rescale, by = "unit")
+data = data %>% 
+  mutate(
+    value.bak = value_raw,
+    value_raw = (value_raw - value.min)*multiplier,
+    value = value_raw
+  )
 
 ## Grid Search Basque ----------------------------------------------------------
 # parameters
@@ -113,7 +121,6 @@ args.TFDTW.synth.all.units = list(target = "Basque Country (Pais Vasco)",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -122,14 +129,13 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_basque_1018.Rds")
+saveRDS(results, "./data/res_basque_1019.Rds")
 job.end = Sys.time()
 print(job.end - job.start)
 
 ## Result ----------------------------------------------------------------------
-results = readRDS("./data/res_basque_1018.Rds")
+results = readRDS("./data/res_basque_1019.Rds")
 neg.ratio = lapply(results, "[[", "neg.ratio") %>% 
   do.call("c", .)
 p.value = lapply(results, "[[", "p.value") %>% 
@@ -146,16 +152,16 @@ p.value[min.p]
 
 ## Optimal Run -----------------------------------------------------------------
 # parameters
-filter.width.range = 19
+filter.width.range = 21
 k.range = 5
 step.pattern.range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
   # symmetricP1 = dtw::symmetricP1,
-  # symmetricP2 = dtw::symmetricP2,
+  symmetricP2 = dtw::symmetricP2#,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   # asymmetricP05 = dtw::asymmetricP05,
-  asymmetricP1 = dtw::asymmetricP1#,
+  # asymmetricP1 = dtw::asymmetricP1,
   # asymmetricP2 = dtw::asymmetricP2,
   # typeIc = dtw::typeIc,
   # typeIcs = dtw::typeIcs,
@@ -218,7 +224,6 @@ args.TFDTW.synth.all.units = list(target = "Basque Country (Pais Vasco)",
                                   ## 2nd
                                   all.units.parallel = TRUE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -227,9 +232,8 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_basque_optimal_1019.Rds")
+saveRDS(results, "./data/res_basque_optimal_1020.Rds")
 
 # plot placebo figure
 df = results[[1]][["results.TFDTW.synth"]] %>%
@@ -273,7 +277,7 @@ fig = df %>%
   ggtitle(paste0("Percent=", round(results[[1]]$neg.ratio, 4), ", P.value=", round(results[[1]]$p.value, 4))) +
   theme_bw()
 
-ggsave("./figures/placebo_basque_1019.pdf",
+ggsave("./figures/placebo_basque_1020.pdf",
        fig, width = 6, height = 4,
        units = "in", limitsize = FALSE)
 

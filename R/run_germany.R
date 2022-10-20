@@ -28,14 +28,23 @@ df.rescale = data %>%
   filter(time <= 1990) %>% 
   group_by(unit) %>% 
   summarise(value.min = min(value),
-            value.max = max(value),
-            multiplier = 15000/(value.max - value.min)) %>% 
+            value.max = max(value)) %>% 
   ungroup()
 
+mean.diff = mean(df.rescale$value.max - df.rescale$value.min)
+
+df.rescale = df.rescale %>% 
+  mutate(
+    multiplier = mean.diff/(value.max - value.min)
+  )
+
 data = left_join(data, df.rescale, by = "unit")
-data = data %>% mutate(value.bak = value_raw,
-                       value_raw = (value_raw - value.min)*multiplier,
-                       value = value_raw)
+data = data %>% 
+  mutate(
+    value.bak = value_raw,
+    value_raw = (value_raw - value.min)*multiplier,
+    value = value_raw
+  )
 
 
 ## Grid Search Germany ---------------------------------------------------------
@@ -98,7 +107,6 @@ args.TFDTW.synth.all.units = list(target = "West Germany",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -107,14 +115,13 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_germany_1013.Rds")
+saveRDS(results, "./data/res_germany_1020.Rds")
 job.end = Sys.time()
 print(job.end - job.start)
 
 ## Result ----------------------------------------------------------------------
-results = readRDS("./data/res_germany_1013.Rds")
+results = readRDS("./data/res_germany_1020.Rds")
 neg.ratio = lapply(results, "[[", "neg.ratio") %>% 
   do.call("c", .)
 p.value = lapply(results, "[[", "p.value") %>% 
@@ -135,7 +142,7 @@ k.range = 6
 step.pattern.range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
-  symmetricP1 = dtw::symmetricP1#,
+  # symmetricP1 = dtw::symmetricP1,
   # symmetricP2 = dtw::symmetricP2,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   # asymmetricP05 = dtw::asymmetricP05,
@@ -146,7 +153,7 @@ step.pattern.range = list(
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  # typeId = dtw::typeId,
+  typeId = dtw::typeId#,
   # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
   # mori2006 = dtw::mori2006
@@ -189,7 +196,6 @@ args.TFDTW.synth.all.units = list(target = "West Germany",
                                   ## 2nd
                                   all.units.parallel = TRUE)
 
-cat("Start...")
 args.TFDTW.synth.all.units[["data"]] = data
 results = SimDesign::quiet(
   grid.search(filter.width.range = filter.width.range,
@@ -198,9 +204,8 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
-cat("Done.\n")
 
-saveRDS(results, "./data/res_germany_optimal_1018.Rds")
+saveRDS(results, "./data/res_germany_optimal_1020.Rds")
 
 # plot placebo figure
 df = results[[1]][["results.TFDTW.synth"]] %>%
@@ -208,10 +213,10 @@ df = results[[1]][["results.TFDTW.synth"]] %>%
     ~{
       item = .
       data.frame(unit = item[["dependent"]],
-                 time = 1960:2000,
-                 value = item$res.synth.raw$value[-c(42:44)],
-                 synth_origin = item$res.synth.raw$synthetic[-c(42:44)],
-                 synth_new = item$res.synth.TFDTW$synthetic[-c(42:44)])
+                 time = 1960:2003,
+                 value = item$res.synth.raw$value,
+                 synth_origin = item$res.synth.raw$synthetic,
+                 synth_new = item$res.synth.TFDTW$synthetic)
     }
   ) %>%
   do.call("rbind", .) %>%
@@ -244,7 +249,7 @@ fig = df %>%
   ggtitle(paste0("Percent=", results[[1]]$neg.ratio, ", P.value=", round(results[[1]]$p.value, 4))) +
   theme_bw()
 
-ggsave("./figures/placebo_germany_1018.pdf",
+ggsave("./figures/placebo_germany_1020.pdf",
        fig, width = 6, height = 4,
        units = "in", limitsize = FALSE)
 
