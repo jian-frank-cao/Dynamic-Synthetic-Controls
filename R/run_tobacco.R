@@ -62,6 +62,8 @@ data = data %>%
     value = value_raw
   )
 
+# warped Mississippi is 5 years shorter
+
 ## Grid Search Tobacco ---------------------------------------------------------
 # parameters
 filter.width.range = (1:9)*2+3
