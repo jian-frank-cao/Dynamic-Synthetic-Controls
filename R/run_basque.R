@@ -234,6 +234,7 @@ results = SimDesign::quiet(
 )
 
 saveRDS(results, "./data/res_basque_optimal_1020.Rds")
+# results = readRDS("./data/res_basque_optimal_1020.Rds")
 
 # plot placebo figure
 df = results[[1]][["results.TFDTW.synth"]] %>%
@@ -262,11 +263,26 @@ df = df %>%
 
 mse = results[["1"]][["mse"]]
 
+df.interval = df %>% 
+  filter(unit != "Basque Country (Pais Vasco)") %>% 
+  group_by(time) %>% 
+  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_mean = mean(gap_origin, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_mean = mean(gap_new, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
+  mutate(unit = "area")
+
 fig = df %>%
   filter(unit %in% (mse %>% filter(mse.preT.raw < 5*9 & unit != "Basque Country (Pais Vasco)") %>% .[["unit"]])) %>%
   ggplot(aes(x = time, group = unit)) +
   geom_line(aes(y = gap_origin), col = "#adcbe3") +
   geom_line(aes(y = gap_new), col = "#fec8c1") +
+  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper),
+              data = df.interval, fill="#2ab7ca", alpha=0.5) +
+  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper),
+              data = df.interval, fill="#fe4a49", alpha=0.5) +
   geom_line(aes(y = gap_origin), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#2ab7ca", size = 1) +
   geom_line(aes(y = gap_new), data = df %>% filter(unit == "Basque Country (Pais Vasco)"), col = "#fe4a49", size = 1) +
   geom_vline(xintercept = 1970, linetype="dashed") +
@@ -277,7 +293,7 @@ fig = df %>%
   ggtitle(paste0("Percent=", round(results[[1]]$neg.ratio, 4), ", P.value=", round(results[[1]]$p.value, 4))) +
   theme_bw()
 
-ggsave("./figures/placebo_basque_1020.pdf",
+ggsave("./figures/placebo_basque_1025.pdf",
        fig, width = 6, height = 4,
        units = "in", limitsize = FALSE)
 
