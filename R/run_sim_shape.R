@@ -42,17 +42,17 @@ set.seed(20220407)
 #                             reweight = TRUE,
 #                             rescale = TRUE,
 #                             rescale.multiplier = 20,
-#                             beta = 0.5)
+#                             beta = 0)
 # }
 # 
 # data.list[[1]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_beta05.Rds")
+# saveRDS(data.list, "./data/simul_data_beta0.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta05.Rds")
+data.list = readRDS("./data/simul_data_beta0.Rds")
 
 # parameters
 filter.width.range = (1:9)*2+3
