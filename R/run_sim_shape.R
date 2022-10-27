@@ -130,8 +130,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 # results = NULL
-# beta = 0
-# folder = "./data/res_sim/1011/"
+# beta = 1
+# folder = "./data/res_sim/1006/"
 # res.files = list.files(folder)
 # res.files = setdiff(res.files, "old")
 # for (res.file in res.files) {
@@ -205,16 +205,16 @@ print(job.end - job.start)
 # n.t = length(t.interval)
 # n.datasets = nrow(df2)/16
 # 
-# var.original = df2 %>% group_by(id) %>% 
-#   summarise(variance = var(diff_original)*(n.t - 1)) %>% 
-#   ungroup %>% 
-#   .[["variance"]] %>% 
+# var.original = df2 %>% group_by(id) %>%
+#   summarise(variance = var(diff_original)*(n.t - 1)) %>%
+#   ungroup %>%
+#   .[["variance"]] %>%
 #   sum(., na.rm = T)/(n.datasets*(n.t - 1))
 # 
-# var.new = df2 %>% group_by(id) %>% 
-#   summarise(variance = var(diff_new)*(n.t - 1)) %>% 
-#   ungroup %>% 
-#   .[["variance"]] %>% 
+# var.new = df2 %>% group_by(id) %>%
+#   summarise(variance = var(diff_new)*(n.t - 1)) %>%
+#   ungroup %>%
+#   .[["variance"]] %>%
 #   sum(., na.rm = T)/(n.datasets*(n.t - 1))
 # 
 # f.value = var.new/var.original
@@ -252,7 +252,7 @@ print(job.end - job.start)
 #   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P<0.0001")) +
 #   theme_bw()
 # 
-# ggsave("./figures/placebo_sim_1011.pdf",
+# ggsave("./figures/placebo_sim_1006.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
 
