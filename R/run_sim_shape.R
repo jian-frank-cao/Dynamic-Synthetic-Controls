@@ -252,7 +252,7 @@ print(job.end - job.start)
 #   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P<0.0001")) +
 #   theme_bw()
 # 
-# ggsave("./figures/placebo_sim_1006.pdf",
+# ggsave("./figures/placebo_sim_1006_2.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
 
