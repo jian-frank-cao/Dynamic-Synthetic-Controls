@@ -130,8 +130,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 # results = NULL
-# beta = 1
-# folder = "./data/res_sim/1006/"
+# beta = 0.5
+# folder = "./data/res_sim/1010/"
 # res.files = list.files(folder)
 # res.files = setdiff(res.files, "old")
 # for (res.file in res.files) {
@@ -219,8 +219,9 @@ print(job.end - job.start)
 # 
 # f.value = var.new/var.original
 # f.value = round(f.value, 4)
-# p.value = pf(f.value, n.datasets*(n.t - 1),
-#              n.datasets*(n.t - 1), lower.tail = TRUE)*2
+# p.value = pf(f.value, n.datasets - 1,
+#              n.datasets - 1, lower.tail = TRUE)*2
+# p.value = round(p.value, 4)
 # 
 # 
 # percent = df %>%
@@ -249,12 +250,12 @@ print(job.end - job.start)
 #   geom_hline(yintercept = 0, linetype="dashed") +
 #   xlab("Time") +
 #   ylab("True Value - Synthetic Control") +
-#   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P<0.0001")) +
+#   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P=", p.value)) +
 #   theme_bw()
 # 
-# ggsave("./figures/placebo_sim_1006_2.pdf",
+# ggsave("./figures/placebo_sim_1006_3.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
-
+# 
 
 
