@@ -131,8 +131,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 # results = NULL
-# beta = 1
-# folder = "./data/res_sim/1006/"
+# beta = 0.5
+# folder = "./data/res_sim/1010/"
 # res.files = list.files(folder)
 # for (res.file in res.files) {
 #   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -219,8 +219,9 @@ print(job.end - job.start)
 # 
 # f.value = var.new/var.original
 # f.value = round(f.value, 4)
-# p.value = pf(f.value, n.datasets-1,
-#              n.datasets-1, lower.tail = TRUE)*2
+# p.value = pf(f.value, n.datasets - 1,
+#              n.datasets - 1, lower.tail = TRUE)*2
+# p.value = round(p.value, 4)
 # 
 # 
 # percent = df %>%
@@ -255,6 +256,5 @@ print(job.end - job.start)
 # ggsave("./figures/placebo_sim_1006_3.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
-
 
 
