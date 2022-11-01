@@ -1,5 +1,6 @@
 args = commandArgs(trailingOnly=TRUE)
 i = as.integer(args[1])
+beta = as.integer(args[2])
 job.start = Sys.time()
 
 ## Setup -----------------------------------------------------------------------
@@ -45,14 +46,14 @@ set.seed(20220407)
 #                             beta = 0)
 # }
 # 
-# data.list[[1]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+# data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_beta0.Rds")
+# saveRDS(data.list, "./data/simul_data_beta_0.Rds")
 
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta0.Rds")
+data.list = readRDS(paste0("./data/simul_data_beta_", beta, ".Rds"))
 
 # parameters
 filter.width.range = (1:9)*2+3
@@ -124,7 +125,7 @@ results = SimDesign::quiet(
 )
 cat("Done.\n")
 
-saveRDS(results, paste0("./data/res_sim_1006_", i, ".Rds"))
+saveRDS(results, paste0("./data/res_sim_beta_", beta, "_", i, ".Rds"))
 job.end = Sys.time()
 print(job.end - job.start)
 
@@ -133,7 +134,6 @@ print(job.end - job.start)
 # beta = 1
 # folder = "./data/res_sim/1006/"
 # res.files = list.files(folder)
-# res.files = setdiff(res.files, "old")
 # for (res.file in res.files) {
 #   results = c(results, list(readRDS(paste0(folder, res.file))))
 # }
@@ -219,8 +219,8 @@ print(job.end - job.start)
 # 
 # f.value = var.new/var.original
 # f.value = round(f.value, 4)
-# p.value = pf(f.value, n.datasets*(n.t - 1),
-#              n.datasets*(n.t - 1), lower.tail = TRUE)*2
+# p.value = pf(f.value, n.datasets-1,
+#              n.datasets-1, lower.tail = TRUE)*2
 # 
 # 
 # percent = df %>%
@@ -249,10 +249,10 @@ print(job.end - job.start)
 #   geom_hline(yintercept = 0, linetype="dashed") +
 #   xlab("Time") +
 #   ylab("True Value - Synthetic Control") +
-#   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P<0.0001")) +
+#   ggtitle(paste0("Beta=", beta, ", F=", f.value, ", P=", p.value)) +
 #   theme_bw()
 # 
-# ggsave("./figures/placebo_sim_1006_2.pdf",
+# ggsave("./figures/placebo_sim_1006_3.pdf",
 #        fig, width = 6, height = 4,
 #        units = "in", limitsize = FALSE)
 
