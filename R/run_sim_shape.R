@@ -131,8 +131,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 results = NULL
-beta = 1
-folder = "./data/res_sim/1006/"
+beta = 0.5
+folder = "./data/res_sim/1010/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
