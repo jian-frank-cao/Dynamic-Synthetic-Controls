@@ -131,8 +131,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 results = NULL
-beta = 0.5
-folder = "./data/res_sim/1010/"
+beta = 1
+folder = "./data/res_sim/1006/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -182,7 +182,7 @@ res = future_map2(
     mse = data.frame(mse_original = mse_original,
                      mse_new = mse_new,
                      log_ratio = log(mse_new/mse_original))
-    list(df = data.frame(time = 1:length(value_raw),
+    list(df = data.frame(time = 0:(length(value_raw)-1),
                          id = id,
                          value_raw = value_raw,
                          synth_original = synth_original,
@@ -225,40 +225,104 @@ p.value = round(p.value, 4)
 
 df = df %>% filter(time <= 80)
 
+
+
 percent = df %>%
   group_by(time) %>%
-  summarise(ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
-            ci_origin_mean = mean(gap_origin, na.rm = T),
-            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
-            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
-            ci_new_mean = mean(gap_new, na.rm = T),
-            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
-  mutate(artifical_effect = causal_effect[1:80],
+  summarise(mean_origin = mean(gap_origin, na.rm = T),
+            sd_origin = sd(gap_origin, na.rm = T),
+            mean_new = mean(gap_new, na.rm = T),
+            sd_new = sd(gap_new, na.rm = T),
+            ci_origin_upper = mean_origin + qt(0.975, df = n.datasets-1)*sd_origin,
+            ci_origin_lower = mean_origin - qt(0.975, df = n.datasets-1)*sd_origin,
+            ci_new_upper = mean_new + qt(0.975, df = n.datasets-1)*sd_new,
+            ci_new_lower = mean_new - qt(0.975, df = n.datasets-1)*sd_new,
+            quantile_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            quantile_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            quantile_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            quantile_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
+  mutate(artifical_effect = causal_effect[1:81],
          id = 0)
 
-fig = df %>%
+color_original = "#2ab7ca"
+color_new = "#fe4a49"
+# color_original = "grey70"
+# color_new = "grey30"
+
+colors = c("Treatment Effect" = "grey20",
+           "Mean (Original)" = color_original,
+           "Mean (TFDTW)" = color_new)
+
+fills = c("95% CI (Original)" = color_original,
+          "95% CI (TFDTW)" = color_new)
+
+fig1 = df %>%
   ggplot(aes(x = time, group = id)) +
-  geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
-  geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
-  # geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
-  # geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
-  # geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
-  # geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
-  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper), data = percent, fill = "#2ab7ca", alpha=0.5) +
-  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper), data = percent, fill = "#fe4a49", alpha=0.5) +
-  geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
-  geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
-  geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
-  geom_vline(xintercept = 60, linetype="dashed") +
-  geom_hline(yintercept = 0, linetype="dashed") +
+  geom_line(aes(y = gap_origin), col = color_original, alpha=0.1) +
+  geom_line(aes(y = gap_new), col = color_new, alpha=0.1) +
+  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill = "95% CI (Original)"), data = percent, alpha=0.6) +
+  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper, fill = "95% CI (TFDTW)"), data = percent, alpha=0.6) +
+  geom_line(aes(x = time, y = artifical_effect, color = "Treatment Effect"), data = percent, alpha=1) +
+  geom_line(aes(x = time, y = mean_origin, color = "Mean (Original)"), data = percent, alpha=1) +
+  geom_line(aes(x = time, y = mean_new, col = "Mean (TFDTW)"), data = percent, alpha=1) +
+  scale_color_manual(name = NULL, values = colors) +
+  scale_fill_manual(name = NULL, values = fills) +
+  geom_vline(xintercept = 60, linetype="dashed", col = "grey20") +
+  geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
+  annotate("text", x = 58, y = 25, 
+           label = "Treatment", col = "grey20",
+           angle = 90) +
+  ylim(-20, 30) +
   xlab("Time") +
-  ylab("True Value - Synthetic Control") +
-  ggtitle(paste0("Beta=", beta, ", N=", n.datasets,
-                 ", F=", f.value, ", P=", p.value)) +
+  ylab("Gap (y - Synthetic Control)") +
+  theme_bw() + 
+  theme(legend.position=c(0.5,0.15), 
+        legend.box = "horizontal",
+        legend.background = element_rect(fill=NA))#,
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(),
+        # panel.background = element_blank(),
+        # axis.line = element_line(colour = "black"))
+
+df2 = data.frame(Beta = c(0, 0.5, 1),
+                 `F` = c(0.9, 0.75, 0.6))
+
+fig2 = df2 %>% 
+  ggplot(aes(x = Beta, y = `F`)) +
+  geom_line() +
+  geom_point(size = 2, col = color_new) +
+  ylim(0.4, 1) +
+  xlab(expression(beta)) +
+  ylab("F") +
   theme_bw()
 
-ggsave("./figures/placebo_sim_1006_1101.pdf",
-       fig, width = 6, height = 4,
+
+fig = fig1 + annotation_custom(ggplotGrob(fig2),
+                               xmin = 1, xmax = 40, 
+                               ymin = 5, ymax = 29)
+
+ggsave("./figures/placebo_sim_1006_1103.pdf",
+       fig, width = 8, height = 6,
        units = "in", limitsize = FALSE)
 
 
+# fig = df %>%
+#   ggplot(aes(x = time, group = id)) +
+#   geom_line(aes(y = gap_origin), col = "#4d648d", alpha=0.1) +
+#   geom_line(aes(y = gap_new), col = "#feb2a8", alpha=0.1) +
+#   # geom_line(aes(x = time, y = ci_origin_upper), data = percent, col = "#2ab7ca", alpha=0.8) +
+#   # geom_line(aes(x = time, y = ci_origin_lower), data = percent, col = "#2ab7ca", alpha=0.8) +
+#   # geom_line(aes(x = time, y = ci_new_upper), data = percent, col = "#fe4a49", alpha=0.8) +
+#   # geom_line(aes(x = time, y = ci_new_lower), data = percent, col = "#fe4a49", alpha=0.8) +
+#   geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper), data = percent, fill = "#2ab7ca", alpha=0.5) +
+#   geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper), data = percent, fill = "#fe4a49", alpha=0.5) +
+#   geom_line(aes(x = time, y = ci_origin_mean), data = percent, col = "#2ab7ca", alpha=1) +
+#   geom_line(aes(x = time, y = ci_new_mean), data = percent, col = "#fe4a49", alpha=1) +
+#   geom_line(aes(x = time, y = artifical_effect), data = percent, col = "#008744", alpha=1) +
+#   geom_vline(xintercept = 60, linetype="dashed") +
+#   geom_hline(yintercept = 0, linetype="dashed") +
+#   xlab("Time") +
+#   ylab("True Value - Synthetic Control") +
+#   ggtitle(paste0("Beta=", beta, ", N=", n.datasets,
+#                  ", F=", f.value, ", P=", p.value)) +
+#   theme_bw()
