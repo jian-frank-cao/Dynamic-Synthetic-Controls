@@ -131,8 +131,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 results = NULL
-beta = 0.5
-folder = "./data/res_sim/1010/"
+beta = 0
+folder = "./data/res_sim/1011/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -141,7 +141,7 @@ for (res.file in res.files) {
 length = 100
 shock = 10
 treat_time = 60
-n_mse = 15
+n_mse = 10
 
 causal_effect = c(rep(0, treat_time),
                   seq(0, shock, length.out = round(0.1*length)),
@@ -200,10 +200,10 @@ t.test(mse$log_ratio)
 
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
 
-t.interval = 60:75
+t.interval = 61:70
 df2 = df %>% filter(time %in% t.interval)
 n.t = length(t.interval)
-n.datasets = nrow(df2)/16
+n.datasets = nrow(df2)/length(t.interval)
 
 var.original = df2 %>% group_by(id) %>%
   summarise(variance = var(diff_original)*(n.t - 1)) %>%
@@ -220,7 +220,7 @@ var.new = df2 %>% group_by(id) %>%
 f.value = var.new/var.original
 f.value = round(f.value, 4)
 p.value = pf(f.value, n.datasets - 1,
-             n.datasets - 1, lower.tail = TRUE)*2
+             n.datasets - 1, lower.tail = TRUE)
 p.value = round(p.value, 4)
 
 df = df %>% filter(time <= 80)
