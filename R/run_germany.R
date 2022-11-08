@@ -248,10 +248,10 @@ df.interval = df %>%
             ci_new_lower = mean_new - qt(0.975, df = 20-1)*sd_new) %>% 
   mutate(unit = "area")
 
-# color_original = "#2ab7ca"
-# color_new = "#fe4a49"
-color_original = "grey70"
-color_new = "grey30"
+color_original = "#2ab7ca"
+color_new = "#fe4a49"
+# color_original = "grey70"
+# color_new = "grey30"
 
 colors = c("Gap (Original)" = color_original,
            "Gap (TFDTW)" = color_new)
@@ -262,6 +262,8 @@ fills = c("95% CI (Original)" = color_original,
 fig_germany = df %>%
   filter(unit %in% (mse %>% filter(unit != "West Germany") %>% .[["unit"]])) %>%
   ggplot(aes(x = time, group = unit)) +
+  annotate("rect", xmin = 1990, xmax = 2000, ymin = -9000, ymax = 9000, 
+           alpha = .3) +
   geom_line(aes(y = gap_origin), col = color_original, alpha = 0.4) +
   geom_line(aes(y = gap_new), col = color_new, alpha = 0.4) +
   geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill="95% CI (Original)"),
@@ -274,14 +276,13 @@ fig_germany = df %>%
   scale_fill_manual(name = NULL, values = fills) +
   geom_vline(xintercept = 1990, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  # annotate("text", x = 1989, y = 7700, 
-  #          label = "Treatment", col = "grey20",
-  #          angle = 90) +
-  coord_cartesian(xlim=c(1955, 2003)) +
+  annotate("text", x = 1995, y = 6800,
+           label = "P = 0.016", col = "grey20") +
+  coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +
   ylab("y - Synthetic Control") +
   theme_bw() + 
-  theme(legend.position = c(0.4, 0.2), 
+  theme(legend.position = c(0.25, 0.2), 
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
 

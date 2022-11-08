@@ -278,10 +278,10 @@ df.interval = df %>%
 
 df.interval[28:31, 8:9] = NA
 
-# color_original = "#2ab7ca"
-# color_new = "#fe4a49"
-color_original = "grey70"
-color_new = "grey30"
+color_original = "#2ab7ca"
+color_new = "#fe4a49"
+# color_original = "grey70"
+# color_new = "grey30"
 
 colors = c("Gap (Original)" = color_original,
            "Gap (TFDTW)" = color_new)
@@ -292,6 +292,8 @@ fills = c("95% CI (Original)" = color_original,
 fig_tobacco = df %>%
   filter(unit %in% (mse %>% filter(unit != "California") %>% .[["unit"]])) %>%
   ggplot(aes(x = time, group = unit)) +
+  annotate("rect", xmin = 1989, xmax = 1999, ymin = -60, ymax = 70, 
+           alpha = .3) +
   geom_line(aes(y = gap_origin), col = color_original, alpha = 0.4) +
   geom_line(aes(y = gap_new), col = color_new, alpha = 0.4) +
   geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill="95% CI (Original)"),
@@ -304,10 +306,9 @@ fig_tobacco = df %>%
   scale_fill_manual(name = NULL, values = fills) +
   geom_vline(xintercept = 1989, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  # annotate("text", x = 1988.5, y = 55, 
-  #          label = "Treatment", col = "grey20",
-  #          angle = 90) +
-  coord_cartesian(xlim=c(1955, 2003)) +
+  annotate("text", x = 1994, y = 33,
+           label = "P = 0.023", col = "grey20") +
+  coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +
   xlab("Year") +
   ylab("y - Synthetic Control") +
   theme_bw() + 

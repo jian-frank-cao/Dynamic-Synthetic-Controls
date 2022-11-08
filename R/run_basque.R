@@ -276,10 +276,10 @@ df.interval = df %>%
             ci_new_lower = mean_new - qt(0.975, df = 18-1)*sd_new) %>% 
   mutate(unit = "area")
 
-# color_original = "#2ab7ca"
-# color_new = "#fe4a49"
-color_original = "grey70"
-color_new = "grey30"
+color_original = "#2ab7ca"
+color_new = "#fe4a49"
+# color_original = "grey70"
+# color_new = "grey30"
 
 colors = c("Gap (Original)" = color_original,
            "Gap (TFDTW)" = color_new)
@@ -290,6 +290,8 @@ fills = c("95% CI (Original)" = color_original,
 fig_basque = df %>%
   filter(unit %in% (mse %>% filter(unit != "Basque Country (Pais Vasco)") %>% .[["unit"]])) %>%
   ggplot(aes(x = time, group = unit)) +
+  annotate("rect", xmin = 1970, xmax = 1980, ymin = -3, ymax = 3, 
+           alpha = .3) +
   geom_line(aes(y = gap_origin), col = color_original, alpha = 0.4) +
   geom_line(aes(y = gap_new), col = color_new, alpha = 0.4) +
   geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill="95% CI (Original)"),
@@ -302,10 +304,9 @@ fig_basque = df %>%
   scale_fill_manual(name = NULL, values = fills) +
   geom_vline(xintercept = 1970, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  # annotate("text", x = 1969, y = 1.3, 
-  #          label = "Treatment", col = "grey20",
-  #          angle = 90) +
-  coord_cartesian(xlim=c(1955, 2003)) +
+  annotate("text", x = 1975, y = 0.85,
+           label = "P = 0.026", col = "grey20") +
+  coord_cartesian(xlim=c(1950, 1990), ylim = c(-1, 1)) +
   xlab("Year") +
   ylab("y - Synthetic Control") +
   theme_bw() + 
