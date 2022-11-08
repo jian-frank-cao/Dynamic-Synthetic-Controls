@@ -22,34 +22,34 @@ set.seed(20220407)
 
 
 ## Data Simulation -------------------------------------------------------------
-# n.simulation = 100
-# length = 100
-# n = 10
-# 
-# # generate sobol sequence
-# # sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
-# #                         seed = 20220401, skip = 100)
-# # rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
-# 
-# 
-# # simulate
-# data.list = NULL
-# for (i in 1:n.simulation) {
-#   data.list[[i]] = sim.data(n = n, length = length,
-#                             t.treat = 60, shock = 10, ar.x = 0.6,
-#                             n.SMA = 1, n.diff = 1,
-#                             speed.upper = 2,
-#                             speed.lower = 0.5,
-#                             reweight = TRUE,
-#                             rescale = TRUE,
-#                             rescale.multiplier = 20,
-#                             beta = 0)
-# }
-# 
-# data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
-#   geom_line() +
-#   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_beta_0.Rds")
+n.simulation = 150
+length = 100
+n = 10
+
+# generate sobol sequence
+# sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
+#                         seed = 20220401, skip = 100)
+# rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
+
+
+# simulate
+data.list = NULL
+for (i in 1:n.simulation) {
+  data.list[[i]] = sim.data(n = n, length = length,
+                            t.treat = 60, shock = 10, ar.x = 0.6,
+                            n.SMA = 1, n.diff = 1,
+                            speed.upper = 2,
+                            speed.lower = 0.5,
+                            reweight = TRUE,
+                            rescale = TRUE,
+                            rescale.multiplier = 20,
+                            beta = 0)
+}
+
+data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line() +
+  geom_vline(xintercept = 60, linetype="dashed")
+saveRDS(data.list, "./data/simul_data_beta_0.Rds")
 
 
 ## Run -------------------------------------------------------------------------
