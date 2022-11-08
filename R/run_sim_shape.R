@@ -43,13 +43,13 @@ for (i in 1:n.simulation) {
                             reweight = TRUE,
                             rescale = TRUE,
                             rescale.multiplier = 20,
-                            beta = 0)
+                            beta = 0.5)
 }
 
 data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
   geom_vline(xintercept = 60, linetype="dashed")
-saveRDS(data.list, "./data/simul_data_beta_0.Rds")
+saveRDS(data.list, "./data/simul_data_beta_5.Rds")
 
 
 ## Run -------------------------------------------------------------------------
