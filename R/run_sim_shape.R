@@ -285,7 +285,7 @@ fig1 = df %>%
         # axis.line = element_line(colour = "black"))
 
 df2 = data.frame(Beta = c(0, 0.5, 1),
-                 `F` = c(0.9, 0.75, 0.6))
+                 `F` = c(0.9, 0.70, 0.55))
 
 fig2 = df2 %>% 
   ggplot(aes(x = Beta, y = `F`)) +
