@@ -4,7 +4,7 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 8)
+plan(multisession, workers = 7)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 source("./R/misc.R")
@@ -29,7 +29,7 @@ sim.data = function(n = 3, nCycles = 6, length = 100, extra.x = round(0.2*length
   xt = 0
   x2 = NULL
   for (j in 1:length(x)) {
-    xt = 0.96*xt + x[j]
+    xt = 0.8*xt + x[j]
     x2 = c(x2, xt)
   }
   x = x2
@@ -122,26 +122,26 @@ data %>% ggplot(aes(x = time, y = value, color = unit)) + geom_line()
 
 
 # parameters
-filter.width.range = (1:9)*2+3
-k.range = 4:9
+filter.width.range = 19
+k.range = 7
 step.pattern.range = list(
   # symmetricP0 = dtw::symmetricP0, # too bumpy
   # symmetricP05 = dtw::symmetricP05,
-  symmetricP1 = dtw::symmetricP1,
-  symmetricP2 = dtw::symmetricP2,
+  # symmetricP1 = dtw::symmetricP1,
+  # symmetricP2 = dtw::symmetricP2,
   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
   # asymmetricP05 = dtw::asymmetricP05,
-  asymmetricP1 = dtw::asymmetricP1,
-  asymmetricP2 = dtw::asymmetricP2,
-  typeIc = dtw::typeIc,
+  # asymmetricP1 = dtw::asymmetricP1,
+  # asymmetricP2 = dtw::asymmetricP2,
+  typeIc = dtw::typeIc#,
   # typeIcs = dtw::typeIcs,
   # typeIIc = dtw::typeIIc,  # jumps
   # typeIIIc = dtw::typeIIIc, # jumps
   # typeIVc = dtw::typeIVc,  # jumps
-  typeId = dtw::typeId,
+  # typeId = dtw::typeId,
   # typeIds = dtw::typeIds,
   # typeIId = dtw::typeIId, # jumps
-  mori2006 = dtw::mori2006
+  # mori2006 = dtw::mori2006
 )
 grid.search.parallel = TRUE
 
@@ -188,6 +188,68 @@ results = SimDesign::quiet(
               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
               grid.search.parallel = grid.search.parallel)
 )
+
+# df = rbind(
+#   data.frame(id = 1, unit = "A", time = 1:1000,
+#              value = approx(data[1:100, 4], n = 1000)$y),
+#   data.frame(id = 2, unit = "B", time = 1:1000,
+#              value = approx(data[101:200, 4], n = 1000)$y),
+#   data.frame(id = 1, unit = "C", time = 1:1000,
+#              value = approx(data[201:300, 4], n = 1000)$y),
+#   data.frame(id = 1, unit = "Original", time = 1:1000,
+#              value = approx(results[[1]]$res.synth.target.raw$synthetic, n = 1000)$y),
+#   data.frame(id = 1, unit = "A", time = 1:1000,
+#              value = approx(data[1:100, 4], n = 1000)$y),
+# )
+
+df = rbind(
+  data.frame(id = 1, unit = "Unit T", time = 1:1000,
+             value = approx(data[1:100,4], n = 1000)$y),
+  data.frame(id = 2, unit = "Unit C1", time = 1:1000,
+             value = approx(data[101:200,4], n = 1000)$y),
+  data.frame(id = 3, unit = "Unit C2", time = 1:1000,
+             value = approx(data[201:300,4], n = 1000)$y),
+  data.frame(id = 4, unit = "Synthetic Control (Original)", time = 1:1000,
+             value = approx(results[[1]]$res.synth.target.raw$synthetic, n = 1000)$y),
+  data.frame(id = 5, unit = "Synthetic Control (TFDTW)", time = 1:1000,
+             value = c(approx(results[[1]]$res.synth.target.TFDTW$synthetic, n = 770)$y, rep(NA, 230)))
+)
+
+df$time[c(1:1000, 4001:5000)] = df$time[c(1:1000, 4001:5000)] + 100
+df$value = df$value + rnorm(1000, mean = 0, sd = 0.1)
+
+fig = df %>% 
+  ggplot(aes(x = time, y = value, color = unit, linetype = unit)) +
+  geom_line(size = 1) + 
+  scale_linetype_manual(name = NULL,
+                     values = c("Unit T" = "solid", "Unit C1" = "dashed",
+                                "Unit C2" = "dotted", "Synthetic Control (Original)" = "solid",
+                                "Synthetic Control (TFDTW)" = "solid")) +
+  scale_color_manual(name = NULL,
+                     values = c("Unit T" = "#4a4e4d", "Unit C1" = "#aaaaaa",
+                                "Unit C2" = "#aaaaaa", "Synthetic Control (Original)" = "#3da4ab",
+                                "Synthetic Control (TFDTW)" = "#fe8a71")) +
+  geom_vline(xintercept = 600, linetype="dashed", col = "grey20") +
+  # annotate("text", x = 590, y = 18.5, 
+  #          label = "Treatment", col = "grey20",
+  #          angle = 90) +
+  xlim(350, 750) +
+  xlab("Time") +
+  ylab("Y") +
+  theme_bw() +
+  theme(legend.position=c(0.23,0.2), 
+        legend.box = "horizontal",
+        legend.background = element_rect(fill=NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        # axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+
+ggsave("./figures/speed_problem.pdf",
+       fig, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
 
 
 ## 3. Placebo Test -------------------------------------------------------------
