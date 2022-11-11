@@ -189,18 +189,6 @@ results = SimDesign::quiet(
               grid.search.parallel = grid.search.parallel)
 )
 
-# df = rbind(
-#   data.frame(id = 1, unit = "A", time = 1:1000,
-#              value = approx(data[1:100, 4], n = 1000)$y),
-#   data.frame(id = 2, unit = "B", time = 1:1000,
-#              value = approx(data[101:200, 4], n = 1000)$y),
-#   data.frame(id = 1, unit = "C", time = 1:1000,
-#              value = approx(data[201:300, 4], n = 1000)$y),
-#   data.frame(id = 1, unit = "Original", time = 1:1000,
-#              value = approx(results[[1]]$res.synth.target.raw$synthetic, n = 1000)$y),
-#   data.frame(id = 1, unit = "A", time = 1:1000,
-#              value = approx(data[1:100, 4], n = 1000)$y),
-# )
 
 df = rbind(
   data.frame(id = 1, unit = "Unit T", time = 1:1000,
@@ -236,10 +224,10 @@ fig = df %>%
   xlim(350, 750) +
   xlab("Time") +
   ylab("Y") +
-  theme_bw() +
+  theme_minimal() +
   theme(legend.position=c(0.23,0.2), 
         legend.box = "horizontal",
-        legend.background = element_rect(fill=NA),
+        legend.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
