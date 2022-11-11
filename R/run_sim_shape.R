@@ -22,34 +22,34 @@ set.seed(20220407)
 
 
 ## Data Simulation -------------------------------------------------------------
-n.simulation = 150
-length = 100
-n = 10
-
-# generate sobol sequence
-# sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
-#                         seed = 20220401, skip = 100)
-# rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
-
-
-# simulate
-data.list = NULL
-for (i in 1:n.simulation) {
-  data.list[[i]] = sim.data(n = n, length = length,
-                            t.treat = 60, shock = 10, ar.x = 0.6,
-                            n.SMA = 1, n.diff = 1,
-                            speed.upper = 2,
-                            speed.lower = 0.5,
-                            reweight = TRUE,
-                            rescale = TRUE,
-                            rescale.multiplier = 20,
-                            beta = 0.5)
-}
-
-data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
-  geom_line() +
-  geom_vline(xintercept = 60, linetype="dashed")
-saveRDS(data.list, "./data/simul_data_beta_5.Rds")
+# n.simulation = 150
+# length = 100
+# n = 10
+# 
+# # generate sobol sequence
+# # sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
+# #                         seed = 20220401, skip = 100)
+# # rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
+# 
+# 
+# # simulate
+# data.list = NULL
+# for (i in 1:n.simulation) {
+#   data.list[[i]] = sim.data(n = n, length = length,
+#                             t.treat = 60, shock = 10, ar.x = 0.6,
+#                             n.SMA = 1, n.diff = 1,
+#                             speed.upper = 2,
+#                             speed.lower = 0.5,
+#                             reweight = TRUE,
+#                             rescale = TRUE,
+#                             rescale.multiplier = 20,
+#                             beta = 0.5)
+# }
+# 
+# data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
+#   geom_line() +
+#   geom_vline(xintercept = 60, linetype="dashed")
+# saveRDS(data.list, "./data/simul_data_beta_5.Rds")
 
 
 ## Run -------------------------------------------------------------------------
@@ -131,8 +131,8 @@ print(job.end - job.start)
 
 ## Plot result -----------------------------------------------------------------
 results = NULL
-beta = 0
-folder = "./data/res_sim/1011/"
+beta = 1
+folder = "./data/res_sim/1006/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -285,7 +285,8 @@ fig1 = df %>%
         # axis.line = element_line(colour = "black"))
 
 df2 = data.frame(Beta = c(0, 0.5, 1),
-                 `F` = c(0.9, 0.70, 0.55))
+                 `F` = c(0.71, 0.70, 0.55),
+                 P = c(0, 0, 0.0017))
 
 fig2 = df2 %>% 
   ggplot(aes(x = Beta, y = `F`)) +
@@ -301,7 +302,7 @@ fig = fig1 + annotation_custom(ggplotGrob(fig2),
                                xmin = 1, xmax = 40, 
                                ymin = 5, ymax = 29)
 
-ggsave("./figures/placebo_sim_1006_1103.pdf",
+ggsave("./figures/placebo_sim_1006_1111.pdf",
        fig, width = 8, height = 6,
        units = "in", limitsize = FALSE)
 
