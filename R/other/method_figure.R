@@ -135,26 +135,32 @@ df = rbind(# data.frame(time = 1:1000,
                       # unit = "y1"),
            data.frame(time = 1:t_treat,
                       value = y1_pre + 80,
-                      unit = "Y pre-T"),
+                      unit = "Y pre-T",
+                      group = "y"),
            data.frame(time = (t_treat+1):1000,
                       value = y1_post + 80,
-                      unit = "Y post-T"),
+                      unit = "Y post-T",
+                      group = "y"),
            data.frame(time = 1:cutoff,
                       value = y2_pre,
-                      unit = "X pre-T"),
+                      unit = "X pre-T",
+                      group = "x"),
            data.frame(time = (cutoff+1):1000,
                       value = y2_post,
-                      unit = "X post-T"),
+                      unit = "X post-T",
+                      group = "x"),
            data.frame(time = 1:1000,
                       value = c(y2_post - 130, rep(NA_real_, cutoff)),
-                      unit = "X post-T (copy)"))
+                      unit = "X post-T (copy)",
+                      group = "x"))
 
 df = df %>% mutate(dtwA = NA_real_,
                    dtwB = NA_real_,
                    dtwC = NA_real_,
                    unit = factor(unit, levels = c("Y pre-T", "Y post-T",
                                                   "X pre-T", "X post-T",
-                                                  "X post-T (copy)")))
+                                                  "X post-T (copy)")),
+                   group = factor(group, levels = c("y", "x")))
 
 df$dtwA[match_pairsA$ind_q + 1000] = 1:nrow(match_pairsA)
 df$dtwA[match_pairsA$ind_r] = 1:nrow(match_pairsA)
@@ -164,6 +170,140 @@ df$dtwB[match_pairsB$ind_q + 1000] = 1:nrow(match_pairsB)
 
 df$dtwC[match_pairsC$ind_r + 1000 +cutoff] = 1:nrow(match_pairsC)
 df$dtwC[match_pairsC$ind_q + t_treat] = 1:nrow(match_pairsC)
+
+
+## Main ------------------------------------------------------------------------
+fig.main = df %>%
+  filter(unit != "X post-T (copy)") %>% 
+  ggplot(aes(x = time, y = value, color = group)) +
+  geom_segment(aes(x = 498, y = -25, xend = 498, yend = 200),
+               color = "#aaaaaa", size = 1, linetype = "solid") +
+  geom_line(size = 1) +
+  scale_color_manual(name = NULL, values = c("grey10", "#ee4035")) +
+  # annotate("text", x = 900, y = 190, size = 8,
+  #          label = "Y", color = "grey10") +
+  # annotate("text", x = 900, y = 60, size = 8,
+  #          label = "X", color = "#ee4035") +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        legend.box = "horizontal",
+        legend.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+
+
+ggsave("./figures/method_main.pdf",
+       fig.main, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
+
+## dtwA ------------------------------------------------------------------------
+fig.dtwA = df %>% 
+  filter(unit %in% c("Y pre-T", "X pre-T")) %>% 
+  ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line(data = df %>% filter(!is.na(dtwA)),
+            aes(group = dtwA), color = "grey80",
+            linetype = "longdash", size = 1) +
+  geom_line(size = 1) +
+  scale_color_manual(name = NULL, values = c("grey10", "#ee4035")) +
+  ylim(-65, 160) +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        legend.box = "horizontal",
+        legend.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+  
+ggsave("./figures/method_dtwA.pdf",
+       fig.dtwA, width = 3, height = 4,
+       units = "in", limitsize = FALSE,
+       bg='transparent')
+
+
+## dtwB ------------------------------------------------------------------------
+fig.dtwB = df %>% 
+  filter(unit %in% c("X pre-T", "X post-T")) %>% 
+  ggplot(aes(x = time, y = value, color = group)) +
+  geom_segment(aes(x = 498, y = -70, xend = 498, yend = 155),
+               color = "#aaaaaa", size = 1, linetype = "solid") +
+  geom_rect(aes(xmin = 570, xmax = 650, ymin = 40, ymax = 65),
+            color = NA, fill = "grey80") +
+  geom_rect(aes(xmin = 322, xmax = 402, ymin = 13, ymax = 38),
+            color = NA, fill = "grey80") +
+  geom_rect(aes(xmin = 780, xmax = 860, ymin = 65, ymax = 90),
+            color = NA, fill = "grey90") +
+  geom_rect(aes(xmin = 178, xmax = 258, ymin = 11, ymax = 36),
+            color = NA, fill = "grey90") +
+  geom_line(size = 1) +
+  geom_rect(aes(xmin = 570, xmax = 650, ymin = 40, ymax = 65),
+            color = "grey30", fill = NA) +
+  geom_rect(aes(xmin = 322, xmax = 402, ymin = 13, ymax = 38),
+            color = "grey30", fill = NA) +
+  geom_curve(aes(x = 610, y = 65, 
+                 xend = 362, yend = 38),
+             curvature = 0.6,
+             linetype = "solid",
+             color = "grey30",
+             arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_rect(aes(xmin = 780, xmax = 860, ymin = 65, ymax = 90),
+            color = "grey30", fill = NA, linetype = "dashed") +
+  geom_rect(aes(xmin = 178, xmax = 258, ymin = 11, ymax = 36),
+            color = "grey30", fill = NA, linetype = "dashed") +
+  geom_curve(aes(x = 820, y = 65,
+                 xend = 218, yend = 11),
+             curvature = -0.6,
+             linetype = "dashed",
+             color = "grey30",
+             arrow = arrow(length = unit(0.03, "npc"))) +
+  scale_color_manual(name = NULL, values = c("#ee4035")) +
+  ylim(-70, 155) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        legend.box = "horizontal",
+        legend.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+
+ggsave("./figures/method_dtwB.pdf",
+       fig.dtwB, width = 6, height = 4,
+       units = "in", limitsize = FALSE)
+
+
+## dtwC ------------------------------------------------------------------------
+fig.dtwC = df %>% 
+  filter(unit %in% c("Y post-T", "X post-T")) %>% 
+  ggplot(aes(x = time, y = value, color = group)) +
+  geom_line(data = df %>% filter(!is.na(dtwC)),
+            aes(group = dtwC), color = "grey80",
+            linetype = "twodash", size = 1) +
+  geom_line(size = 1) +
+  scale_color_manual(name = NULL, values = c("grey10", "#ee4035")) +
+  ylim(-15, 210) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        legend.box = "horizontal",
+        legend.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+
+ggsave("./figures/method_dtwC.pdf",
+       fig.dtwC, width = 3, height = 4,
+       units = "in", limitsize = FALSE)
 
 
 ## Plot ------------------------------------------------------------------------
