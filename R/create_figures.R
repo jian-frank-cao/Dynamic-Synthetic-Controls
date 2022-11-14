@@ -208,7 +208,7 @@ df$value = df$value + rnorm(1000, mean = 0, sd = 0.1)
 
 fig = df %>% 
   ggplot(aes(x = time, y = value, color = unit, linetype = unit)) +
-  geom_line(size = 1) + 
+  geom_line(size = 0.7) + 
   scale_linetype_manual(name = NULL,
                      values = c("Unit T" = "solid", "Unit C1" = "dashed",
                                 "Unit C2" = "dotted", "Synthetic Control (Original)" = "solid",
@@ -235,8 +235,8 @@ fig = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/speed_problem.pdf",
-       fig, width = 6, height = 4,
+ggsave("./figures/speed_problem_1114.pdf",
+       fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 
 
@@ -253,7 +253,7 @@ fig_all = ggpubr::ggarrange(fig_basque + ggpubr::rremove("ylab") +
                             label.x = 0.1,
                             label.y = 0.9,
                             hjust = c(0, 0, 0),
-                            font.label = list(size = 18, color = "grey20",
+                            font.label = list(size = 16, color = "grey20",
                                               face = "bold"),
                             ncol = 1, nrow = 3,
                             # common.legend = TRUE, legend = "bottom",
@@ -266,6 +266,6 @@ fig_all = ggpubr::annotate_figure(fig_all,
                 bottom = grid::textGrob("Time", 
                                   gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/placebo_all_1108.pdf",
-       fig_all, width = 8, height = 8,
+ggsave("./figures/placebo_all_1114.pdf",
+       fig_all, width = 7, height = 7,
        units = "in", limitsize = FALSE)

@@ -126,7 +126,8 @@ dtw::dtwPlotTwoWay(res_dtwC, y2_post,
                    y1_post, offset = 100)
 dtw::dtwPlotThreeWay(res_dtwC)
 match_pairsC = get_match_pairs(res_dtwC, n_line)
-match_pairsC = match_pairsB[complete.cases(match_pairsC),]
+match_pairsC = match_pairsC[complete.cases(match_pairsC),]
+y2_post_warped = y2_post[dtw::warp(res_dtwC)]
 
 
 # df
@@ -152,15 +153,21 @@ df = rbind(# data.frame(time = 1:1000,
            data.frame(time = 1:1000,
                       value = c(y2_post - 130, rep(NA_real_, cutoff)),
                       unit = "X post-T (copy)",
-                      group = "x"))
+                      group = "x.post.copy"),
+           data.frame(time = 1:1000,
+                      value = c(rep(NA_real_, t_treat), y2_post_warped),
+                      unit = "X post-T (Warped)",
+                      group = "x.post.warped"))
 
 df = df %>% mutate(dtwA = NA_real_,
                    dtwB = NA_real_,
                    dtwC = NA_real_,
                    unit = factor(unit, levels = c("Y pre-T", "Y post-T",
                                                   "X pre-T", "X post-T",
-                                                  "X post-T (copy)")),
-                   group = factor(group, levels = c("y", "x")))
+                                                  "X post-T (copy)",
+                                                  "X post-T (Warped)")),
+                   group = factor(group, levels = c("y", "x", "x.post.copy",
+                                                    "x.post.warped")))
 
 df$dtwA[match_pairsA$ind_q + 1000] = 1:nrow(match_pairsA)
 df$dtwA[match_pairsA$ind_r] = 1:nrow(match_pairsA)
@@ -174,7 +181,7 @@ df$dtwC[match_pairsC$ind_q + t_treat] = 1:nrow(match_pairsC)
 
 ## Main ------------------------------------------------------------------------
 fig.main = df %>%
-  filter(unit != "X post-T (copy)") %>% 
+  filter(group %in% c("y", "x")) %>% 
   ggplot(aes(x = time, y = value, color = group)) +
   geom_segment(aes(x = 498, y = -25, xend = 498, yend = 200),
                color = "#aaaaaa", size = 1, linetype = "solid") +
@@ -235,7 +242,7 @@ fig.dtwB = df %>%
                color = "#aaaaaa", size = 1, linetype = "solid") +
   geom_rect(aes(xmin = 570, xmax = 650, ymin = 40, ymax = 65),
             color = NA, fill = "grey80") +
-  geom_rect(aes(xmin = 322, xmax = 402, ymin = 13, ymax = 38),
+  geom_rect(aes(xmin = 70, xmax = 175, ymin = -8, ymax = 20),
             color = NA, fill = "grey80") +
   geom_rect(aes(xmin = 780, xmax = 860, ymin = 65, ymax = 90),
             color = NA, fill = "grey90") +
@@ -244,10 +251,10 @@ fig.dtwB = df %>%
   geom_line(size = 1) +
   geom_rect(aes(xmin = 570, xmax = 650, ymin = 40, ymax = 65),
             color = "grey30", fill = NA) +
-  geom_rect(aes(xmin = 322, xmax = 402, ymin = 13, ymax = 38),
+  geom_rect(aes(xmin = 70, xmax = 175, ymin = -8, ymax = 20),
             color = "grey30", fill = NA) +
   geom_curve(aes(x = 610, y = 65, 
-                 xend = 362, yend = 38),
+                 xend = 122.5, yend = 20),
              curvature = 0.6,
              linetype = "solid",
              color = "grey30",
@@ -275,21 +282,22 @@ fig.dtwB = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/method_dtwB.pdf",
+ggsave("./figures/method_dtwB_1114.pdf",
        fig.dtwB, width = 6, height = 4,
        units = "in", limitsize = FALSE)
 
 
 ## dtwC ------------------------------------------------------------------------
 fig.dtwC = df %>% 
-  filter(unit %in% c("Y post-T", "X post-T")) %>% 
+  filter(unit %in% c("Y post-T", "X post-T", "X post-T (Warped)")) %>% 
   ggplot(aes(x = time, y = value, color = group)) +
-  geom_line(data = df %>% filter(!is.na(dtwC)),
-            aes(group = dtwC), color = "grey80",
-            linetype = "twodash", size = 1) +
+  # geom_line(data = df %>% filter(!is.na(dtwC)),
+  #           aes(group = dtwC), color = "grey80",
+  #           linetype = "twodash", size = 1) +
   geom_line(size = 1) +
-  scale_color_manual(name = NULL, values = c("grey10", "#ee4035")) +
+  scale_color_manual(name = NULL, values = c("grey10", "#eec9d2", "#008744")) +
   ylim(-15, 210) +
+  xlim(cutoff, 1000) +
   theme_minimal() +
   theme(legend.position = "none",
         legend.box = "horizontal",
@@ -301,7 +309,7 @@ fig.dtwC = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/method_dtwC.pdf",
+ggsave("./figures/method_dtwC_1114.pdf",
        fig.dtwC, width = 3, height = 4,
        units = "in", limitsize = FALSE)
 

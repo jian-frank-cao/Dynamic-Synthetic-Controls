@@ -154,18 +154,29 @@ res = future_map2(
   ~{
     item = .x
     id = .y
+    # neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
+    # # neg.ratio.rank = rank(neg.ratio, ties.method = "max")
+    # ind.max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))
+    # p.value = lapply(item, "[[", "p.value") %>% do.call("c", .) %>% .[ind.max.neg.ratio]
+    # # p.value.rank = rank(1 - p.value, ties.method = "max")
+    # ind.min.p.value = which(p.value == min(p.value, na.rm = T))[1]
+    # # mse.pre = lapply(item, "[[", "mse") %>% do.call("rbind", .) %>%
+    # #   filter(unit == "A") %>% .[["mse.preT.TFDTW"]] %>% .[ind.max.neg.ratio]
+    # # mse.pre.rank = rank(1 - mse.pre, ties.method = "max")
+    # # score = neg.ratio.rank*3 + p.value.rank*2 + mse.pre.rank
+    # # ind = which(score == max(score, na.rm = T))[1]
+    # ind = ind.max.neg.ratio[1]
+    
     neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-    # neg.ratio.rank = rank(neg.ratio, ties.method = "max")
     ind.max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))
     p.value = lapply(item, "[[", "p.value") %>% do.call("c", .) %>% .[ind.max.neg.ratio]
-    # p.value.rank = rank(1 - p.value, ties.method = "max")
-    ind.min.p.value = which(p.value == min(p.value, na.rm = T))[1]
+    ind.min.p.value = which(p.value == min(p.value, na.rm = T))
     # mse.pre = lapply(item, "[[", "mse") %>% do.call("rbind", .) %>%
     #   filter(unit == "A") %>% .[["mse.preT.TFDTW"]] %>% .[ind.max.neg.ratio]
     # mse.pre.rank = rank(1 - mse.pre, ties.method = "max")
     # score = neg.ratio.rank*3 + p.value.rank*2 + mse.pre.rank
     # ind = which(score == max(score, na.rm = T))[1]
-    ind = ind.max.neg.ratio[1]
+    ind = ind.max.neg.ratio[ind.min.p.value[1]]
 
     synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
     synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
@@ -223,9 +234,9 @@ p.value = pf(f.value, n.datasets - 1,
              n.datasets - 1, lower.tail = TRUE)
 p.value = round(p.value, 4)
 
+
+
 df = df %>% filter(time <= 80)
-
-
 
 percent = df %>%
   group_by(time) %>%
@@ -233,14 +244,14 @@ percent = df %>%
             sd_origin = sd(gap_origin, na.rm = T),
             mean_new = mean(gap_new, na.rm = T),
             sd_new = sd(gap_new, na.rm = T),
-            ci_origin_upper = mean_origin + qt(0.975, df = n.datasets-1)*sd_origin,
-            ci_origin_lower = mean_origin - qt(0.975, df = n.datasets-1)*sd_origin,
-            ci_new_upper = mean_new + qt(0.975, df = n.datasets-1)*sd_new,
-            ci_new_lower = mean_new - qt(0.975, df = n.datasets-1)*sd_new,
-            quantile_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
-            quantile_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
-            quantile_new_upper = quantile(gap_new, 0.975, na.rm = T),
-            quantile_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
+            # ci_origin_upper = mean_origin + qt(0.975, df = n.datasets-1)*sd_origin,
+            # ci_origin_lower = mean_origin - qt(0.975, df = n.datasets-1)*sd_origin,
+            # ci_new_upper = mean_new + qt(0.975, df = n.datasets-1)*sd_new,
+            # ci_new_lower = mean_new - qt(0.975, df = n.datasets-1)*sd_new,
+            ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>%
   mutate(artifical_effect = causal_effect[1:81],
          id = 0)
 
@@ -253,15 +264,15 @@ colors = c("Treatment Effect" = "grey20",
            "Mean (Original)" = color_original,
            "Mean (TFDTW)" = color_new)
 
-fills = c("95% CI (Original)" = color_original,
-          "95% CI (TFDTW)" = color_new)
+fills = c("95% Quantile (Original)" = color_original,
+          "95% Quantile (TFDTW)" = color_new)
 
 fig1 = df %>%
   ggplot(aes(x = time, group = id)) +
   geom_line(aes(y = gap_origin), col = color_original, alpha=0.1) +
   geom_line(aes(y = gap_new), col = color_new, alpha=0.1) +
-  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill = "95% CI (Original)"), data = percent, alpha=0.6) +
-  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper, fill = "95% CI (TFDTW)"), data = percent, alpha=0.6) +
+  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill = "95% Quantile (Original)"), data = percent, alpha=0.6) +
+  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper, fill = "95% Quantile (TFDTW)"), data = percent, alpha=0.6) +
   geom_line(aes(x = time, y = artifical_effect, color = "Treatment Effect"), data = percent, alpha=1) +
   geom_line(aes(x = time, y = mean_origin, color = "Mean (Original)"), data = percent, alpha=1) +
   geom_line(aes(x = time, y = mean_new, col = "Mean (TFDTW)"), data = percent, alpha=1) +
@@ -276,7 +287,7 @@ fig1 = df %>%
   xlab("Time") +
   ylab("Gap (y - Synthetic Control)") +
   theme_bw() + 
-  theme(legend.position=c(0.5,0.15), 
+  theme(legend.position=c(0.4,0.15), 
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))#,
         # panel.grid.major = element_blank(),
@@ -285,25 +296,31 @@ fig1 = df %>%
         # axis.line = element_line(colour = "black"))
 
 df2 = data.frame(Beta = c(0, 0.5, 1),
-                 `F` = c(0.71, 0.70, 0.55),
-                 P = c(0, 0, 0.0017))
+                 `F` = c(0.6747, 0.5596, 0.4178),
+                 P = c(0.0258, 0.0021, 0.0001),
+                 upper = c(0.94, 0.7802, 0.5824),
+                 lower = c(0, 0, 0))
 
 fig2 = df2 %>% 
   ggplot(aes(x = Beta, y = `F`)) +
-  geom_line() +
+  geom_line(size = 1) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width=.05,
+                position=position_dodge(.9)) +
   geom_point(size = 2, col = color_new) +
-  ylim(0.4, 1) +
+  scale_x_continuous(breaks = c(0, 0.5, 1)) +
+  scale_y_continuous(breaks = c(0, 0.5, 1), limits = c(0, 1)) +
   xlab(expression(beta)) +
   ylab("F") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 
 
 fig = fig1 + annotation_custom(ggplotGrob(fig2),
                                xmin = 1, xmax = 40, 
-                               ymin = 5, ymax = 29)
+                               ymin = 10, ymax = 29)
 
-ggsave("./figures/placebo_sim_1006_1111.pdf",
-       fig, width = 8, height = 6,
+ggsave("./figures/placebo_sim_1006_1114.pdf",
+       fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 
 
