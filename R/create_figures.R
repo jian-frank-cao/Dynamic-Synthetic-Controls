@@ -218,9 +218,9 @@ fig = df %>%
                                 "Unit C2" = "#aaaaaa", "Synthetic Control (Original)" = "#3da4ab",
                                 "Synthetic Control (TFDTW)" = "#fe8a71")) +
   geom_vline(xintercept = 600, linetype="dashed", col = "grey20") +
-  # annotate("text", x = 590, y = 18.5, 
-  #          label = "Treatment", col = "grey20",
-  #          angle = 90) +
+  annotate("text", x = 590, y = 18.5,
+           label = "Treatment", col = "grey20",
+           angle = 90) +
   xlim(350, 750) +
   xlab("Time") +
   ylab("Y") +
@@ -235,7 +235,7 @@ fig = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/speed_problem_1114.pdf",
+ggsave("./figures/speed_problem_1116.pdf",
        fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 
@@ -266,6 +266,6 @@ fig_all = ggpubr::annotate_figure(fig_all,
                 bottom = grid::textGrob("Time", 
                                   gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/placebo_all_1114.pdf",
+ggsave("./figures/placebo_all_1116.pdf",
        fig_all, width = 7, height = 7,
        units = "in", limitsize = FALSE)

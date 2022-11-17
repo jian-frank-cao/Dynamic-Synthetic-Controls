@@ -270,10 +270,14 @@ df.interval = df %>%
             sd_origin = sd(gap_origin, na.rm = T),
             mean_new = mean(gap_new, na.rm = T),
             sd_new = sd(gap_new, na.rm = T),
-            ci_origin_upper = mean_origin + qt(0.975, df = 39-1)*sd_origin,
-            ci_origin_lower = mean_origin - qt(0.975, df = 39-1)*sd_origin,
-            ci_new_upper = mean_new + qt(0.975, df = 39-1)*sd_new,
-            ci_new_lower = mean_new - qt(0.975, df = 39-1)*sd_new) %>% 
+            # ci_origin_upper = mean_origin + qt(0.975, df = 39-1)*sd_origin,
+            # ci_origin_lower = mean_origin - qt(0.975, df = 39-1)*sd_origin,
+            # ci_new_upper = mean_new + qt(0.975, df = 39-1)*sd_new,
+            # ci_new_lower = mean_new - qt(0.975, df = 39-1)*sd_new,
+            ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
   mutate(unit = "area")
 
 df.interval[28:31, 8:9] = NA
@@ -308,6 +312,8 @@ fig_tobacco = df %>%
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 1994, y = 33,
            label = "P = 0.023", col = "grey20") +
+  annotate("text", x = 1988, y = 25, angle = 90,
+           label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +
   xlab("Year") +
   ylab("y - Synthetic Control") +

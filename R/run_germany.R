@@ -242,10 +242,14 @@ df.interval = df %>%
             sd_origin = sd(gap_origin, na.rm = T),
             mean_new = mean(gap_new, na.rm = T),
             sd_new = sd(gap_new, na.rm = T),
-            ci_origin_upper = mean_origin + qt(0.975, df = 20-1)*sd_origin,
-            ci_origin_lower = mean_origin - qt(0.975, df = 20-1)*sd_origin,
-            ci_new_upper = mean_new + qt(0.975, df = 20-1)*sd_new,
-            ci_new_lower = mean_new - qt(0.975, df = 20-1)*sd_new) %>% 
+            # ci_origin_upper = mean_origin + qt(0.975, df = 20-1)*sd_origin,
+            # ci_origin_lower = mean_origin - qt(0.975, df = 20-1)*sd_origin,
+            # ci_new_upper = mean_new + qt(0.975, df = 20-1)*sd_new,
+            # ci_new_lower = mean_new - qt(0.975, df = 20-1)*sd_new,
+            ci_origin_upper = quantile(gap_origin, 0.975, na.rm = T),
+            ci_origin_lower = quantile(gap_origin, 0.025, na.rm = T),
+            ci_new_upper = quantile(gap_new, 0.975, na.rm = T),
+            ci_new_lower = quantile(gap_new, 0.025, na.rm = T)) %>% 
   mutate(unit = "area")
 
 color_original = "#2ab7ca"
@@ -256,8 +260,8 @@ color_new = "#fe4a49"
 colors = c("Gap (Original)" = color_original,
            "Gap (TFDTW)" = color_new)
 
-fills = c("95% CI (Original)" = color_original,
-          "95% CI (TFDTW)" = color_new)
+fills = c("95% Quantile (Original)" = color_original,
+          "95% Quantile (TFDTW)" = color_new)
 
 fig_germany = df %>%
   filter(unit %in% (mse %>% filter(unit != "West Germany") %>% .[["unit"]])) %>%
@@ -266,9 +270,9 @@ fig_germany = df %>%
            alpha = .3) +
   geom_line(aes(y = gap_origin), col = color_original, alpha = 0.4) +
   geom_line(aes(y = gap_new), col = color_new, alpha = 0.4) +
-  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill="95% CI (Original)"),
+  geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill="95% Quantile (Original)"),
               data = df.interval, alpha=0.5) +
-  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper, fill="95% CI (TFDTW)"),
+  geom_ribbon(aes(ymin = ci_new_lower, ymax = ci_new_upper, fill="95% Quantile (TFDTW)"),
               data = df.interval, alpha=0.5) +
   geom_line(aes(y = gap_origin, color = "Gap (Original)"), data = df %>% filter(unit == "West Germany"), size = 1) +
   geom_line(aes(y = gap_new, color = "Gap (TFDTW)"), data = df %>% filter(unit == "West Germany"), size = 1) +
@@ -278,6 +282,8 @@ fig_germany = df %>%
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 1995, y = 6800,
            label = "P = 0.016", col = "grey20") +
+  annotate("text", x = 1989, y = 4800, angle = 90,
+           label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +
   ylab("y - Synthetic Control") +

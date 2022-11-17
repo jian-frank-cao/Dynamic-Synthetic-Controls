@@ -269,6 +269,8 @@ fills = c("95% Quantile (Original)" = color_original,
 
 fig1 = df %>%
   ggplot(aes(x = time, group = id)) +
+  annotate("rect", xmin = 60, xmax = 70, ymin = -25, ymax = 35, 
+           alpha = .3) +
   geom_line(aes(y = gap_origin), col = color_original, alpha=0.1) +
   geom_line(aes(y = gap_new), col = color_new, alpha=0.1) +
   geom_ribbon(aes(ymin = ci_origin_lower, ymax = ci_origin_upper, fill = "95% Quantile (Original)"), data = percent, alpha=0.6) +
@@ -283,7 +285,7 @@ fig1 = df %>%
   annotate("text", x = 58, y = 25, 
            label = "Treatment", col = "grey20",
            angle = 90) +
-  ylim(-20, 30) +
+  coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
   ylab("Gap (y - Synthetic Control)") +
   theme_bw() + 
@@ -295,11 +297,17 @@ fig1 = df %>%
         # panel.background = element_blank(),
         # axis.line = element_line(colour = "black"))
 
+# df2 = data.frame(Beta = c(0, 0.5, 1),
+#                  `F` = c(0.6747, 0.5596, 0.4178),
+#                  P = c(0.0258, 0.0021, 0.0001),
+#                  upper = c(0.94, 0.7802, 0.5824),
+#                  lower = c(0, 0, 0))
+
 df2 = data.frame(Beta = c(0, 0.5, 1),
                  `F` = c(0.6747, 0.5596, 0.4178),
                  P = c(0.0258, 0.0021, 0.0001),
-                 upper = c(0.94, 0.7802, 0.5824),
-                 lower = c(0, 0, 0))
+                 upper = c(0.9405, 0.7802, 0.5824),
+                 lower = c(0.4840, 0.4014, 0.2997))
 
 fig2 = df2 %>% 
   ggplot(aes(x = Beta, y = `F`)) +
@@ -319,7 +327,7 @@ fig = fig1 + annotation_custom(ggplotGrob(fig2),
                                xmin = 1, xmax = 40, 
                                ymin = 10, ymax = 29)
 
-ggsave("./figures/placebo_sim_1006_1114.pdf",
+ggsave("./figures/placebo_sim_1006_1116.pdf",
        fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 
