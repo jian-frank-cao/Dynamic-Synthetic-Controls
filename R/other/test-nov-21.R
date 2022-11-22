@@ -109,6 +109,7 @@ args.TFDTW.synth = list(start.time = 1, end.time = 100, treat.time = 60,
                         ## 2nd
                         n.mse = 10, 
                         ## other
+                        detailed.output = TRUE,
                         plot.figures = FALSE,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.7))
@@ -118,6 +119,7 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   args.TFDTW.synth = args.TFDTW.synth,
                                   ## 2nd
                                   detailed.output = TRUE,
+                                  target.TFDTW = TRUE,
                                   all.units.parallel = FALSE)
 
 
