@@ -110,8 +110,11 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
   }
   
   # output
+  n.na = df.synth %>%
+    filter(id == dependent.id) %>%
+    .[["value_warped"]] %>% is.na %>% sum
   gap.raw = res.synth.raw$value - res.synth.raw$synthetic
-  gap.TFDTW = res.synth.TFDTW$value - res.synth.TFDTW$synthetic
+  gap.TFDTW = res.synth.TFDTW$value - c(res.synth.TFDTW$synthetic, rep(NA, n.na))
   
   mse = data.frame(
     unit = dependent,
@@ -154,7 +157,7 @@ TFDTW.synth.all.units = function(data, target,
   unit.target = units %>% filter(unit == target)
   units.list = units %>% 
     filter(unit != target) %>% 
-    split(., seq(nrow(units)))
+    split(., seq(nrow(units) - 1))
   
   # run TFDTW.synth
   if (all.units.parallel) {
@@ -169,7 +172,7 @@ TFDTW.synth.all.units = function(data, target,
   result.target = do.call(TFDTW.synth, args.TFDTW.synth)
   
   if (target.TFDTW) {
-    args.TFDTW.synth[["df.synth"]] = result.target$dy.synth
+    args.TFDTW.synth[["df.synth"]] = result.target$df.synth
   }else{
     args.TFDTW.synth[["df.synth"]] = NULL
   }
