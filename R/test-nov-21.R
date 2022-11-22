@@ -137,6 +137,66 @@ results = ind.opt %>%
                     args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
                     grid.search.parallel = grid.search.parallel)
       )
+      results
     }
   )
+
+
+## Results ---------------------------------------------------------------------
+res = results %>% 
+  future_map(
+    ~{
+      item = .[[1]]
+      res.synth = map2(
+        item$results.TFDTW.synth,
+        names(item$results.TFDTW.synth),
+        ~{
+          result = .x
+          unit = .y
+          data.frame(unit = unit,
+                     time = 1:100,
+                     value = result$res.synth.raw$value,
+                     original = result$res.synth.raw$synthetic,
+                     TFDTW = result$res.synth.TFDTW$synthetic)
+        }
+      ) %>% 
+        do.call("rbind", .)
+      res.synth = res.synth %>% 
+        mutate(gap.original = value - original,
+               gap.TFDTW = value - TFDTW)
+      gap.original = res.synth %>% filter(unit == "A") %>% .["gap.original"]
+      gap.TFDTW = res.synth %>% filter(unit == "A") %>% .["gap.TFDTW"]
+      res.synth = res.synth %>% 
+        filter(unit != "A")
+      df.quant = res.synth %>% 
+        group_by(time) %>% 
+        summarise(
+          ci_origin_upper = quantile(gap.original, 0.975, na.rm = T),
+          ci_origin_lower = quantile(gap.original, 0.025, na.rm = T),
+          ci_new_upper = quantile(gap.TFDTW, 0.975, na.rm = T),
+          ci_new_lower = quantile(gap.TFDTW, 0.025, na.rm = T)
+        )
+      df.quant$gap.original = gap.original
+      df.quant$gap.TFDTW = gap.TFDTW
+      df.quant$gap.original.zero = gap.original - causal_effect
+      df.quant$gap.TFDTW.zero = gap.TFDTW - causal_effect
+      df.quant = df.quant %>% 
+        mutate(sig.original = ifelse(gap.original > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
+               sig.TFDTW = ifelse(gap.TFDTW > ci_new_upper | gap.original < ci_new_lower, 1, 0),
+               sig.original.zero = ifelse(gap.original.zero > ci_origin_upper | gap.original.zero < ci_origin_lower, 1, 0),
+               sig.TFDTW.zero = ifelse(gap.TFDTW.zero > ci_new_upper | gap.TFDTW.zero < ci_new_lower, 1, 0)) %>% 
+        data.frame(.) %>% 
+        `rownames<-`(1:100)
+      df.quant
+    }
+  ) %>% 
+  do.call("rbind", .)
+
+res = res[, -(1:9)]
+res = res[complete.cases(res),]
+original.tt = mean(res$sig.original)
+TFDTW.tt = mean(res$sig.TFDTW)
+original.ft = mean(res$sig.original.zero)
+TFDTW.ft = mean(res$sig.TFDTW)
+
 
