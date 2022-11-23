@@ -109,7 +109,7 @@ args.TFDTW.synth = list(start.time = 1, end.time = 100, treat.time = 60,
                         ## 2nd
                         n.mse = 10, 
                         ## other
-                        detailed.output = TRUE,
+                        # detailed.output = TRUE,
                         plot.figures = FALSE,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.7))
@@ -119,7 +119,7 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   args.TFDTW.synth = args.TFDTW.synth,
                                   ## 2nd
                                   detailed.output = TRUE,
-                                  target.TFDTW = TRUE,
+                                  # target.TFDTW = TRUE,
                                   all.units.parallel = FALSE)
 
 
@@ -185,8 +185,11 @@ res = results %>%
       df.quant = df.quant %>% 
         mutate(sig.original = ifelse(gap.original > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
                sig.TFDTW = ifelse(gap.TFDTW > ci_new_upper | gap.original < ci_new_lower, 1, 0),
+               # sig.TFDTW = ifelse(gap.TFDTW > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
                sig.original.zero = ifelse(gap.original.zero > ci_origin_upper | gap.original.zero < ci_origin_lower, 1, 0),
-               sig.TFDTW.zero = ifelse(gap.TFDTW.zero > ci_new_upper | gap.TFDTW.zero < ci_new_lower, 1, 0)) %>% 
+               sig.TFDTW.zero = ifelse(gap.TFDTW.zero > ci_new_upper | gap.TFDTW.zero < ci_new_lower, 1, 0),
+               # sig.TFDTW.zero = ifelse(gap.TFDTW.zero > ci_origin_upper | gap.TFDTW.zero < ci_origin_lower, 1, 0)
+               ) %>% 
         data.frame(.) %>% 
         `rownames<-`(1:100)
       df.quant
@@ -194,11 +197,12 @@ res = results %>%
   ) %>% 
   do.call("rbind", .)
 
+res = res %>% filter(time > 60 & time < 71)
 res = res[, -(1:9)]
 res = res[complete.cases(res),]
 original.tt = mean(res$sig.original)
 TFDTW.tt = mean(res$sig.TFDTW)
-original.ft = mean(res$sig.original.zero)
-TFDTW.ft = mean(res$sig.TFDTW)
+original.ft = mean(1 - res$sig.original.zero)
+TFDTW.ft = mean(1 - res$sig.TFDTW.zero)
 
 

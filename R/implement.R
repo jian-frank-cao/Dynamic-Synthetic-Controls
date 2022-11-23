@@ -2,9 +2,7 @@
 TFDTW.synth = function(data, start.time, end.time, treat.time,
                        dependent, dependent.id,
                        args.TFDTW, args.synth,
-                       df.synth = NULL,
                        res.synth.raw = NULL,
-                       detailed.output = FALSE,
                        n.mse = 10, plot.figures = FALSE,
                        plot.path = "./figures/",
                        legend.pos = c(0.3, 0.3)){
@@ -30,62 +28,60 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
   args.TFDTW[["plot.figures"]] = plot.figures
   
   # TFDTW
-  if (is.null(df.synth)) {
-    results = NULL
-    for (item in x.list) {
-      unit = as.character(item$unit[1])
-      x.raw = item$value_raw
-      args.TFDTW[["x"]] = item$value
-      
-      res = do.call(TFDTW, args.TFDTW)
-      
-      x.warped = c(
-        warpWITHweight(x.raw[1:res$cutoff], res$weight.a)[1:t.treat],
-        warpWITHweight(x.raw[res$cutoff:length(x.raw)], res$avg.weight)[-1]
-      )
-      
-      df.synth = data.frame(
-        time = 1:length(y.raw) + start.time - 1,
-        unit = unit,
-        value_warped = NA,
-        stringsAsFactors = FALSE
-      )
-      df.synth$value_warped = x.warped[1:length(y.raw)]
-      
-      fig.warp = NULL
-      if (plot.figures) {
-        fig.warp = plot.warped(unit = unit, dependent = dependent,
-                               t.treat = t.treat, y.raw = y.raw,
-                               x.raw = x.raw, x.warped = x.warped,
-                               legend.pos = legend.pos)
-      }
-      
-      results[[unit]] = list(unit = unit, 
-                             x.warped = x.warped,
-                             df.synth = df.synth,
-                             fig.warp = fig.warp)
-    }
+  results = NULL
+  for (item in x.list) {
+    unit = as.character(item$unit[1])
+    x.raw = item$value_raw
+    args.TFDTW[["x"]] = item$value
     
-    # plot warped data
+    res = do.call(TFDTW, args.TFDTW)
+    
+    x.warped = c(
+      warpWITHweight(x.raw[1:res$cutoff], res$weight.a)[1:t.treat],
+      warpWITHweight(x.raw[res$cutoff:length(x.raw)], res$avg.weight)[-1]
+    )
+    
+    df.synth = data.frame(
+      time = 1:length(y.raw) + start.time - 1,
+      unit = unit,
+      value_warped = NA,
+      stringsAsFactors = FALSE
+    )
+    df.synth$value_warped = x.warped[1:length(y.raw)]
+    
+    fig.warp = NULL
     if (plot.figures) {
-      file.name = paste0(plot.path, "warped-", dependent, ".pdf")
-      stack.warped(fig.list = lapply(results,"[[","fig.warp"),
-                   file.name = file.name, ncol = 3)
+      fig.warp = plot.warped(unit = unit, dependent = dependent,
+                             t.treat = t.treat, y.raw = y.raw,
+                             x.raw = x.raw, x.warped = x.warped,
+                             legend.pos = legend.pos)
     }
     
-    # prepare data for Synth
-    df.synth = lapply(results, "[[", "df.synth") %>% 
-      do.call("rbind", .) %>% 
-      `row.names<-`(NULL)
-    
-    df.synth = rbind(df.synth,
-                     data.frame(time = 1:length(y.raw) + start.time - 1,
-                                unit = dependent,
-                                value_warped = y.raw))
-    
-    df.synth = right_join(data, df.synth, by = c("unit", "time"))
-    df.synth = data.frame(df.synth)
+    results[[unit]] = list(unit = unit, 
+                           x.warped = x.warped,
+                           df.synth = df.synth,
+                           fig.warp = fig.warp)
   }
+  
+  # plot warped data
+  if (plot.figures) {
+    file.name = paste0(plot.path, "warped-", dependent, ".pdf")
+    stack.warped(fig.list = lapply(results,"[[","fig.warp"),
+                 file.name = file.name, ncol = 3)
+  }
+  
+  # prepare data for Synth
+  df.synth = lapply(results, "[[", "df.synth") %>% 
+    do.call("rbind", .) %>% 
+    `row.names<-`(NULL)
+  
+  df.synth = rbind(df.synth,
+                   data.frame(time = 1:length(y.raw) + start.time - 1,
+                              unit = dependent,
+                              value_warped = y.raw))
+  
+  df.synth = right_join(data, df.synth, by = c("unit", "time"))
+  df.synth = data.frame(df.synth)
   
   args.synth[["df"]] = df.synth
   args.synth[["dependent.id"]] = dependent.id
@@ -110,11 +106,8 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
   }
   
   # output
-  n.na = df.synth %>%
-    filter(id == dependent.id) %>%
-    .[["value_warped"]] %>% is.na %>% sum
   gap.raw = res.synth.raw$value - res.synth.raw$synthetic
-  gap.TFDTW = res.synth.TFDTW$value - c(res.synth.TFDTW$synthetic, rep(NA, n.na))
+  gap.TFDTW = res.synth.TFDTW$value - res.synth.TFDTW$synthetic
   
   mse = data.frame(
     unit = dependent,
@@ -124,16 +117,9 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
     mse.postT.TFDTW = mean(gap.TFDTW[(t.treat+1):(t.treat+n.mse)]^2, na.rm = T)
   )
   
-  if (!detailed.output) {
-    args.TFDTW = NULL
-    args.synth = NULL
-    results = NULL
-    df.synth = NULL
-  }
-  
   return(list(dependent = dependent, dependent.id = dependent.id,
-              args.TFDTW = args.TFDTW, args.synth = args.synth,
-              results.TFDTW = results, df.synth = df.synth,
+              # args.TFDTW = args.TFDTW, args.synth = args.synth,
+              # results.TFDTW = results, df.synth = df.synth,
               res.synth.raw = res.synth.raw,
               res.synth.TFDTW = res.synth.TFDTW,
               gap.raw = gap.raw, gap.TFDTW = gap.TFDTW,
@@ -146,7 +132,6 @@ TFDTW.synth.all.units = function(data, target,
                                  filter.width = NULL,
                                  res.synth.raw.list = NULL,
                                  detailed.output = FALSE,
-                                 target.TFDTW = FALSE,
                                  all.units.parallel = FALSE){
   # prepare data
   if (!is.null(filter.width)) {
@@ -154,10 +139,7 @@ TFDTW.synth.all.units = function(data, target,
   }
   args.TFDTW.synth[["data"]] = data
   units = data[c("id", "unit")] %>% distinct
-  unit.target = units %>% filter(unit == target)
-  units.list = units %>% 
-    filter(unit != target) %>% 
-    split(., seq(nrow(units) - 1))
+  units.list = units %>% split(., seq(nrow(units)))
   
   # run TFDTW.synth
   if (all.units.parallel) {
@@ -165,18 +147,6 @@ TFDTW.synth.all.units = function(data, target,
   }else{
     fun.map = purrr::map
   }
-  
-  args.TFDTW.synth[["dependent"]] = unit.target$unit
-  args.TFDTW.synth[["dependent.id"]] = unit.target$id
-  args.TFDTW.synth[["res.synth.raw"]] = res.synth.raw.list[[unit.target$unit]]
-  result.target = do.call(TFDTW.synth, args.TFDTW.synth)
-  
-  if (target.TFDTW) {
-    args.TFDTW.synth[["df.synth"]] = result.target$df.synth
-  }else{
-    args.TFDTW.synth[["df.synth"]] = NULL
-  }
-  
   results = units.list %>% 
     set_names(units$unit) %>% 
     fun.map(
@@ -190,8 +160,6 @@ TFDTW.synth.all.units = function(data, target,
         do.call(TFDTW.synth, args.TFDTW.synth)
       }
     )
-  
-  results[[target]] = result.target
   
   # compute log ratio
   mse = lapply(results, '[[', "mse") %>% 
