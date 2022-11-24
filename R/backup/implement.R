@@ -87,6 +87,9 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
     df.synth = data.frame(df.synth)
   }
   
+  ##
+  df.synth[df.synth$unit == dependent, "value_raw"] = df.synth[df.synth$unit == dependent, "value_warped"]
+  
   args.synth[["df"]] = df.synth
   args.synth[["dependent.id"]] = dependent.id
   
@@ -127,13 +130,14 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
   if (!detailed.output) {
     args.TFDTW = NULL
     args.synth = NULL
-    results = NULL
+    # results = NULL
     df.synth = NULL
   }
   
   return(list(dependent = dependent, dependent.id = dependent.id,
               args.TFDTW = args.TFDTW, args.synth = args.synth,
-              results.TFDTW = results, df.synth = df.synth,
+              # results.TFDTW = results,
+              df.synth = df.synth,
               res.synth.raw = res.synth.raw,
               res.synth.TFDTW = res.synth.TFDTW,
               gap.raw = gap.raw, gap.TFDTW = gap.TFDTW,
@@ -178,7 +182,7 @@ TFDTW.synth.all.units = function(data, target,
   }
   
   results = units.list %>% 
-    set_names(units$unit) %>% 
+    set_names(setdiff(units$unit, target)) %>% 
     fun.map(
       ~{
         item = .

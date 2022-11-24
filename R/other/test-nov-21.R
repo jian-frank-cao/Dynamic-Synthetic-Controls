@@ -19,14 +19,14 @@ set.seed(20220407)
 ## Extract Results -------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1006/"
+folder = "./data/res_sim/1124/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
 }
 
 length = 100
-shock = 10
+shock = 0
 treat_time = 60
 n_mse = 10
 
@@ -54,7 +54,7 @@ ind.opt = future_map2(
 )
 
 ## Estimate --------------------------------------------------------------------
-beta = 1
+beta = 10
 data.list = readRDS(paste0("./data/simul_data_beta_", beta, ".Rds"))
 
 # parameters
@@ -184,7 +184,7 @@ res = results %>%
       df.quant$gap.TFDTW.zero = gap.TFDTW - causal_effect
       df.quant = df.quant %>% 
         mutate(sig.original = ifelse(gap.original > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
-               sig.TFDTW = ifelse(gap.TFDTW > ci_new_upper | gap.original < ci_new_lower, 1, 0),
+               sig.TFDTW = ifelse(gap.TFDTW > ci_new_upper | gap.TFDTW < ci_new_lower, 1, 0),
                # sig.TFDTW = ifelse(gap.TFDTW > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
                sig.original.zero = ifelse(gap.original.zero > ci_origin_upper | gap.original.zero < ci_origin_lower, 1, 0),
                sig.TFDTW.zero = ifelse(gap.TFDTW.zero > ci_new_upper | gap.TFDTW.zero < ci_new_lower, 1, 0),
@@ -202,7 +202,7 @@ res = res[, -(1:9)]
 res = res[complete.cases(res),]
 original.tt = mean(res$sig.original)
 TFDTW.tt = mean(res$sig.TFDTW)
-original.ft = mean(1 - res$sig.original.zero)
-TFDTW.ft = mean(1 - res$sig.TFDTW.zero)
+original.ff = mean(1 - res$sig.original.zero)
+TFDTW.ff = mean(1 - res$sig.TFDTW.zero)
 
 

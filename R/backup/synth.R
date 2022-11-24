@@ -4,7 +4,6 @@ do.synth = function(df, dep.var, dependent.id, predictors,
                     special.predictors, time.predictors.prior,
                     time.optimize.ssr){
   # find v
-  ind.na = is.na(df$value_warped)
   dataprep.out <-
     Synth::dataprep(
       foo = df,
@@ -19,7 +18,7 @@ do.synth = function(df, dep.var, dependent.id, predictors,
       time.optimize.ssr = time.optimize.ssr, 
       unit.names.variable = 2,
       time.plot = df %>%
-        filter(id == dependent.id & !ind.na) %>% 
+        filter(id == dependent.id & !is.na(df$value_raw)) %>% 
         .[["time"]] %>% unique %>% sort
     )
   
@@ -30,7 +29,7 @@ do.synth = function(df, dep.var, dependent.id, predictors,
       Margin.ipop=.005,Sigf.ipop=7,Bound.ipop=6
     )
   
-  value = df %>% filter(id == dependent.id) %>% `$`(value_warped)
+  value = df %>% filter(id == dependent.id) %>% `$`(value_raw)
   average = df %>% filter(id != dependent.id) %>% group_by(time) %>% 
     summarise(average = mean(!!sym(dep.var), na.rm = TRUE)) %>% `$`(average)
   synthetic = dataprep.out$Y0%*%synth.out$solution.w %>% as.numeric

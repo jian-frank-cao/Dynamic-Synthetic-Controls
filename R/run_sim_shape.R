@@ -36,7 +36,7 @@ set.seed(20220407)
 # data.list = NULL
 # for (i in 1:n.simulation) {
 #   data.list[[i]] = sim.data(n = n, length = length,
-#                             t.treat = 60, shock = 10, ar.x = 0.6,
+#                             t.treat = 60, shock = 0, ar.x = 0.6,
 #                             n.SMA = 1, n.diff = 1,
 #                             speed.upper = 2,
 #                             speed.lower = 0.5,
@@ -49,7 +49,7 @@ set.seed(20220407)
 # data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line() +
 #   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_beta_5.Rds")
+# saveRDS(data.list, "./data/simul_data_beta_10.Rds")
 
 
 ## Run -------------------------------------------------------------------------
