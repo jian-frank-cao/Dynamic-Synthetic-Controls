@@ -26,7 +26,7 @@ for (res.file in res.files) {
 }
 
 length = 100
-shock = 0
+shock = 10
 treat_time = 60
 n_mse = 10
 
@@ -145,7 +145,8 @@ results = ind.opt %>%
 
 
 ## Results ---------------------------------------------------------------------
-res = results %>% 
+results = readRDS("./data/results5.Rds")
+res = results[1:50] %>% 
   future_map(
     ~{
       item = .[[1]]
@@ -200,9 +201,14 @@ res = results %>%
 res = res %>% filter(time > 60 & time < 71)
 res = res[, -(1:9)]
 res = res[complete.cases(res),]
-original.tt = mean(res$sig.original)
-TFDTW.tt = mean(res$sig.TFDTW)
-original.ff = mean(1 - res$sig.original.zero)
-TFDTW.ff = mean(1 - res$sig.TFDTW.zero)
 
+res.boot = NULL
+for (i in 1:100) {
+  ind = sample(1:nrow(res), 1000, replace = TRUE)
+  boot = res[ind,]
+  res.boot = rbind(res.boot, colMeans(boot, na.rm = TRUE))
+}
+boxplot(res.boot[,1:2])
 
+log.ratio = log(res.boot[, 2]/res.boot[, 1])
+t.test(log.ratio)
