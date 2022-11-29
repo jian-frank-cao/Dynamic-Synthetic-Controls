@@ -119,6 +119,170 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
 }
 
 
+sim.data2 = function(n = 10, length = 100, extra.x = round(0.2*length),
+                    t.treat = 60, shock = 10, ar.x = 0.6, n.SMA = 1,
+                    n.diff = 1, speed.upper = 2, speed.lower = 0.5,
+                    reweight = TRUE, rescale = TRUE, 
+                    rescale.multiplier = 20, beta = 1){
+  # common exogenous shocks
+  x = arima.sim(list(order = c(1,1,0), ar = ar.x),
+                n = length + extra.x + n.SMA + n.diff - 2)
+  
+  # smoothing
+  x.SMA = ts(TTR::SMA(x, n = n.SMA)[-(1:(n.SMA - 1))])
+  
+  # difference
+  x.diff = diff(x.SMA, difference = n.diff)
+  pos.diff = x.diff > 0
+  if (reweight) {
+    pos.ratio = sum(pos.diff)/sum(!pos.diff)
+  }
+  
+  # speeds
+  log.speeds = seq(log(speed.lower), log(speed.upper), length.out = n)
+  rnd.ind = sample(1:n, size = 1)
+  log.speeds = c(log.speeds[rnd.ind], log.speeds[-rnd.ind])
+  
+  # simulate
+  data = NULL
+  for (i in 1:n) {
+    # speed profile
+    log.speed = log.speeds[i]
+    if (reweight) {
+      if (pos.ratio > 1) {
+        pos.speed = exp(log.speed*(1/pos.ratio))
+        neg.speed = exp(-log.speed)
+      }else{
+        pos.speed = exp(log.speed)
+        neg.speed = exp(-log.speed*pos.ratio)
+      }
+    }else{
+      pos.speed = exp(log.speed)
+      neg.speed = exp(-log.speed)
+    }
+    
+    phi.shape = rep(NA, length.out = length + extra.x)
+    phi.shape[pos.diff] = pos.speed
+    phi.shape[!pos.diff] = neg.speed
+    
+    log.phi.mean = mean(log(phi.shape), na.rm = T)
+    log.phi.sd = sd(log(phi.shape), na.rm = T)
+    
+    phi.random = exp(rnorm(n = length + extra.x,
+                           mean = log.phi.mean,
+                           sd = log.phi.sd))
+    
+    # treatment
+    if (i == 1) {
+      treatment = c(rep(0, t.treat),
+                    seq(0, shock, length.out = round(0.1*length)),
+                    rep(shock, round(0.9*length - t.treat)))
+    }else{
+      treatment = 0
+    }
+    
+    phi = beta*phi.shape + (1 - beta)*phi.random
+    
+    y = warpWITHweight(x[1:(length + extra.x)], phi)[1:length]
+    
+    if (rescale) {
+      y = minmax.normalize(y, reference = y[1:t.treat])*rescale.multiplier
+    }
+    
+    y = y + treatment
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y,
+                            value_raw = y))
+  }
+  return(data)
+}
+
+
+sim.data3 = function(n = 10, length = 100, extra.x = round(0.2*length),
+                     t.treat = 60, shock = 10, ar.x = 0.6, n.SMA = 1,
+                     n.diff = 1, speed.upper = 2, speed.lower = 0.5,
+                     reweight = TRUE, rescale = TRUE, 
+                     rescale.multiplier = 20, beta = 1){
+  # common exogenous shocks
+  x = arima.sim(list(order = c(1,1,0), ar = ar.x),
+                n = length + extra.x + n.SMA + n.diff - 2)
+  
+  # smoothing
+  x.SMA = ts(TTR::SMA(x, n = n.SMA)[-(1:(n.SMA - 1))])
+  
+  # difference
+  x.diff = diff(x.SMA, difference = n.diff)
+  pos.diff = x.diff > 0
+  if (reweight) {
+    pos.ratio = sum(pos.diff)/sum(!pos.diff)
+  }
+  
+  # speeds
+  log.speeds = runif(n = n, min = log(speed.lower), max = log(speed.upper))
+
+  # simulate
+  data = NULL
+  for (i in 1:n) {
+    # speed profile
+    log.speed = log.speeds[i]
+    if (reweight) {
+      if (pos.ratio > 1) {
+        pos.speed = exp(log.speed*(1/pos.ratio))
+        neg.speed = exp(-log.speed)
+      }else{
+        pos.speed = exp(log.speed)
+        neg.speed = exp(-log.speed*pos.ratio)
+      }
+    }else{
+      pos.speed = exp(log.speed)
+      neg.speed = exp(-log.speed)
+    }
+    
+    phi.shape = rep(NA, length.out = length + extra.x)
+    phi.shape[pos.diff] = pos.speed
+    phi.shape[!pos.diff] = neg.speed
+    
+    log.phi.mean = mean(log(phi.shape), na.rm = T)
+    log.phi.sd = sd(log(phi.shape), na.rm = T)
+    
+    phi.random = exp(rnorm(n = length + extra.x,
+                           mean = log.phi.mean,
+                           sd = log.phi.sd))
+    
+    # treatment
+    if (i == 1) {
+      treatment = c(rep(0, t.treat),
+                    seq(0, shock, length.out = round(0.1*length)),
+                    rep(shock, round(0.9*length - t.treat)))
+    }else{
+      treatment = 0
+    }
+    
+    phi = beta*phi.shape + (1 - beta)*phi.random
+    
+    y = warpWITHweight(x[1:(length + extra.x)], phi)[1:length]
+    
+    if (rescale) {
+      y = minmax.normalize(y, reference = y[1:t.treat])*rescale.multiplier
+    }
+    
+    y = y + treatment
+    
+    data = rbind(data,
+                 data.frame(id = i,
+                            unit = LETTERS[i],
+                            time = 1:length,
+                            value = y,
+                            value_raw = y))
+  }
+  return(data)
+}
+
+
 SimData_Lags = function(n = 3,
                         length = 100,
                         rnd_nCycles = seq(0.1, 0.9, length.out = n),
