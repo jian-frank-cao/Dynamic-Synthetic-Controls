@@ -103,15 +103,13 @@ for (UNIT in units) {
         res.synth = res.synth %>% 
           mutate(gap.original = value - original)
         gap.original = res.synth %>% filter(unit == UNIT) %>% .[["gap.original"]]
-        res.synth = res.synth %>% 
-          filter(unit != UNIT)
+        # res.synth = res.synth %>% 
+        #   filter(unit != UNIT)
         df.quant = res.synth %>% 
           group_by(time) %>% 
           summarise(
             ci_origin_upper = quantile(gap.original, 0.975, na.rm = T),
-            ci_origin_lower = quantile(gap.original, 0.025, na.rm = T),
-            ci_new_upper = quantile(gap.TFDTW, 0.975, na.rm = T),
-            ci_new_lower = quantile(gap.TFDTW, 0.025, na.rm = T)
+            ci_origin_lower = quantile(gap.original, 0.025, na.rm = T)
           )
         df.quant$gap.original = gap.original
         df.quant = df.quant %>% 
@@ -125,7 +123,7 @@ for (UNIT in units) {
     do.call("rbind", .)
   
   res = res %>% filter(time > 60 & time < 71)
-  res = res[complete.cases(res),7]
+  res = res[complete.cases(res),5]
   
   res.boot = NULL
   for (i in 1:1000) {
