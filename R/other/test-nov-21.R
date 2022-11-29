@@ -26,7 +26,7 @@ for (res.file in res.files) {
 }
 
 length = 100
-shock = 10
+shock = 0
 treat_time = 60
 n_mse = 10
 
@@ -146,7 +146,7 @@ results = ind.opt %>%
 
 ## Results ---------------------------------------------------------------------
 results = readRDS("./data/results5.Rds")
-res = results[1:50] %>% 
+res = results %>% 
   future_map(
     ~{
       item = .[[1]]
