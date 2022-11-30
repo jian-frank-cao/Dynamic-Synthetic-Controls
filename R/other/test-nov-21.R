@@ -212,3 +212,66 @@ boxplot(res.boot[,1:2])
 
 log.ratio = log(res.boot[, 2]/res.boot[, 1])
 t.test(log.ratio)
+
+
+## Pooled Results --------------------------------------------------------------
+results = readRDS("./data/results5.Rds")
+
+res = future_map2(
+  results,
+  as.list(1:99),
+  ~{
+    item = .x[[1]]
+    id = .y
+    res.synth = map2(
+      item$results.TFDTW.synth,
+      names(item$results.TFDTW.synth),
+      ~{
+        result = .x
+        unit = .y
+        data.frame(data.id = id,
+                   unit = unit,
+                   time = 1:100,
+                   value = result$res.synth.raw$value,
+                   original = result$res.synth.raw$synthetic,
+                   TFDTW = result$res.synth.TFDTW$synthetic)
+      }
+    ) %>% 
+      do.call("rbind", .)
+    res.synth = res.synth %>% 
+      mutate(gap.original = value - original,
+             gap.TFDTW = value - TFDTW)
+    res.synth
+  }
+) %>% do.call("rbind", .)
+
+
+target.df = res %>% filter(unit == "A")
+df.quant = res %>%
+  filter(unit != "A") %>% 
+  group_by(time) %>% 
+  summarise(
+    ci_origin_upper = quantile(gap.original, 0.975, na.rm = T),
+    ci_origin_lower = quantile(gap.original, 0.025, na.rm = T),
+    ci_new_upper = quantile(gap.TFDTW, 0.975, na.rm = T),
+    ci_new_lower = quantile(gap.TFDTW, 0.025, na.rm = T)
+  )
+
+target.df$ci_origin_upper = rep(df.quant$ci_origin_upper, 99)
+target.df$ci_origin_lower = rep(df.quant$ci_origin_lower, 99)
+target.df$ci_new_upper = rep(df.quant$ci_new_upper, 99)
+target.df$ci_new_lower = rep(df.quant$ci_new_lower, 99)
+
+target.df = target.df %>% 
+  mutate(sig.original = ifelse(gap.original > ci_origin_upper | gap.original < ci_origin_lower, 1, 0),
+         sig.TFDTW = ifelse(gap.TFDTW > ci_new_upper | gap.TFDTW < ci_new_lower, 1, 0)
+  )
+
+res.sig = target.df %>% 
+  filter(time > 60 & time < 71)
+
+mean(res.sig$sig.original, na.rm = TRUE)
+mean(res.sig$sig.TFDTW, na.rm = TRUE)
+
+
+

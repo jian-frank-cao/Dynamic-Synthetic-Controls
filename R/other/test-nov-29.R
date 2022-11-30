@@ -47,7 +47,7 @@ data.list[[12]] %>% ggplot(aes(x = time, y = value, color = unit)) +
 saveRDS(data.list, "./data/simul_data_beta_103.Rds")
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS(paste0("./data/simul_data_beta_103.Rds"))
+data.list = readRDS(paste0("./data/simul_data_beta_10.Rds"))
 
 args.synth = list(predictors = NULL,
                   special.predictors = 
@@ -57,7 +57,7 @@ args.synth = list(predictors = NULL,
                   time.predictors.prior = 1:59,
                   time.optimize.ssr = 1:59)
 
-results = data.list %>% 
+results = data.list[51:150] %>% 
   future_map(
     ~{
       data = .
@@ -81,6 +81,7 @@ results = data.list %>%
 
 
 ## Results ---------------------------------------------------------------------
+ratio = c()
 units = LETTERS[1:10]
 for (UNIT in units) {
   res = results %>% 
@@ -103,8 +104,8 @@ for (UNIT in units) {
         res.synth = res.synth %>% 
           mutate(gap.original = value - original)
         gap.original = res.synth %>% filter(unit == UNIT) %>% .[["gap.original"]]
-        # res.synth = res.synth %>% 
-        #   filter(unit != UNIT)
+        res.synth = res.synth %>%
+          filter(unit != UNIT)
         df.quant = res.synth %>% 
           group_by(time) %>% 
           summarise(
@@ -134,6 +135,7 @@ for (UNIT in units) {
   
   print(UNIT)
   print(mean(res.boot))
+  ratio = c(ratio, mean(res.boot))
 }
 
 
