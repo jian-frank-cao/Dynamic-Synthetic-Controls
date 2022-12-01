@@ -325,6 +325,177 @@ fig_basque = df %>%
 #        units = "in", limitsize = FALSE)
 
 
+## Placebo v2 ------------------------------------------------------------------
+results = readRDS("./data/res_basque_1019.Rds")
+
+mse = future_map2(
+  results,
+  names(results),
+  ~{
+    item = .x
+    id = .y
+    item$mse %>% mutate(id = id)
+  }
+) %>% 
+  do.call("rbind", .) %>% 
+  filter(unit != "Basque Country (Pais Vasco)")
+
+units = unique(mse$unit)
+opt.grid = data.frame(unit = units, id = 0)
+for (i in 1:nrow(opt.grid)) {
+  target = opt.grid$unit[i]
+  scores = mse %>% 
+    filter(unit != target) %>% 
+    group_by(id) %>% 
+    summarise(percent = mean(log.ratio < 0),
+              p.value = t.test(log.ratio)$p.value)
+  max.percent = which(scores$percent == max(scores$percent))
+  min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
+  opt.grid[i,2] = as.numeric(scores$id[max.percent[min.p]])
+}
+
+tasks = unique(opt.grid$id)
+
+
+# parameters
+filter.width.range = (1:9)*2+3
+k.range = 4:9
+step.pattern.range = list(
+  # symmetricP0 = dtw::symmetricP0, # too bumpy
+  # symmetricP05 = dtw::symmetricP05,
+  symmetricP1 = dtw::symmetricP1,
+  symmetricP2 = dtw::symmetricP2,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+  # asymmetricP05 = dtw::asymmetricP05,
+  asymmetricP1 = dtw::asymmetricP1,
+  asymmetricP2 = dtw::asymmetricP2,
+  typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
+  # typeIIc = dtw::typeIIc,  # jumps
+  # typeIIIc = dtw::typeIIIc, # jumps
+  # typeIVc = dtw::typeIVc,  # jumps
+  typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
+  # typeIId = dtw::typeIId, # jumps
+  mori2006 = dtw::mori2006
+)
+search.grid = expand.grid(filter.width.range, k.range,
+                          names(step.pattern.range)) %>% 
+  `colnames<-`(c("filter.width", "k", "step.pattern"))
+tasks = cbind(data.frame(id = tasks),
+              search.grid[tasks,])
+grid.search.parallel = FALSE
+
+args.TFDTW = list(buffer = 0, match.method = "fixed",
+                  dist.quant = 0.95,
+                  window.type = "none",
+                  ## other
+                  norm.method = "t",
+                  step.pattern2 = dtw::asymmetricP2,
+                  n.burn = 3, n.IQR = 3,
+                  ma = 3, ma.na = "original",
+                  default.margin = 3,
+                  n.q = 1, n.r = 1)
+
+args.synth = list(predictors = NULL,
+                  special.predictors =
+                    expression(list(
+                      list(dep.var, 1960:1969, c("mean")),
+                      list("invest_ratio", 1964:1969, c("mean")),
+                      list("popdens", 1969, c("mean")),
+                      list("sec.agriculture", 1961:1969, c("mean")),
+                      list("sec.energy", 1961:1969, c("mean")),
+                      list("sec.industry", 1961:1969, c("mean")),
+                      list("sec.construction", 1961:1969, c("mean")),
+                      list("sec.services.venta", 1961:1969, c("mean")),
+                      list("sec.services.nonventa", 1961:1969, c("mean")),
+                      list("school.illit", 1964:1969, c("mean")),
+                      list("school.prim", 1964:1969, c("mean")),
+                      list("school.med", 1964:1969, c("mean")),
+                      list("school.high", 1964:1969, c("mean")),
+                      list("school.post.high", 1964:1969, c("mean"))
+                    )),
+                  time.predictors.prior = 1955:1969,
+                  time.optimize.ssr = 1955:1969)
+
+args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
+                        args.TFDTW = args.TFDTW, args.synth = args.synth,
+                        ## 2nd
+                        n.mse = 10,
+                        ## other
+                        plot.figures = TRUE,
+                        plot.path = "./figures/",
+                        legend.pos = c(0.3, 0.3))
+
+args.TFDTW.synth.all.units = list(target = "Basque Country (Pais Vasco)",
+                                  # data = data,
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  detailed.output = TRUE,
+                                  ## 2nd
+                                  all.units.parallel = TRUE)
+
+
+results = tasks %>% 
+  split(., seq(nrow(tasks))) %>% 
+  set_names(tasks$id) %>% 
+  map(
+    ~{
+      search = .
+      
+      args.TFDTW.synth.all.units[["data"]] = data
+      results = SimDesign::quiet(
+        grid.search(filter.width.range = search$filter.width,
+                    k.range = search$k,
+                    step.pattern.range = step.pattern.range[search$step.pattern],
+                    args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                    grid.search.parallel = grid.search.parallel)
+      )
+      results
+    }
+  )
+
+
+# plot figures
+df = future_map2(
+  results[as.character(opt.grid$id)],
+  units %>% as.list,
+  ~{
+    item = .x[[1]]
+    unit = .y
+    value = item$results.TFDTW.synth[[unit]]$res.synth.raw$value
+    gap_original = item$results.TFDTW.synth[[unit]]$gap.raw
+    gap_new = item$results.TFDTW.synth[[unit]]$gap.TFDTW
+    data.frame(unit = unit,
+               time = 1955:1997,
+               value = value,
+               gap_original = gap_original,
+               gap_new = gap_new)
+  }
+) %>% 
+  do.call("rbind", .)
+
+t.interval = 1971:1980
+df2 = df %>% filter(time %in% t.interval)
+n.t = length(t.interval)
+n.datasets = nrow(df2)/length(t.interval)
+
+var.original = df2 %>% group_by(unit) %>%
+  summarise(variance = var(gap_original)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+var.new = df2 %>% group_by(unit) %>%
+  summarise(variance = var(gap_new)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+f.value = var.new/var.original
+f.value = round(f.value, 4)
+p.value = pf(f.value, n.datasets - 1,
+             n.datasets - 1, lower.tail = TRUE)
+p.value = round(p.value, 4)
 
 
 
