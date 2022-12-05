@@ -1,9 +1,10 @@
 .Rproj.user
-.Rhistory
 .RData
 .Ruserdata
 .future/
 figures/
+data/placebo/
+data/.DS_Store
 .DS_Store
 ._.DS_Store
 **/.DS_Store
