@@ -341,9 +341,94 @@ print(job.end - job.start)
 # #        units = "in", limitsize = FALSE)
 # 
 # 
-# ## Placebo v2 ------------------------------------------------------------------
-# results = readRDS("./data/res_basque_1019.Rds")
-# 
+## Placebo v2 ------------------------------------------------------------------
+results = NULL
+folder = "./data/placebo/basque/"
+res.files = list.files(folder)
+for (res.file in res.files) {
+  results = c(results, list(readRDS(paste0(folder, res.file))))
+}
+
+df = future_map2(
+  results,
+  as.list(1:length(results)),
+  ~{
+    item = .x
+    index = .y
+    mse = future_map2(
+      item,
+      names(item),
+      ~{
+        item = .x
+        id = .y
+        item$mse %>% mutate(id = id)
+      }
+    ) %>%
+      do.call("rbind", .)
+    
+    units = unique(mse$unit)
+    
+    df.gap.list = NULL
+    for (i in 1:length(units)) {
+      target = units[[i]]
+      scores = mse %>%
+        filter(unit != target) %>%
+        group_by(id) %>%
+        summarise(percent = mean(log.ratio < 0),
+                  p.value = t.test(log.ratio)$p.value)
+      max.percent = which(scores$percent == max(scores$percent))
+      min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
+      opt.ind = as.numeric(scores$id[max.percent[min.p]])
+      # df.gap.list[[i]] = data.frame(
+      #   unit = paste0("d", index, "-", target),
+      #   time = 1955:1997,
+      #   value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
+      #   gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
+      #   gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic
+      # )
+      df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>% 
+        #mutate(unit = paste0("d", index, "-", target))
+    }
+    df.gap.list %>% do.call("rbind", .)
+  }
+) %>% 
+  do.call("rbind", .)
+
+ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
+
+
+df = df %>% filter(time %in% 1971:1980)
+
+# ICC::ICCest(unit, gap_original, data = df, CI.type = "S")
+
+df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
+                      time ~ unit, value.var = "gap_original")
+value.icc.sc = irr::icc(
+  df_original[,-1], model = "twoway", 
+  type = "agreement", unit = "single"
+)$value
+vif.sc = (nrow(df_original) - 1)*value.icc.sc + 1
+DF.sc = (dim(df_original)[1]*dim(df_original)[2])/vif.sc
+
+df_new = reshape2::dcast(df[c("unit", "time", "gap_new")],
+                              time ~ unit, value.var = "gap_new")
+value.icc.dsc = irr::icc(
+  df_new[,-1], model = "twoway", 
+  type = "agreement", unit = "single"
+)$value
+vif.dsc = (nrow(df_new) - 1)*value.icc.dsc + 1
+DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
+
+var.dsc = var(df$gap_new)
+var.sc = var(df$gap_original)
+
+f.value = var.dsc/var.sc
+f.value = round(f.value, 4)
+p.value = pf(f.value, DF.dsc,
+             DF.sc, lower.tail = TRUE)
+p.value = round(p.value, 4)
+
+
 # mse = future_map2(
 #   results,
 #   names(results),
@@ -352,17 +437,17 @@ print(job.end - job.start)
 #     id = .y
 #     item$mse %>% mutate(id = id)
 #   }
-# ) %>% 
-#   do.call("rbind", .) %>% 
+# ) %>%
+#   do.call("rbind", .) %>%
 #   filter(unit != "Basque Country (Pais Vasco)")
 # 
 # units = unique(mse$unit)
 # opt.grid = data.frame(unit = units, id = 0)
 # for (i in 1:nrow(opt.grid)) {
 #   target = opt.grid$unit[i]
-#   scores = mse %>% 
-#     filter(unit != target) %>% 
-#     group_by(id) %>% 
+#   scores = mse %>%
+#     filter(unit != target) %>%
+#     group_by(id) %>%
 #     summarise(percent = mean(log.ratio < 0),
 #               p.value = t.test(log.ratio)$p.value)
 #   max.percent = which(scores$percent == max(scores$percent))
@@ -396,7 +481,7 @@ print(job.end - job.start)
 #   mori2006 = dtw::mori2006
 # )
 # search.grid = expand.grid(filter.width.range, k.range,
-#                           names(step.pattern.range)) %>% 
+#                           names(step.pattern.range)) %>%
 #   `colnames<-`(c("filter.width", "k", "step.pattern"))
 # tasks = cbind(data.frame(id = tasks),
 #               search.grid[tasks,])
@@ -451,13 +536,13 @@ print(job.end - job.start)
 #                                   all.units.parallel = TRUE)
 # 
 # 
-# results = tasks %>% 
-#   split(., seq(nrow(tasks))) %>% 
-#   set_names(tasks$id) %>% 
+# results = tasks %>%
+#   split(., seq(nrow(tasks))) %>%
+#   set_names(tasks$id) %>%
 #   map(
 #     ~{
 #       search = .
-#       
+# 
 #       args.TFDTW.synth.all.units[["data"]] = data
 #       results = SimDesign::quiet(
 #         grid.search(filter.width.range = search$filter.width,
@@ -487,7 +572,7 @@ print(job.end - job.start)
 #                gap_original = gap_original,
 #                gap_new = gap_new)
 #   }
-# ) %>% 
+# ) %>%
 #   do.call("rbind", .)
 # 
 # t.interval = 1971:1980
