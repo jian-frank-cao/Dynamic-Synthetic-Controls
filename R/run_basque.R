@@ -379,14 +379,14 @@ df = future_map2(
       max.percent = which(scores$percent == max(scores$percent))
       min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
       opt.ind = as.numeric(scores$id[max.percent[min.p]])
-      # df.gap.list[[i]] = data.frame(
-      #   unit = paste0("d", index, "-", target),
-      #   time = 1955:1997,
-      #   value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
-      #   gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
-      #   gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic
-      # )
-      df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>% 
+      df.gap.list[[i]] = data.frame(
+        unit = paste0("d", index, "-", target),
+        time = 1955:1997,
+        value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
+        gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
+        gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
+      )
+      # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>% 
         #mutate(unit = paste0("d", index, "-", target))
     }
     df.gap.list %>% do.call("rbind", .)
@@ -394,17 +394,17 @@ df = future_map2(
 ) %>% 
   do.call("rbind", .)
 
-ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
+# ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
 
-
-df = df %>% filter(time %in% 1971:1980)
-
-# ICC::ICCest(unit, gap_original, data = df, CI.type = "S")
+t.interval = 1971:1980
+df = df %>% filter(time %in% t.interval)
+n.t = length(t.interval)
+n.datasets = nrow(df)/length(t.interval)
 
 df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
                       time ~ unit, value.var = "gap_original")
 value.icc.sc = irr::icc(
-  df_original[,-1], model = "twoway", 
+  df_original[,-1], model = "twoway",
   type = "agreement", unit = "single"
 )$value
 vif.sc = (nrow(df_original) - 1)*value.icc.sc + 1
@@ -413,14 +413,25 @@ DF.sc = (dim(df_original)[1]*dim(df_original)[2])/vif.sc
 df_new = reshape2::dcast(df[c("unit", "time", "gap_new")],
                               time ~ unit, value.var = "gap_new")
 value.icc.dsc = irr::icc(
-  df_new[,-1], model = "twoway", 
+  df_new[,-1], model = "twoway",
   type = "agreement", unit = "single"
 )$value
 vif.dsc = (nrow(df_new) - 1)*value.icc.dsc + 1
 DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
 
-var.dsc = var(df$gap_new)
-var.sc = var(df$gap_original)
+
+
+var.sc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_original)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+var.dsc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_new)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
 
 f.value = var.dsc/var.sc
 f.value = round(f.value, 4)
