@@ -366,8 +366,6 @@ df = future_map2(
 ) %>%
   do.call("rbind", .)
 
-# ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
-
 df = df %>% filter(time %in% 1991:2000)
 
 # ICC::ICCest(unit, gap_original, data = df, CI.type = "S")

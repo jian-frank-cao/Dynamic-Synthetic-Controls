@@ -365,9 +365,9 @@ df = future_map2(
       }
     ) %>%
       do.call("rbind", .)
-    
+
     units = unique(mse$unit)
-    
+
     df.gap.list = NULL
     for (i in 1:length(units)) {
       target = units[[i]]
@@ -386,12 +386,12 @@ df = future_map2(
         gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
         gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
       )
-      # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>% 
+      # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>%
         #mutate(unit = paste0("d", index, "-", target))
     }
     df.gap.list %>% do.call("rbind", .)
   }
-) %>% 
+) %>%
   do.call("rbind", .)
 
 # ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
@@ -439,7 +439,8 @@ p.value = pf(f.value, DF.dsc,
              DF.sc, lower.tail = TRUE)
 p.value = round(p.value, 4)
 
-
+# results = readRDS("./data/res_basque_1019.Rds")
+# 
 # mse = future_map2(
 #   results,
 #   names(results),
@@ -566,6 +567,8 @@ p.value = round(p.value, 4)
 #     }
 #   )
 # 
+# saveRDS(results, "./data/placebo_v2_basque.Rds")
+# results = readRDS("./data/placebo_v2_basque.Rds")
 # 
 # # plot figures
 # df = future_map2(
@@ -587,9 +590,29 @@ p.value = round(p.value, 4)
 #   do.call("rbind", .)
 # 
 # t.interval = 1971:1980
-# df2 = df %>% filter(time %in% t.interval)
+# df = df %>% filter(time %in% t.interval)
 # n.t = length(t.interval)
 # n.datasets = nrow(df2)/length(t.interval)
+# 
+# 
+# df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
+#                       time ~ unit, value.var = "gap_original")
+# value.icc.sc = irr::icc(
+#   df_original[,-1], model = "twoway",
+#   type = "agreement", unit = "single"
+# )$value
+# vif.sc = (nrow(df_original) - 1)*value.icc.sc + 1
+# DF.sc = (dim(df_original)[1]*dim(df_original)[2])/vif.sc
+# 
+# df_new = reshape2::dcast(df[c("unit", "time", "gap_new")],
+#                               time ~ unit, value.var = "gap_new")
+# value.icc.dsc = irr::icc(
+#   df_new[,-1], model = "twoway",
+#   type = "agreement", unit = "single"
+# )$value
+# vif.dsc = (nrow(df_new) - 1)*value.icc.dsc + 1
+# DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
+# 
 # 
 # var.original = df2 %>% group_by(unit) %>%
 #   summarise(variance = var(gap_original)*(n.t - 1)) %>%
@@ -605,8 +628,8 @@ p.value = round(p.value, 4)
 # 
 # f.value = var.new/var.original
 # f.value = round(f.value, 4)
-# p.value = pf(f.value, n.datasets - 1,
-#              n.datasets - 1, lower.tail = TRUE)
+# p.value = pf(f.value, DF.dsc,
+#              DF.sc, lower.tail = TRUE)
 # p.value = round(p.value, 4)
 
 
