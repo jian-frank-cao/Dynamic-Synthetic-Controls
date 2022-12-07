@@ -344,6 +344,110 @@ print(job.end - job.start)
 # 
 # 
 # ## Placebo v2 ------------------------------------------------------------------
+results = NULL
+folder = "./data/placebo/tobacco/"
+res.files = list.files(folder)
+for (res.file in res.files) {
+  results = c(results, list(readRDS(paste0(folder, res.file))))
+}
+
+df = future_map2(
+  results,
+  as.list(1:length(results)),
+  ~{
+    item = .x
+    index = .y
+    mse = future_map2(
+      item,
+      names(item),
+      ~{
+        item = .x
+        id = .y
+        item$mse %>% mutate(id = id)
+      }
+    ) %>%
+      do.call("rbind", .)
+    
+    units = unique(mse$unit)
+    
+    df.gap.list = NULL
+    for (i in 1:length(units)) {
+      target = units[[i]]
+      scores = mse %>%
+        filter(unit != target) %>%
+        group_by(id) %>%
+        summarise(percent = mean(log.ratio < 0),
+                  p.value = t.test(log.ratio)$p.value)
+      max.percent = which(scores$percent == max(scores$percent))
+      min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
+      opt.ind = as.numeric(scores$id[max.percent[min.p]])
+      df.gap.list[[i]] = data.frame(
+        unit = paste0("d", index, "-", target),
+        time = 1970:2000,
+        value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
+        gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
+        gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
+      )
+      # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>%
+      #mutate(unit = paste0("d", index, "-", target))
+    }
+    df.gap.list %>% do.call("rbind", .)
+  }
+) %>%
+  do.call("rbind", .)
+
+df = df %>% filter(time %in% 1990:1999)
+
+# ICC::ICCest(unit, gap_original, data = df, CI.type = "S")
+
+df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
+                              time ~ unit, value.var = "gap_original")
+value.icc.sc = irr::icc(
+  df_original[,-1], model = "twoway",
+  type = "agreement", unit = "single"
+)$value
+vif.sc = (nrow(df_original) - 1)*value.icc.sc + 1
+DF.sc = (dim(df_original)[1]*dim(df_original)[2])/vif.sc
+
+df_new = reshape2::dcast(df[c("unit", "time", "gap_new")],
+                         time ~ unit, value.var = "gap_new")
+value.icc.dsc = irr::icc(
+  df_new[,-1], model = "twoway",
+  type = "agreement", unit = "single"
+)$value
+vif.dsc = (nrow(df_new) - 1)*value.icc.dsc + 1
+DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
+
+# var.dsc = var(df$gap_new, na.rm = TRUE)
+# var.sc = var(df$gap_original, na.rm = TRUE)
+
+t.interval = 1990:1999
+n.t = length(t.interval)
+n.datasets = nrow(df)/length(t.interval)
+
+var.sc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_original, na.rm = TRUE)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+var.dsc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_new, na.rm = TRUE)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+
+
+f.value = var.dsc/var.sc
+f.value = round(f.value, 4)
+p.value = pf(f.value, DF.dsc,
+             DF.sc, lower.tail = TRUE)
+p.value = round(p.value, 4)
+
+
+
+
 # results = readRDS("./data/res_tobacco_1019.Rds")
 # 
 # mse = future_map2(
