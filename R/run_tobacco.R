@@ -396,7 +396,7 @@ df = future_map2(
 ) %>%
   do.call("rbind", .)
 
-df = df %>% filter(time %in% 1990:1999)
+df = df %>% filter(time %in% 1990:1997)
 
 # ICC::ICCest(unit, gap_original, data = df, CI.type = "S")
 
@@ -421,7 +421,7 @@ DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
 # var.dsc = var(df$gap_new, na.rm = TRUE)
 # var.sc = var(df$gap_original, na.rm = TRUE)
 
-t.interval = 1990:1996
+t.interval = 1990:1997
 n.t = length(t.interval)
 n.datasets = nrow(df)/length(t.interval)
 
