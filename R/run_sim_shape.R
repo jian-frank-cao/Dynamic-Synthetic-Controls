@@ -132,7 +132,7 @@ print(job.end - job.start)
 ## Plot result -----------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1006/"
+folder = "./data/res_sim/1011/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -211,6 +211,24 @@ t.test(mse$log_ratio)
 
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
 
+df_original = reshape2::dcast(df[c("id", "time", "diff_original")],
+                              time ~ id, value.var = "diff_original")
+value.icc.sc = irr::icc(
+  df_original[,-1], model = "twoway",
+  type = "agreement", unit = "single"
+)$value
+vif.sc = (nrow(df_original) - 1)*value.icc.sc + 1
+DF.sc = (dim(df_original)[1]*dim(df_original)[2])/vif.sc
+
+df_new = reshape2::dcast(df[c("id", "time", "diff_new")],
+                         time ~ id, value.var = "diff_new")
+value.icc.dsc = irr::icc(
+  df_new[,-1], model = "twoway",
+  type = "agreement", unit = "single"
+)$value
+vif.dsc = (nrow(df_new) - 1)*value.icc.dsc + 1
+DF.dsc = (dim(df_new)[1]*dim(df_new)[2])/vif.dsc
+
 t.interval = 61:70
 df2 = df %>% filter(time %in% t.interval)
 n.t = length(t.interval)
@@ -230,8 +248,8 @@ var.new = df2 %>% group_by(id) %>%
 
 f.value = var.new/var.original
 f.value = round(f.value, 4)
-p.value = pf(f.value, n.datasets - 1,
-             n.datasets - 1, lower.tail = TRUE)
+p.value = pf(f.value, DF.dsc,
+             DF.sc, lower.tail = TRUE)
 p.value = round(p.value, 4)
 
 
