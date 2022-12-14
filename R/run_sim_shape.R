@@ -132,7 +132,7 @@ print(job.end - job.start)
 ## Plot result -----------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1011/"
+folder = "./data/res_sim/1006/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -210,6 +210,29 @@ mse = lapply(res, "[[", "mse") %>% do.call("rbind", .)
 t.test(mse$log_ratio)
 
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
+
+#----------------------------------------------------------------------
+df$id = factor(df$id)
+res.aov.sc = aov(diff_original ~ id, df)
+summary.aov.sc = summary(res.aov.sc)
+
+DF.sc = summary.aov.sc[[1]]$Df %>% sum
+sum.sq.sc = summary.aov.sc[[1]]$`Sum Sq` %>% sum
+var.sc = sum.sq.sc/DF.sc
+
+
+res.aov.dsc = aov(diff_new ~ id, df)
+summary.aov.dsc = summary(res.aov.dsc)
+
+DF.dsc = summary.aov.dsc[[1]]$Df %>% sum
+sum.sq.dsc = summary.aov.dsc[[1]]$`Sum Sq` %>% sum
+var.dsc = sum.sq.dsc/DF.dsc
+
+F.value = var.dsc/var.sc
+p.value = pf(F.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+#----------------------------------------------------------------------
+
+
 
 df_original = reshape2::dcast(df[c("id", "time", "diff_original")],
                               time ~ id, value.var = "diff_original")
