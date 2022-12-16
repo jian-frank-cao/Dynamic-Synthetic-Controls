@@ -207,6 +207,27 @@ res = future_map2(
 )
 
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
+df = df %>% filter(time %in% 61:70)
+
+
+# log(diff/diff) t test ==========================================
+df = df %>% 
+  mutate(log.ratio = log(abs(diff_new)/abs(diff_original)),
+         id = factor(id))
+
+res.aov = aov(log.ratio ~ id, df)
+summary.aov = summary(res.aov)
+
+BMS = summary.aov[[1]]$`Mean Sq`[1]
+WMS = summary.aov[[1]]$`Mean Sq`[2]
+k = 10
+res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
+res.vif = 1 + (k - 1)*res.icc
+DF = nrow(df)/res.vif
+
+t.value = t.test(df$log.ratio)$statistic
+p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
+# ===============================================================
 
 
 # log(mse/mse) t test ==========================================

@@ -401,6 +401,33 @@ df = df %>% filter(time %in% t.interval)
 n.t = length(t.interval)
 n.datasets = nrow(df)/length(t.interval)
 
+
+# log(diff/diff) t test ==========================================
+df = df %>% 
+  mutate(log.ratio = log(abs(gap_new)/abs(gap_original)),
+         id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
+         target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
+
+res.aov = aov(log.ratio ~ id*target, df)
+summary.aov = summary(res.aov)
+
+BMS = summary.aov[[1]]$`Mean Sq`[1]
+JMS = summary.aov[[1]]$`Mean Sq`[2]
+IMS = summary.aov[[1]]$`Mean Sq`[3]
+EMS = summary.aov[[1]]$`Mean Sq`[4]
+k = 17
+n = 18
+l = 10
+target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
+res.icc = target/(target + EMS)
+res.vif = 1 + (l - 1)*res.icc
+DF = nrow(df)/res.vif
+
+t.value = t.test(df$log.ratio)$statistic
+p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
+# ===============================================================
+
+
 df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
                       time ~ unit, value.var = "gap_original")
 value.icc.sc = irr::icc(
