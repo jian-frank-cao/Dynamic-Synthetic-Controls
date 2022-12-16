@@ -428,6 +428,49 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # ===============================================================
 
 
+# fully pooled F test ==========================================
+df = df %>% 
+  mutate(id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
+         target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
+
+n = 18
+k = 17
+l = 10
+
+res.aov.dsc = aov(gap_new ~ id*target, df)
+summary.aov.dsc = summary(res.aov.dsc)
+
+BMS = summary.aov.dsc[[1]]$`Mean Sq`[1]
+JMS = summary.aov.dsc[[1]]$`Mean Sq`[2]
+IMS = summary.aov.dsc[[1]]$`Mean Sq`[3]
+EMS = summary.aov.dsc[[1]]$`Mean Sq`[4]
+
+target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
+res.icc = target/(target + EMS)
+res.vif = 1 + (l - 1)*res.icc
+DF.dsc = nrow(df)/res.vif
+var.dsc = target + EMS
+
+res.aov.sc = aov(gap_original ~ id*target, df)
+summary.aov.sc = summary(res.aov.sc)
+
+BMS = summary.aov.sc[[1]]$`Mean Sq`[1]
+JMS = summary.aov.sc[[1]]$`Mean Sq`[2]
+IMS = summary.aov.sc[[1]]$`Mean Sq`[3]
+EMS = summary.aov.sc[[1]]$`Mean Sq`[4]
+
+target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
+res.icc = target/(target + EMS)
+res.vif = 1 + (l - 1)*res.icc
+DF.sc = nrow(df)/res.vif
+var.sc = target + EMS
+
+f.value = var.dsc/var.sc
+p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+# ===============================================================
+
+
+
 df_original = reshape2::dcast(df[c("unit", "time", "gap_original")],
                       time ~ unit, value.var = "gap_original")
 value.icc.sc = irr::icc(
