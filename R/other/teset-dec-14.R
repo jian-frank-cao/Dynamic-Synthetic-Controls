@@ -103,7 +103,7 @@ df = df %>%
     unit = str_split(unit, "-", simplify = TRUE)[,2]
   )
 
-res.aov.sc = aov(gap_original ~ data.id*unit, df)
+res.aov.sc = aov(gap_new ~ data.id*unit, df)
 summary.aov.sc = summary(res.aov.sc)
 
 DF.sc = summary.aov.sc[[1]]$Df %>% sum
