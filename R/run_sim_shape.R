@@ -132,7 +132,7 @@ print(job.end - job.start)
 ## Plot result -----------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1006/"
+folder = "./data/res_sim/1011/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -228,6 +228,39 @@ DF = nrow(df)/res.vif
 t.value = t.test(df$log.ratio)$statistic
 p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # ===============================================================
+
+# fully pooled F test ==========================================
+df = df %>% 
+  mutate(id = factor(id))
+
+k = 10
+
+res.aov.dsc = aov(diff_new ~ id, df)
+summary.aov.dsc = summary(res.aov.dsc)
+
+BMS = summary.aov.dsc[[1]]$`Mean Sq`[1]
+WMS = summary.aov.dsc[[1]]$`Mean Sq`[2]
+
+res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
+res.vif = 1 + (k - 1)*res.icc
+DF.dsc = nrow(df)/res.vif
+var.dsc = BMS + (k - 1)*WMS
+
+res.aov.sc = aov(diff_original ~ id, df)
+summary.aov.sc = summary(res.aov.sc)
+
+BMS = summary.aov.sc[[1]]$`Mean Sq`[1]
+WMS = summary.aov.sc[[1]]$`Mean Sq`[2]
+
+res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
+res.vif = 1 + (k - 1)*res.icc
+DF.sc = nrow(df)/res.vif
+var.sc = BMS + (k - 1)*WMS
+
+f.value = var.dsc/var.sc
+p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+# ===============================================================
+
 
 
 # log(mse/mse) t test ==========================================
