@@ -188,8 +188,8 @@ res = future_map2(
     diff_original = value_raw - synth_original - causal_effect
     diff_new = value_raw - synth_new - causal_effect
 
-    mse_original = mean((diff_original)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
-    mse_new = mean((diff_new)[treat_time:(treat_time + n_mse)]^2, rm.na = T)
+    mse_original = mean(diff_original[(treat_time + 1):(treat_time + n_mse)]^2, rm.na = T)
+    mse_new = mean(diff_new[(treat_time + 1):(treat_time + n_mse)]^2, rm.na = T)
     mse = data.frame(mse_original = mse_original,
                      mse_new = mse_new,
                      log_ratio = log(mse_new/mse_original))
@@ -206,14 +206,20 @@ res = future_map2(
   }
 )
 
-mse = lapply(res, "[[", "mse") %>% do.call("rbind", .)
-t.test(mse$log_ratio)
-
 df = lapply(res, "[[", "df") %>% do.call("rbind", .)
 
-#----------------------------------------------------------------------
-df$id = factor(df$id)
-res.aov.sc = aov(diff_original ~ id, df)
+
+# log(mse/mse) t test ==========================================
+mse = lapply(res, "[[", "mse") %>% do.call("rbind", .)
+t.test(mse$log_ratio)
+# ===============================================================
+
+
+# full nested variance v2 ======================================
+df2 = df11 %>% 
+  filter(time %in% 61:70) %>% 
+  mutate(id = factor(id))
+res.aov.sc = aov(diff_original ~ id, df2)
 summary.aov.sc = summary(res.aov.sc)
 
 DF.sc = summary.aov.sc[[1]]$Df %>% sum
@@ -221,7 +227,7 @@ sum.sq.sc = summary.aov.sc[[1]]$`Sum Sq` %>% sum
 var.sc = sum.sq.sc/DF.sc
 
 
-res.aov.dsc = aov(diff_new ~ id, df)
+res.aov.dsc = aov(diff_new ~ id, df2)
 summary.aov.dsc = summary(res.aov.dsc)
 
 DF.dsc = summary.aov.dsc[[1]]$Df %>% sum
@@ -230,10 +236,10 @@ var.dsc = sum.sq.dsc/DF.dsc
 
 F.value = var.dsc/var.sc
 p.value = pf(F.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
-#----------------------------------------------------------------------
+# ===============================================================
 
 
-
+# full nested variance v1 ======================================
 df_original = reshape2::dcast(df[c("id", "time", "diff_original")],
                               time ~ id, value.var = "diff_original")
 value.icc.sc = irr::icc(
@@ -274,6 +280,7 @@ f.value = round(f.value, 4)
 p.value = pf(f.value, DF.dsc,
              DF.sc, lower.tail = TRUE)
 p.value = round(p.value, 4)
+# ===============================================================
 
 
 

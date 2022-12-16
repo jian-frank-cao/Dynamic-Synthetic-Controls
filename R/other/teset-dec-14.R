@@ -129,6 +129,7 @@ pf(var.dsc/var.sc, DF.dsc, DF.sc, lower.tail = TRUE)*2
 #   mutate(log.ratio = log(mse.dsc/mse.sc))
 # t.test(res$log.ratio)
 
+df %>% filter(id == 7 & time %in% 61:70) %>% .[["diff_original"]]
 # -------------------------------------------
 
 
@@ -171,3 +172,22 @@ rbind(data.frame(value = res$mse.sc,
                  method = "dsc")) %>% 
   ggplot(aes(x = method, y = value)) +
   geom_boxplot()
+
+# ----------------------------------------------------------------
+sf = data.frame(J1 = c(9,6,8,7,10,6),
+                J2 = c(2,1,4,1,5,2),
+                J3 = c(5,3,6,2,6,4),
+                J4 = c(8,2,8,6,9,7)) %>% 
+  `rownames<-`(c("S1", "S2", "S3", "S4", "S5", "S6"))
+
+irr::icc(
+  sf, model = "twoway",
+  type = "a", unit = "s"
+)
+
+sf.df = reshape::melt(sf, varnames=c("Subject", "Rater"))
+sf.df$subject = rep(c("S1", "S2", "S3", "S4", "S5", "S6"), 4)
+aov(value ~ variable*subject, sf.df) %>% summary
+
+
+
