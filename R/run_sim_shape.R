@@ -244,7 +244,8 @@ WMS = summary.aov.dsc[[1]]$`Mean Sq`[2]
 res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
 res.vif = 1 + (k - 1)*res.icc
 DF.dsc = nrow(df)/res.vif
-var.dsc = BMS + (k - 1)*WMS
+# var.dsc = BMS + (k - 1)*WMS
+var.dsc = WMS
 
 res.aov.sc = aov(diff_original ~ id, df)
 summary.aov.sc = summary(res.aov.sc)
@@ -255,7 +256,8 @@ WMS = summary.aov.sc[[1]]$`Mean Sq`[2]
 res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
 res.vif = 1 + (k - 1)*res.icc
 DF.sc = nrow(df)/res.vif
-var.sc = BMS + (k - 1)*WMS
+# var.sc = BMS + (k - 1)*WMS
+var.sc = WMS
 
 f.value = var.dsc/var.sc
 p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2

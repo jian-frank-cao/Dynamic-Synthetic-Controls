@@ -445,7 +445,8 @@ target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
 res.icc = target/(target + EMS)
 res.vif = 1 + (l - 1)*res.icc
 DF.dsc = nrow(df)/res.vif
-var.dsc = target + EMS
+# var.dsc = target + EMS
+var.dsc = EMS
 
 res.aov.sc = aov(gap_original ~ id*target, df)
 summary.aov.sc = summary(res.aov.sc)
@@ -459,10 +460,36 @@ target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
 res.icc = target/(target + EMS)
 res.vif = 1 + (l - 1)*res.icc
 DF.sc = nrow(df)/res.vif
-var.sc = target + EMS
+# var.sc = target + EMS
+var.sc = EMS
 
 f.value = var.dsc/var.sc
 p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+# ===============================================================
+
+# log(mse/mse) t test ==========================================
+df2 = df %>% 
+  group_by(unit) %>% 
+  summarise(mse.sc = mean(gap_original^2, na.rm = TRUE),
+            mse.dsc = mean(gap_new^2, na.rm = TRUE)) %>% 
+  mutate(log.ratio = log(mse.dsc/mse.sc),
+         id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
+         target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
+
+res.aov = aov(log.ratio ~ id*target, df2)
+summary.aov = summary(res.aov)
+
+BMS = summary.aov[[1]]$`Mean Sq`[1]
+JMS = summary.aov[[1]]$`Mean Sq`[2]
+EMS = summary.aov[[1]]$`Mean Sq`[3]
+n = 39
+k = 38
+res.icc = (BMS - EMS)/(BMS + (k - 1)*EMS + k*(JMS - EMS)/n)
+res.vif = 1 + (k - 1)*res.icc
+DF = nrow(df2)/res.vif
+
+t.value = t.test(df2$log.ratio)$statistic
+p.value = pt(t.value, df = DF, lower.tail = FALSE)*2
 # ===============================================================
 
 
