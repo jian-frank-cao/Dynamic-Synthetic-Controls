@@ -229,7 +229,7 @@ t.value = t.test(df$log.ratio)$statistic
 p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # ===============================================================
 
-# fully pooled F test ==========================================
+# within variance F test ==========================================
 df = df %>% 
   mutate(id = factor(id))
 
@@ -263,6 +263,52 @@ f.value = var.dsc/var.sc
 p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
 # ===============================================================
 
+# pooled variance F test =========================
+df = df %>% 
+  mutate(id = factor(id))
+
+k = 10
+
+res.aov.dsc = aov(diff_new ~ id, df)
+summary.aov.dsc = summary(res.aov.dsc)
+
+BMS = summary.aov.dsc[[1]]$`Mean Sq`[1]
+WMS = summary.aov.dsc[[1]]$`Mean Sq`[2]
+
+res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
+res.vif = 1 + (k - 1)*res.icc
+DF.dsc = nrow(df)/res.vif
+
+res.aov.sc = aov(diff_original ~ id, df)
+summary.aov.sc = summary(res.aov.sc)
+
+BMS = summary.aov.sc[[1]]$`Mean Sq`[1]
+WMS = summary.aov.sc[[1]]$`Mean Sq`[2]
+
+res.icc = (BMS - WMS)/(BMS + (k - 1)*WMS)
+res.vif = 1 + (k - 1)*res.icc
+DF.sc = nrow(df)/res.vif
+
+t.interval = 61:70
+df2 = df %>% filter(time %in% t.interval)
+n.t = length(t.interval)
+n.datasets = nrow(df2)/length(t.interval)
+
+var.sc = df2 %>% group_by(id) %>%
+  summarise(variance = var(diff_original)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+var.dsc = df2 %>% group_by(id) %>%
+  summarise(variance = var(diff_new)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+f.value = var.dsc/var.sc
+p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+# ===============================================================
 
 
 # log(mse/mse) t test ==========================================

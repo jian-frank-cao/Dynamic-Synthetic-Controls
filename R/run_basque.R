@@ -62,6 +62,15 @@ for (i in ids) {
                      data = data.temp)))
 }
 
+select2 = combn(setdiff(ids, 17), 2, simplify = TRUE)[,1:100]
+
+for (i in 1:ncol(select2)) {
+  data.temp = data %>% filter(!(id %in% c(select2[, i], 17)))
+  data.list = c(data.list, 
+                list(list(target = data.temp$unit[1],
+                          data = data.temp)))
+}
+
 
 ## Grid Search Basque ----------------------------------------------------------
 # parameters
@@ -428,7 +437,7 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # ===============================================================
 
 
-# fully pooled F test ==========================================
+# within variance F test ==========================================
 df = df %>% 
   mutate(id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
          target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
@@ -472,6 +481,62 @@ var.sc = EMS
 f.value = var.dsc/var.sc
 p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
 # ===============================================================
+
+
+# pooled variance F test ==========================================
+df = df %>% 
+  mutate(id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
+         target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
+
+n = 18
+k = 17
+l = 10
+
+res.aov.dsc = aov(gap_new ~ id*target, df)
+summary.aov.dsc = summary(res.aov.dsc)
+
+BMS = summary.aov.dsc[[1]]$`Mean Sq`[1]
+JMS = summary.aov.dsc[[1]]$`Mean Sq`[2]
+IMS = summary.aov.dsc[[1]]$`Mean Sq`[3]
+EMS = summary.aov.dsc[[1]]$`Mean Sq`[4]
+
+target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
+res.icc = target/(target + EMS)
+res.vif = 1 + (l - 1)*res.icc
+DF.dsc = nrow(df)/res.vif
+
+res.aov.sc = aov(gap_original ~ id*target, df)
+summary.aov.sc = summary(res.aov.sc)
+
+BMS = summary.aov.sc[[1]]$`Mean Sq`[1]
+JMS = summary.aov.sc[[1]]$`Mean Sq`[2]
+IMS = summary.aov.sc[[1]]$`Mean Sq`[3]
+EMS = summary.aov.sc[[1]]$`Mean Sq`[4]
+
+target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
+res.icc = target/(target + EMS)
+res.vif = 1 + (l - 1)*res.icc
+DF.sc = nrow(df)/res.vif
+
+
+var.sc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_original, na.rm = T)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+var.dsc = df %>% group_by(unit) %>%
+  summarise(variance = var(gap_new, na.rm = T)*(n.t - 1)) %>%
+  ungroup %>%
+  .[["variance"]] %>%
+  sum(., na.rm = T)/(n.datasets*(n.t - 1))
+
+
+f.value = var.dsc/var.sc
+p.value = pf(f.value, DF.dsc, DF.sc, lower.tail = TRUE)*2
+# ===============================================================
+
+
 
 # log(mse/mse) t test ==========================================
 df2 = df %>% 
