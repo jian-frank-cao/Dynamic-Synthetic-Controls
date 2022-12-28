@@ -161,7 +161,7 @@ results = SimDesign::quiet(
               grid.search.parallel = grid.search.parallel)
 )
 
-saveRDS(results, paste0("./data/res_tobacco_1204_", index, ".Rds"))
+saveRDS(results, paste0("./data/res_tobacco_1222_", index, ".Rds"))
 job.end = Sys.time()
 print(job.end - job.start)
 
