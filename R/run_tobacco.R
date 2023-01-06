@@ -421,7 +421,7 @@ IMS = summary.aov[[1]]$`Mean Sq`[3]
 EMS = summary.aov[[1]]$`Mean Sq`[4]
 n = 39
 k = 38
-l = 10
+l = 8
 target = (BMS-IMS)/(l*k) + (JMS-IMS)/(l*n) + (IMS-EMS)/(l)
 res.icc = target/(target + EMS)
 res.vif = 1 + (l - 1)*res.icc
@@ -437,9 +437,9 @@ df = df %>%
   mutate(id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
          target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
 
-n = 39
+n = 138
 k = 38
-l = 10
+l = 8
 
 res.aov.dsc = aov(gap_new ~ id*target, df)
 summary.aov.dsc = summary(res.aov.dsc)
@@ -550,7 +550,7 @@ summary.aov = summary(res.aov)
 BMS = summary.aov[[1]]$`Mean Sq`[1]
 JMS = summary.aov[[1]]$`Mean Sq`[2]
 EMS = summary.aov[[1]]$`Mean Sq`[3]
-n = 39
+n = 138
 k = 38
 res.icc = (BMS - EMS)/(BMS + (k - 1)*EMS + k*(JMS - EMS)/n)
 res.vif = 1 + (k - 1)*res.icc

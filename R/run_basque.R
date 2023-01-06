@@ -442,7 +442,7 @@ df = df %>%
   mutate(id = factor(str_split(unit, "-", simplify = TRUE)[,1]),
          target = factor(str_split(unit, "-", simplify = TRUE)[,2]))
 
-n = 18
+n = 118
 k = 17
 l = 10
 
@@ -553,7 +553,7 @@ summary.aov = summary(res.aov)
 BMS = summary.aov[[1]]$`Mean Sq`[1]
 JMS = summary.aov[[1]]$`Mean Sq`[2]
 EMS = summary.aov[[1]]$`Mean Sq`[3]
-n = 18
+n = 118
 k = 17
 res.icc = (BMS - EMS)/(BMS + (k - 1)*EMS + k*(JMS - EMS)/n)
 res.vif = 1 + (k - 1)*res.icc
