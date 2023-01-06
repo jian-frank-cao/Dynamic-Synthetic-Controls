@@ -367,6 +367,13 @@ df = future_map2(
         gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
         gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
       )
+      # df.gap.list[[i]] = data.frame(
+      #   time = 1960:2003,
+      #   id = paste0("d", index, "-", target),
+      #   synth.sc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
+      #   synth.dsc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic,
+      #   value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value
+      # )
       # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>%
       #mutate(unit = paste0("d", index, "-", target))
     }
