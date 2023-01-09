@@ -132,7 +132,7 @@ print(job.end - job.start)
 ## Plot result -----------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1011/"
+folder = "./data/res_sim/1006/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -167,16 +167,21 @@ res = future_map2(
     # # ind = which(score == max(score, na.rm = T))[1]
     # ind = ind.max.neg.ratio[1]
     
-    neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
-    ind.max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))
-    p.value = lapply(item, "[[", "p.value") %>% do.call("c", .) %>% .[ind.max.neg.ratio]
-    ind.min.p.value = which(p.value == min(p.value, na.rm = T))
+    # neg.ratio = lapply(item, "[[", "neg.ratio") %>% do.call("c", .)
+    # ind.max.neg.ratio = which(neg.ratio == max(neg.ratio, na.rm = T))
+    # p.value = lapply(item, "[[", "p.value") %>% do.call("c", .) %>% .[ind.max.neg.ratio]
+    # ind.min.p.value = which(p.value == min(p.value, na.rm = T))
+    # ind = ind.max.neg.ratio[ind.min.p.value[1]]
+    
     # mse.pre = lapply(item, "[[", "mse") %>% do.call("rbind", .) %>%
     #   filter(unit == "A") %>% .[["mse.preT.TFDTW"]] %>% .[ind.max.neg.ratio]
     # mse.pre.rank = rank(1 - mse.pre, ties.method = "max")
     # score = neg.ratio.rank*3 + p.value.rank*2 + mse.pre.rank
     # ind = which(score == max(score, na.rm = T))[1]
-    ind = ind.max.neg.ratio[ind.min.p.value[1]]
+    
+    mse.pre = lapply(item, "[[", "mse") %>% do.call("rbind", .) %>%
+      filter(unit == "A") %>% .[["mse.preT.TFDTW"]]
+    ind = which(mse.pre == min(mse.pre, na.rm = T))[1]
 
     synth_original = item[[ind]][["res.synth.target.raw"]][["synthetic"]]
     synth_new = item[[ind]][["res.synth.target.TFDTW"]][["synthetic"]]
