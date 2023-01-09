@@ -132,7 +132,7 @@ print(job.end - job.start)
 ## Plot result -----------------------------------------------------------------
 results = NULL
 beta = 1
-folder = "./data/res_sim/1006/"
+folder = "./data/res_sim/1011/"
 res.files = list.files(folder)
 for (res.file in res.files) {
   results = c(results, list(readRDS(paste0(folder, res.file))))
@@ -198,21 +198,21 @@ res = future_map2(
     mse = data.frame(mse_original = mse_original,
                      mse_new = mse_new,
                      log_ratio = log(mse_new/mse_original))
-    list(df = data.frame(time = 0:(length(value_raw)-1),
+    list(#df = data.frame(time = 0:(length(value_raw)-1),
+                         # id = id,
+                         # value_raw = value_raw,
+                         # synth_original = synth_original,
+                         # synth_new = synth_new,
+                         # gap_origin = gap_original,
+                         # gap_new = gap_new,
+                         # diff_original = diff_original,
+                         # diff_new = diff_new),
+         df = data.frame(time = 0:(length(value_raw)-1),
                          id = id,
-                         value_raw = value_raw,
-                         synth_original = synth_original,
-                         synth_new = synth_new,
-                         gap_origin = gap_original,
-                         gap_new = gap_new,
-                         diff_original = diff_original,
-                         diff_new = diff_new),
-         # df = data.frame(time = 0:(length(value_raw)-1),
-         #                 id = id,
-         #                 synth.sc = synth_original,
-         #                 synth.dsc = synth_new,
-         #                 value = value_raw,
-         #                 treatment = causal_effect),
+                         synth.sc = synth_original,
+                         synth.dsc = synth_new,
+                         value = value_raw,
+                         treatment = causal_effect),
          mse = mse)
   }
 )

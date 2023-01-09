@@ -381,14 +381,18 @@ df = future_map2(
     df.gap.list = NULL
     for (i in 1:length(units)) {
       target = units[[i]]
-      scores = mse %>%
-        filter(unit != target) %>%
-        group_by(id) %>%
-        summarise(percent = mean(log.ratio < 0),
-                  p.value = t.test(log.ratio)$p.value)
-      max.percent = which(scores$percent == max(scores$percent))
-      min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
-      opt.ind = as.numeric(scores$id[max.percent[min.p]])
+      # scores = mse %>%
+      #   filter(unit != target) %>%
+      #   group_by(id) %>%
+      #   summarise(percent = mean(log.ratio < 0),
+      #             p.value = t.test(log.ratio)$p.value)
+      # max.percent = which(scores$percent == max(scores$percent))
+      # min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
+      # opt.ind = as.numeric(scores$id[max.percent[min.p]])
+      scores = mse %>% filter(unit == target)
+      min.mse.new = which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]
+      opt.ind = as.numeric(scores$id[min.mse.new])
+      
       df.gap.list[[i]] = data.frame(
         unit = paste0("d", index, "-", target),
         time = 1970:2000,

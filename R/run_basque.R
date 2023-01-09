@@ -388,9 +388,9 @@ df = future_map2(
       # max.percent = which(scores$percent == max(scores$percent))
       # min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
       # opt.ind = as.numeric(scores$id[max.percent[min.p]])
-      scores = mse %>% 
-        filter(unit == target)
-      opt.ind = as.numeric(scores$id[which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]])
+      scores = mse %>% filter(unit == target)
+      min.mse.new = which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]
+      opt.ind = as.numeric(scores$id[min.mse.new])
       
       df.gap.list[[i]] = data.frame(
         unit = paste0("d", index, "-", target),
@@ -414,7 +414,6 @@ df = future_map2(
 ) %>%
   do.call("rbind", .)
 
-# ICC::ICCest(unit, log.ratio, data = df, CI.type = "S")
 
 t.interval = 1971:1980
 df = df %>% filter(time %in% t.interval)
