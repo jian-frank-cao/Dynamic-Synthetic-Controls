@@ -202,6 +202,12 @@ res = future_map2(
                          gap_new = gap_new,
                          diff_original = diff_original,
                          diff_new = diff_new),
+         # df = data.frame(time = 0:(length(value_raw)-1),
+         #                 id = id,
+         #                 synth.sc = synth_original,
+         #                 synth.dsc = synth_new,
+         #                 value = value_raw,
+         #                 treatment = causal_effect),
          mse = mse)
   }
 )
