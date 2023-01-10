@@ -346,6 +346,31 @@ df = future_map2(
       }
     ) %>%
       do.call("rbind", .)
+    
+    # score = mse %>% 
+    #   mutate(log.ratio.preT = log(mse.preT.TFDTW/mse.preT.raw)) %>% 
+    #   group_by(id) %>% 
+    #   summarise(neg.count = sum(log.ratio.preT < 0),
+    #             mean.log.ratio = mean(log.ratio.preT, na.rm = TRUE))
+    # 
+    # max.percent = which(score$neg.count == max(score$neg.count, na.rm = TRUE))
+    # min.p = which(score$mean.log.ratio[max.percent] == min(score$mean.log.ratio[max.percent], na.rm = TRUE)[1])
+    # opt.ind = score$id[max.percent[min.p]][1]
+    # item[[opt.ind]]$results.TFDTW.synth %>% 
+    #   map(
+    #     ~{
+    #       task = .
+    #       target = task$dependent
+    #       data.frame(
+    #         unit = paste0("d", index, "-", target),
+    #         time = 1960:2003,
+    #         value = task$res.synth.raw$value,
+    #         gap_original = task$gap.raw,
+    #         gap_new = task$gap.TFDTW
+    #       )
+    #     }
+    #   ) %>% 
+    #   do.call("rbind", .)
 
     units = unique(mse$unit)
 
@@ -363,7 +388,7 @@ df = future_map2(
       scores = mse %>% filter(unit == target)
       min.mse.new = which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]
       opt.ind = as.numeric(scores$id[min.mse.new])
-      
+
       df.gap.list[[i]] = data.frame(
         unit = paste0("d", index, "-", target),
         time = 1960:2003,
