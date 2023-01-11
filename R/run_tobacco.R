@@ -365,16 +365,18 @@ df = future_map2(
   ~{
     item = .x
     index = .y
-    mse = future_map2(
-      item,
-      names(item),
-      ~{
-        item = .x
-        id = .y
-        item$mse %>% mutate(id = id)
-      }
-    ) %>%
-      do.call("rbind", .)
+    
+    
+    # mse = future_map2(
+    #   item,
+    #   names(item),
+    #   ~{
+    #     item = .x
+    #     id = .y
+    #     item$mse %>% mutate(id = id)
+    #   }
+    # ) %>%
+    #   do.call("rbind", .)
     
     # score = mse %>% 
     #   mutate(log.ratio.preT = log(mse.preT.TFDTW/mse.preT.raw)) %>% 
@@ -386,22 +388,22 @@ df = future_map2(
     # min.p = which(score$mean.log.ratio[max.percent] == min(score$mean.log.ratio[max.percent], na.rm = TRUE)[1])
     # opt.ind = score$id[max.percent[min.p]][1]
     
-    opt.ind = "1"
-    item[[opt.ind]]$results.TFDTW.synth %>%
-      map(
-        ~{
-          task = .
-          target = task$dependent
-          data.frame(
-            unit = paste0("d", index, "-", target),
-            time = 1970:2000,
-            value = task$res.synth.raw$value,
-            gap_original = task$gap.raw,
-            gap_new = task$gap.TFDTW
-          )
-        }
-      ) %>%
-      do.call("rbind", .)
+    # opt.ind = "1"
+    # item[[opt.ind]]$results.TFDTW.synth %>%
+    #   map(
+    #     ~{
+    #       task = .
+    #       target = task$dependent
+    #       data.frame(
+    #         unit = paste0("d", index, "-", target),
+    #         time = 1970:2000,
+    #         value = task$res.synth.raw$value,
+    #         gap_original = task$gap.raw,
+    #         gap_new = task$gap.TFDTW
+    #       )
+    #     }
+    #   ) %>%
+    #   do.call("rbind", .)
     
     # mse$data.id = index
     # mse

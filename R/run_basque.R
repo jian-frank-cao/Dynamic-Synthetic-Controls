@@ -368,80 +368,134 @@ df = future_map2(
       item,
       names(item),
       ~{
-        item = .x
+        data = .x[["results.TFDTW.synth"]]
         id = .y
-        item$mse %>% mutate(id = id)
+        mse = data %>% 
+          map(
+            ~{
+              task = .
+              unit = task$dependent
+              gap.raw = task$gap.raw
+              gap.TFDTW = task$gap.TFDTW
+              data.frame(unit = unit,
+                         mse.preT.raw = mean(gap.raw[7:16]^2, na.rm = T),
+                         mse.preT.TFDTW = mean(gap.TFDTW[7:16]^2, na.rm = T),
+                         mse.postT.raw = mean(gap.raw[17:26]^2, na.rm = T),
+                         mse.postT.TFDTW = mean(gap.TFDTW[17:26]^2, na.rm = T)
+              )
+            }
+          ) %>% 
+          do.call("rbind", .)
+        mse %>% mutate(id = id)
       }
-    ) %>%
+    ) %>% 
       do.call("rbind", .)
     
-    score = mse %>% 
-      mutate(log.ratio.preT = log(mse.preT.TFDTW/mse.preT.raw)) %>% 
-      group_by(id) %>% 
-      summarise(neg.count = sum(log.ratio.preT < 0),
-                mean.log.ratio = mean(log.ratio.preT, na.rm = TRUE))
+    units = unique(mse$unit)
+    df = NULL
     
-    max.percent = which(score$neg.count == max(score$neg.count, na.rm = TRUE))
-    min.p = which(score$mean.log.ratio[max.percent] == min(score$mean.log.ratio[max.percent], na.rm = TRUE)[1])
-    opt.ind = score$id[max.percent[min.p]][1]
-    item[[opt.ind]]$results.TFDTW.synth %>% 
-      map(
-        ~{
-          task = .
-          target = task$dependent
-          data.frame(
-            unit = paste0("d", index, "-", target),
-            time = 1955:1997,
-            value = task$res.synth.raw$value,
-            gap_original = task$gap.raw,
-            gap_new = task$gap.TFDTW
-          )
-        }
-      ) %>% 
-      do.call("rbind", .)
-
-    # units = unique(mse$unit)
-    # 
-    # df.gap.list = NULL
-    # for (i in 1:length(units)) {
-    #   target = units[[i]]
-    #   
-    #   ## max.percent + min.p
-    #   # scores = mse %>%
-    #   #   filter(unit != target) %>%
-    #   #   group_by(id) %>%
-    #   #   summarise(percent = mean(log.ratio < 0),
-    #   #             p.value = t.test(log.ratio)$p.value)
-    #   # max.percent = which(scores$percent == max(scores$percent))
-    #   # min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
-    #   # opt.ind = as.numeric(scores$id[max.percent[min.p]])
-    #   
-    #   ## min(mse.preT.TFDTW)
-    #   scores = mse %>% filter(unit == target)
-    #   min.mse.new = which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]
-    #   opt.ind = as.numeric(scores$id[min.mse.new])
-    #   
-    #   df.gap.list[[i]] = data.frame(
-    #     unit = paste0("d", index, "-", target),
-    #     time = 1955:1997,
-    #     value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
-    #     gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
-    #     gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
-    #   )
-    #   # df.gap.list[[i]] = data.frame(
-    #   #   time = 1955:1997,
-    #   #   id = paste0("d", index, "-", target),
-    #   #   synth.sc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
-    #   #   synth.dsc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic,
-    #   #   value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value
-    #   # )
-    #   # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>%
-    #     #mutate(unit = paste0("d", index, "-", target))
-    # }
-    # df.gap.list %>% do.call("rbind", .)
+    for (i in units) {
+      temp = mse %>% filter(unit == i)
+      ind = which(temp$mse.preT.TFDTW == min(temp$mse.preT.TFDTW, na.rm = T))[1]
+      opt.id = temp$id[ind]
+      target = item[[opt.id]][["results.TFDTW.synth"]][[i]]
+      df[[i]] =  data.frame(
+        unit = paste0("d", index, "-", i),
+        time = 1955:1997,
+        value = target$res.synth.raw$value,
+        gap_original = target$gap.raw,
+        gap_new = target$gap.TFDTW
+      )
+    }
+    df %>% do.call("rbind", .)
   }
 ) %>%
   do.call("rbind", .)
+
+# df = future_map2(
+#   results,
+#   as.list(1:length(results)),
+#   ~{
+#     item = .x
+#     index = .y
+#     mse = future_map2(
+#       item,
+#       names(item),
+#       ~{
+#         item = .x
+#         id = .y
+#         item$mse %>% mutate(id = id)
+#       }
+#     ) %>%
+#       do.call("rbind", .)
+#     
+#     score = mse %>% 
+#       mutate(log.ratio.preT = log(mse.preT.TFDTW/mse.preT.raw)) %>% 
+#       group_by(id) %>% 
+#       summarise(neg.count = sum(log.ratio.preT < 0),
+#                 mean.log.ratio = mean(log.ratio.preT, na.rm = TRUE))
+#     
+#     max.percent = which(score$neg.count == max(score$neg.count, na.rm = TRUE))
+#     min.p = which(score$mean.log.ratio[max.percent] == min(score$mean.log.ratio[max.percent], na.rm = TRUE)[1])
+#     opt.ind = score$id[max.percent[min.p]][1]
+#     item[[opt.ind]]$results.TFDTW.synth %>% 
+#       map(
+#         ~{
+#           task = .
+#           target = task$dependent
+#           data.frame(
+#             unit = paste0("d", index, "-", target),
+#             time = 1955:1997,
+#             value = task$res.synth.raw$value,
+#             gap_original = task$gap.raw,
+#             gap_new = task$gap.TFDTW
+#           )
+#         }
+#       ) %>% 
+#       do.call("rbind", .)
+# 
+#     # units = unique(mse$unit)
+#     # 
+#     # df.gap.list = NULL
+#     # for (i in 1:length(units)) {
+#     #   target = units[[i]]
+#     #   
+#     #   ## max.percent + min.p
+#     #   # scores = mse %>%
+#     #   #   filter(unit != target) %>%
+#     #   #   group_by(id) %>%
+#     #   #   summarise(percent = mean(log.ratio < 0),
+#     #   #             p.value = t.test(log.ratio)$p.value)
+#     #   # max.percent = which(scores$percent == max(scores$percent))
+#     #   # min.p = which(scores$p.value[max.percent] == min(scores$p.value[max.percent])[1])[1]
+#     #   # opt.ind = as.numeric(scores$id[max.percent[min.p]])
+#     #   
+#     #   ## min(mse.preT.TFDTW)
+#     #   scores = mse %>% filter(unit == target)
+#     #   min.mse.new = which(scores$mse.preT.TFDTW == min(scores$mse.preT.TFDTW))[1]
+#     #   opt.ind = as.numeric(scores$id[min.mse.new])
+#     #   
+#     #   df.gap.list[[i]] = data.frame(
+#     #     unit = paste0("d", index, "-", target),
+#     #     time = 1955:1997,
+#     #     value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value,
+#     #     gap_original = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.raw,
+#     #     gap_new = item[[opt.ind]]$results.TFDTW.synth[[target]]$gap.TFDTW
+#     #   )
+#     #   # df.gap.list[[i]] = data.frame(
+#     #   #   time = 1955:1997,
+#     #   #   id = paste0("d", index, "-", target),
+#     #   #   synth.sc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
+#     #   #   synth.dsc = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic,
+#     #   #   value = item[[opt.ind]]$results.TFDTW.synth[[target]]$res.synth.raw$value
+#     #   # )
+#     #   # df.gap.list[[i]] = item[[opt.ind]]$mse %>% filter(unit == target) #%>%
+#     #     #mutate(unit = paste0("d", index, "-", target))
+#     # }
+#     # df.gap.list %>% do.call("rbind", .)
+#   }
+# ) %>%
+#   do.call("rbind", .)
 
 
 t.interval = 1971:1980
