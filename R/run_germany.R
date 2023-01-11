@@ -217,5 +217,172 @@ t.value = t.test(df.mse$log.ratio)$statistic
 p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 
+## Plot results ----------------------------------------------------------------
+# df.target
+results.target = readRDS("./data/res_germany_1204_1.Rds")
+target = "West Germany"
 
+pre.start = 22
+pre.end = 31
+post.start = 32
+post.end = 41
+
+mse = future_map2(
+  results.target,
+  as.list(names(results.target)),
+  ~{
+    result.synth = .x[["results.TFDTW.synth"]][[target]]
+    grid.id = .y
+    gap.raw = result.synth$gap.raw
+    gap.TFDTW = result.synth$gap.TFDTW
+    data.frame(grid.id = grid.id,
+               mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
+               mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
+               mse.postT.raw = mean(gap.raw[post.start:post.end]^2, na.rm = T),
+               mse.postT.TFDTW = mean(gap.TFDTW[post.start:post.end]^2, na.rm = T))
+  }
+) %>% do.call("rbind", .)
+
+opt.grid.id = mse %>% 
+  top_n(-1, mse.preT.TFDTW) %>% 
+  top_n(-1, grid.id) %>% 
+  .[["grid.id"]]
+
+df.target = data.frame(
+  time = 1960:2003,
+  unit = target,
+  data.id = 0,
+  grid.id = opt.grid.id,
+  value = results.target[[opt.grid.id]][[4]][[target]][[3]][["value"]],
+  synth.sc = results.target[[opt.grid.id]][[4]][[target]][[3]][["synthetic"]],
+  synth.dsc = results.target[[opt.grid.id]][[4]][[target]][[4]][["synthetic"]]
+)
+
+df.target = df.target %>% 
+  mutate(
+    gap.sc = value - synth.sc,
+    gap.dsc = value - synth.dsc,
+    group = paste0(data.id, "-", grid.id, "-", unit)
+  )
+
+saveRDS(df.target, "./data/df.target_germany.Rds")
+
+
+# df.gap
+df.mse = readRDS("./data/df.mse_germany.Rds")
+folder = "./data/placebo/germany/"
+file.list = as.list(list.files(folder))
+results = file.list %>%
+  future_map(
+    ~{
+      file.name = .
+      readRDS(paste0(folder, file.name))
+    }
+  )
+
+
+df.gap = NULL
+for (i in 1:nrow(df.mse)) {
+  unit = df.mse$unit[i]
+  data.id = df.mse$data.id[i]
+  grid.id = df.mse$grid.id[i]
+  df.gap[[i]] = data.frame(
+    time = 1960:2003,
+    unit = unit,
+    data.id = data.id,
+    grid.id = grid.id,
+    value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]],
+    synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]],
+    synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+  )
+  print(i)
+}
+
+df.gap = df.gap %>%
+  do.call("rbind", .) %>%
+  mutate(
+    gap.sc = value - synth.sc,
+    gap.dsc = value - synth.dsc,
+    group = paste0(data.id, "-", grid.id, "-", unit)
+  )
+
+saveRDS(df.gap, "./data/df.gap_germany.Rds")
+
+# double check t test
+# res = df.gap %>%
+#   filter(time %in% 1991:2000) %>%
+#   group_by(unit, data.id, grid.id) %>%
+#   summarise(mse.sc = mean(gap.sc^2, na.rm = T),
+#             mse.dsc = mean(gap.dsc^2, na.rm = T)) %>%
+#   mutate(log.ratio = log(mse.dsc/mse.sc))
+# 
+# t.test(res$log.ratio)
+
+
+# plot
+df.target = readRDS("./data/df.target_germany.Rds")
+df.gap = readRDS("./data/df.gap_germany.Rds")
+
+df.quantile = df.gap %>%
+  group_by(time) %>%
+  summarise(quantile.sc.975 = quantile(gap.sc, 0.975, na.rm = T),
+            quantile.sc.025 = quantile(gap.sc, 0.025, na.rm = T),
+            quantile.dsc.975 = quantile(gap.dsc, 0.975, na.rm = T),
+            quantile.dsc.025 = quantile(gap.dsc, 0.025, na.rm = T)) %>% 
+  mutate(group = "quantile")
+
+color.sc = "#2ab7ca"
+color.dsc = "#fe4a49"
+# color.sc = "grey70"
+# color.dsc = "grey30"
+
+colors = c("Gap (SC)" = color.sc,
+           "Gap (DSC)" = color.dsc)
+
+fills = c("95% Quantile (SC)" = color.sc,
+          "95% Quantile (DSC)" = color.dsc)
+
+group.sample = sample(unique(df.gap$group), 100)
+
+fig.placebo = df.gap %>%
+  filter(group %in% group.sample) %>% 
+  ggplot(aes(x = time, group = group)) +
+  annotate("rect", xmin = 1990, xmax = 2000, 
+           ymin = -9000, ymax = 9000, alpha = .3) +
+  geom_line(aes(y = gap.sc), col = color.sc, alpha = 0.4) +
+  geom_line(aes(y = gap.dsc), col = color.dsc, alpha = 0.4) +
+  geom_ribbon(aes(ymin = quantile.sc.025,
+                  ymax = quantile.sc.975,
+                  fill="95% Quantile (SC)"),
+              data = df.quantile, alpha=0.5) +
+  geom_ribbon(aes(ymin = quantile.dsc.025,
+                  ymax = quantile.dsc.975,
+                  fill="95% Quantile (DSC)"),
+              data = df.quantile, alpha=0.5) +
+  geom_line(aes(y = gap.sc, color = "Gap (SC)"),
+            data = df.target, size = 1) +
+  geom_line(aes(y = gap.dsc, color = "Gap (DSC)"), 
+            data = df.target, size = 1) +
+  scale_color_manual(name = NULL, values = colors) +
+  scale_fill_manual(name = NULL, values = fills) +
+  geom_vline(xintercept = 1990, linetype="dashed", col = "grey20") +
+  geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
+  annotate("text", x = 1995, y = 6800,
+           label = "t = -4.0951\nP < 0.0001", col = "grey20") +
+  annotate("text", x = 1989, y = 4800, angle = 90,
+           label = "Treatment", col = "grey20") +
+  coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
+  xlab("Year") +
+  ylab("Gap(y - Synthetic Control)") +
+  theme_bw() +
+  theme(legend.position = c(0.25, 0.2),
+        legend.box = "horizontal",
+        legend.background = element_rect(fill=NA))
+
+# ggsave("./figures/placebo_germany.pdf",
+#        fig.placebo, width = 8, height = 6,
+#        units = "in", limitsize = FALSE)
+
+saveRDS(fig.placebo, "./data/placebo_germany.Rds")
+  
 
