@@ -218,19 +218,11 @@ for (i in 1:nrow(df.mse)) {
   print(i)
 }
 
-shock = 10
-length = 100
-treat_time = 60
-n_mse = 10
-treatment = c(rep(0, treat_time),
-              seq(0, shock, length.out = round(0.1*length)),
-              rep(shock, round(0.9*length - treat_time)))
-
 df.gap = df.gap %>%
   do.call("rbind", .) %>%
   mutate(
-    gap.sc = value - synth.sc - treatment,
-    gap.dsc = value - synth.dsc - treatment,
+    gap.sc = value - synth.sc,
+    gap.dsc = value - synth.dsc,
     group = paste0(data.id, "-", grid.id)
   )
 
@@ -241,6 +233,14 @@ df.gap = readRDS("./data/df.gap_sim_beta_1.Rds")
 
 # df.gap = df.gap %>% filter(time <= 80)
 
+shock = 10
+length = 100
+treat_time = 60
+n_mse = 10
+treatment = c(rep(0, treat_time),
+              seq(0, shock, length.out = round(0.1*length)),
+              rep(shock, round(0.9*length - treat_time)))
+
 df.quantile = df.gap %>%
   group_by(time) %>%
   summarise(mean.sc = mean(gap.sc, na.rm = T),
@@ -249,7 +249,8 @@ df.quantile = df.gap %>%
             quantile.sc.025 = quantile(gap.sc, 0.025, na.rm = T),
             quantile.dsc.975 = quantile(gap.dsc, 0.975, na.rm = T),
             quantile.dsc.025 = quantile(gap.dsc, 0.025, na.rm = T)) %>% 
-  mutate(group = "quantile")
+  mutate(group = "quantile",
+         treatment = treatment)
 
 
 color.sc = "#2ab7ca"
@@ -257,15 +258,16 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
 
-colors = c("Mean (SC)" = color.sc,
-           "Mean (DSC)" = color.dsc)
+colors = c("Treatment Effect" = "grey20",
+           "Mean Gap (SC)" = color.sc,
+           "Mean Gap (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
 
 fig.big = df.gap %>%
   ggplot(aes(x = time, group = group)) +
-  annotate("rect", xmin = 60, xmax = 70,
+  annotate("rect", xmin = 61, xmax = 70,
            ymin = -25, ymax = 35, alpha = .3) +
   geom_line(aes(y = gap.sc), col = color.sc, alpha=0.1) +
   geom_line(aes(y = gap.dsc), col = color.dsc, alpha=0.1) +
@@ -273,19 +275,21 @@ fig.big = df.gap %>%
                   fill = "95% Quantile (SC)"), data = df.quantile, alpha=0.6) +
   geom_ribbon(aes(ymin = quantile.dsc.025, ymax = quantile.dsc.975,
                   fill = "95% Quantile (DSC)"), data = df.quantile, alpha=0.6) +
-  geom_line(aes(x = time, y = mean.sc, color = "Mean (SC)"),
+  geom_line(aes(x = time, y = treatment, color = "Treatment Effect"),
             data = df.quantile, alpha=1) +
-  geom_line(aes(x = time, y = mean.dsc, col = "Mean (DSC)"),
+  geom_line(aes(x = time, y = mean.sc, color = "Mean Gap (SC)"),
+            data = df.quantile, alpha=1) +
+  geom_line(aes(x = time, y = mean.dsc, col = "Mean Gap (DSC)"),
             data = df.quantile, alpha=1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
-  geom_vline(xintercept = 60, linetype="dashed", col = "grey20") +
+  geom_vline(xintercept = 61, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  annotate("text", x = 58, y = 25, label = "Treatment",
+  annotate("text", x = 59, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
-  ylab("Error (y - Synthetic Control - Treatment)") +
+  ylab("Gap (y - Synthetic Control)") +
   theme_bw() + 
   theme(legend.position=c(0.3,0.15), 
         legend.box = "horizontal",
@@ -299,13 +303,13 @@ df.t.test = data.frame(Beta = c(0, 0.5, 1),
 fig.small = df.t.test %>% 
   ggplot(aes(x = Beta, y = t)) +
   annotate("rect", xmin = -0.2, xmax = 1.2,
-           ymin = -15, ymax = -1.99, alpha = .3) +
+           ymin = -15, ymax = -2.63, alpha = .3) +
   geom_line(size = 1) +
   geom_point(size = 2, col = color.dsc) +
   geom_hline(yintercept = 0, linetype="solid", col = "black") +
-  geom_hline(yintercept = -1.99, linetype="dashed", col = "grey20") +
-  annotate("text", x = 0.75, y = -3.0, 
-           label = "P < 0.05", col = "grey20") +
+  geom_hline(yintercept = -2.63, linetype="dashed", col = "grey20") +
+  annotate("text", x = 0.75, y = -4, 
+           label = "P < 0.01", col = "grey20") +
   scale_x_continuous(breaks = c(0, 0.5, 1), 
                      labels = c("0", "0.5", "1")) +
   scale_y_continuous(breaks = c(-10, -5, 0)) +
@@ -320,6 +324,6 @@ fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
                                       xmin = 5, xmax = 45, 
                                       ymin = 7, ymax = 30)
 
-ggsave("./figures/placebo_sim_0112.pdf",
+ggsave("./figures/placebo_sim_0113.pdf",
        fig.sim, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
