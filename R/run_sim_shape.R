@@ -252,6 +252,8 @@ df.quantile = df.gap %>%
   mutate(group = "quantile",
          treatment = treatment)
 
+df.quantile[95:100, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
+
 
 color.sc = "#2ab7ca"
 color.dsc = "#fe4a49"
@@ -324,6 +326,6 @@ fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
                                       xmin = 5, xmax = 45, 
                                       ymin = 7, ymax = 30)
 
-ggsave("./figures/placebo_sim_0113.pdf",
+ggsave("./figures/placebo_sim_0116.pdf",
        fig.sim, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
