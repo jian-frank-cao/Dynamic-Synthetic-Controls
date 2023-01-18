@@ -44,7 +44,7 @@ B = diag(x = 1, nrow = 5)
 B[2:4, 2:4] = t(Wb)
 
 R = matrix(rep(1,5), ncol = 5)
-C = t(row.one)
+C = t(R)
 
 C3 = matrix(rep(1,3), nrow = 3)
 
@@ -52,3 +52,4 @@ C3 = matrix(rep(1,3), nrow = 3)
 a = (Wa%*%(diag(as.numeric((R%*%Wa)^(-1)))))%*%C
 b = ((diag(as.numeric((Wb%*%C3)^(-1))))%*%Wb)
 c = b %*% a[2:4,]
+
