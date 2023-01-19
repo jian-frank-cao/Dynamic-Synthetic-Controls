@@ -46,7 +46,7 @@ B[2:4, 2:4] = t(Wb)
 R = matrix(rep(1,5), ncol = 5)
 C = t(R)
 
-C3 = matrix(rep(1,3), nrow = 3)
+C3 = matrix(rep(1,4), nrow = 4)
 
 (Wa*(C%*%((R%*%Wa)^(-1))))%*%C
 a = (Wa%*%(diag(as.numeric((R%*%Wa)^(-1)))))%*%C
