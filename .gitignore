@@ -3,6 +3,8 @@
 .Ruserdata
 .future/
 figures/
+R/other/
+R/backup/
 data/placebo/
 data/.DS_Store
 .DS_Store
