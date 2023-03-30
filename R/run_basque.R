@@ -1,14 +1,12 @@
-args = commandArgs(trailingOnly=TRUE)
-index = as.integer(args[1])
-job.start = Sys.time()
-
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
 
+library(parallel)
+n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 8)
+plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
@@ -146,18 +144,18 @@ args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
                                   detailed.output = TRUE,
                                   all.units.parallel = FALSE)
 
-args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-results = SimDesign::quiet(
-  grid.search(filter.width.range = filter.width.range,
-              k.range = k.range,
-              step.pattern.range = step.pattern.range,
-              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-              grid.search.parallel = grid.search.parallel)
-)
-
-saveRDS(results, paste0("./data/res_basque_1222_", index, ".Rds"))
-job.end = Sys.time()
-print(job.end - job.start)
+for (index in 1:length(data.list)) {
+  args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+  results = SimDesign::quiet(
+    grid.search(filter.width.range = filter.width.range,
+                k.range = k.range,
+                step.pattern.range = step.pattern.range,
+                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                grid.search.parallel = grid.search.parallel)
+  )
+  
+  saveRDS(results, paste0("./data/placebo/basque/res_basque_", index, ".Rds"))
+}
 
 
 ## Placebo ---------------------------------------------------------------------
@@ -235,7 +233,7 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 ## Plot results ----------------------------------------------------------------
 # df.target
-results.target = readRDS("./data/res_basque_1204_1.Rds")
+results.target = readRDS("./data/placebo/basque/res_basque_1.Rds")
 target = "Basque Country (Pais Vasco)"
 
 pre.start = 7
@@ -323,17 +321,6 @@ df.gap = df.gap %>%
   )
 
 saveRDS(df.gap, "./data/df.gap_basque.Rds")
-
-# # double check t test
-# res = df.gap %>%
-#   filter(time %in% 1971:1980) %>%
-#   group_by(unit, data.id, grid.id) %>%
-#   summarise(mse.sc = mean(gap.sc^2, na.rm = T),
-#             mse.dsc = mean(gap.dsc^2, na.rm = T)) %>%
-#   mutate(log.ratio = log(mse.dsc/mse.sc))
-# 
-# t.test(res$log.ratio)
-
 
 # plot
 df.target = readRDS("./data/df.target_basque.Rds")

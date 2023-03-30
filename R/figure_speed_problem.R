@@ -2,9 +2,11 @@
 library(checkpoint)
 checkpoint("2022-04-01")
 
+library(parallel)
+n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 11)
+plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 source("./R/misc.R")
@@ -340,7 +342,7 @@ fig = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/speed_problem_1118.pdf",
+ggsave("./figures/speed_problem.pdf",
        fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 

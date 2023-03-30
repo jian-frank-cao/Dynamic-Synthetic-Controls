@@ -1,15 +1,12 @@
-args = commandArgs(trailingOnly=TRUE)
-i = as.integer(args[1])
-beta = as.integer(args[2])
-job.start = Sys.time()
-
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
 
+library(parallel)
+n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 8)
+plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 source("./R/misc.R")
@@ -22,34 +19,27 @@ set.seed(20220407)
 
 
 ## Data Simulation -------------------------------------------------------------
-# n.simulation = 150
-# length = 100
-# n = 10
-# 
-# # generate sobol sequence
-# # sobol.seq = qrng::sobol(n.simulation*1, d = n - 1, randomize = "Owen",
-# #                         seed = 20220401, skip = 100)
-# # rnd.speeds = cbind(rep(0.5, n.simulation), sobol.seq*0.5 + 0.1)
-# 
-# 
-# # simulate
-# data.list = NULL
-# for (i in 1:n.simulation) {
-#   data.list[[i]] = sim.data(n = n, length = length,
-#                             t.treat = 60, shock = 0, ar.x = 0.6,
-#                             n.SMA = 1, n.diff = 1,
-#                             speed.upper = 2,
-#                             speed.lower = 0.5,
-#                             reweight = TRUE,
-#                             rescale = TRUE,
-#                             rescale.multiplier = 20,
-#                             beta = 0.5)
-# }
-# 
-# data.list[[52]] %>% ggplot(aes(x = time, y = value, color = unit)) +
-#   geom_line() +
-#   geom_vline(xintercept = 60, linetype="dashed")
-# saveRDS(data.list, "./data/simul_data_beta_10.Rds")
+n.simulation = 100
+length = 100
+n = 10
+beta = 1
+shock = 10
+
+# simulate
+data.list = NULL
+for (i in 1:n.simulation) {
+  data.list[[i]] = sim.data(n = n, length = length,
+                            t.treat = 60, shock = shock, ar.x = 0.6,
+                            n.SMA = 1, n.diff = 1,
+                            speed.upper = 2,
+                            speed.lower = 0.5,
+                            reweight = TRUE,
+                            rescale = TRUE,
+                            rescale.multiplier = 20,
+                            beta = beta)
+}
+
+saveRDS(data.list, paste0("./data/simul_data_beta_", beta, ".Rds"))
 
 
 ## Run -------------------------------------------------------------------------
@@ -114,25 +104,24 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-cat("Simulation data set ", i, "...")
-args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
-results = SimDesign::quiet(
-  grid.search(filter.width.range = filter.width.range,
-              k.range = k.range,
-              step.pattern.range = step.pattern.range,
-              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-              grid.search.parallel = grid.search.parallel)
-)
-cat("Done.\n")
+for (i in 1:length(data.list)) {
+  cat("Simulation data set ", i, "...")
+  args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
+  results = SimDesign::quiet(
+    grid.search(filter.width.range = filter.width.range,
+                k.range = k.range,
+                step.pattern.range = step.pattern.range,
+                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                grid.search.parallel = grid.search.parallel)
+  )
+  saveRDS(results, paste0("./data/res_sim/beta", beta,
+                          "/res_sim_beta_", beta, "_", i, ".Rds"))
+  cat("Done.\n")
+}
 
-saveRDS(results, paste0("./data/res_sim_beta_", beta, "_", i, ".Rds"))
-job.end = Sys.time()
-print(job.end - job.start)
 
 ## Test result -----------------------------------------------------------------
-beta = 0
-shock = 10
-folder = "./data/res_sim/1011/"
+folder = paste0("./data/res_sim/beta", beta, "/")
 file.list = as.list(list.files(folder))
 
 length = 100
@@ -192,8 +181,8 @@ t.test(df.mse$log.ratio)
 
 ## Plot result -----------------------------------------------------------------
 # df.gap
-df.mse = readRDS("./data/df.mse_sim_beta_1.Rds")
-folder = "./data/res_sim/1006/"
+df.mse = readRDS(paste0("./data/df.mse_sim_beta_", beta, ".Rds"))
+folder = paste0("./data/res_sim/beta", beta, "/")
 file.list = as.list(list.files(folder))
 results = file.list %>%
   future_map(
@@ -211,9 +200,9 @@ for (i in 1:nrow(df.mse)) {
     time = 1:100,
     data.id = data.id,
     grid.id = grid.id,
-    value = results[[data.id]][[grid.id]][[5]][["value"]],
-    synth.sc = results[[data.id]][[grid.id]][[5]][["synthetic"]],
-    synth.dsc = results[[data.id]][[grid.id]][[6]][["synthetic"]]
+    value = results[[data.id]][[grid.id]][["res.synth.target.raw"]][[1]],
+    synth.sc = results[[data.id]][[grid.id]][["res.synth.target.raw"]][[3]],
+    synth.dsc = results[[data.id]][[grid.id]][["res.synth.target.TFDTW"]][[3]]
   )
   print(i)
 }
@@ -226,12 +215,10 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id)
   )
 
-saveRDS(df.gap, "./data/df.gap_sim_beta_1.Rds")
+saveRDS(df.gap, paste0("./data/df.gap_sim_beta_", beta, ".Rds"))
 
 # plot
-df.gap = readRDS("./data/df.gap_sim_beta_1.Rds")
-
-# df.gap = df.gap %>% filter(time <= 80)
+df.gap = readRDS(paste0("./data/df.gap_sim_beta_", beta, ".Rds"))
 
 shock = 10
 length = 100
@@ -261,8 +248,8 @@ color.dsc = "#fe4a49"
 # color.dsc = "grey30"
 
 colors = c("Treatment Effect" = "grey20",
-           "Mean Gap (SC)" = color.sc,
-           "Mean Gap (DSC)" = color.dsc)
+           "Mean TE (SC)" = color.sc,
+           "Mean TE (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
@@ -279,9 +266,9 @@ fig.big = df.gap %>%
                   fill = "95% Quantile (DSC)"), data = df.quantile, alpha=0.6) +
   geom_line(aes(x = time, y = treatment, color = "Treatment Effect"),
             data = df.quantile, alpha=1) +
-  geom_line(aes(x = time, y = mean.sc, color = "Mean Gap (SC)"),
+  geom_line(aes(x = time, y = mean.sc, color = "Mean TE (SC)"),
             data = df.quantile, alpha=1) +
-  geom_line(aes(x = time, y = mean.dsc, col = "Mean Gap (DSC)"),
+  geom_line(aes(x = time, y = mean.dsc, col = "Mean TE (DSC)"),
             data = df.quantile, alpha=1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
@@ -326,6 +313,6 @@ fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
                                       xmin = 5, xmax = 45, 
                                       ymin = 7, ymax = 30)
 
-ggsave("./figures/placebo_sim_0116.pdf",
+ggsave(paste0("./figures/sim_beta_", beta,".pdf"),
        fig.sim, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
