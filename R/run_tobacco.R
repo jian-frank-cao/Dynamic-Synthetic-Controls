@@ -1,22 +1,20 @@
-args = commandArgs(trailingOnly=TRUE)
-index = as.integer(args[1])
-job.start = Sys.time()
-
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
 
+library(parallel)
+n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 8)
+plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/misc.R")
-source("./R/TFDTW.R")
-source("./R/synth.R")
-source("./R/implement.R")
-source("./R/grid.search.R")
+source("./R/utility/misc.R")
+source("./R/utility/TFDTW.R")
+source("./R/utility/synth.R")
+source("./R/utility/implement.R")
+source("./R/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -152,18 +150,20 @@ args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
                                   detailed.output = TRUE,
                                   all.units.parallel = FALSE)
 
-args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-results = SimDesign::quiet(
-  grid.search(filter.width.range = filter.width.range,
-              k.range = k.range,
-              step.pattern.range = step.pattern.range,
-              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-              grid.search.parallel = grid.search.parallel)
-)
+for (index in 1:length(data.list)) {
+  args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+  results = SimDesign::quiet(
+    grid.search(filter.width.range = filter.width.range,
+                k.range = k.range,
+                step.pattern.range = step.pattern.range,
+                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                grid.search.parallel = grid.search.parallel)
+  )
+  
+  saveRDS(results, paste0("./data/placebo/tobacco/res_tobacco_", index, ".Rds"))
+  print(index)
+}
 
-saveRDS(results, paste0("./data/res_tobacco_1222_", index, ".Rds"))
-job.end = Sys.time()
-print(job.end - job.start)
 
 ## Placebo ---------------------------------------------------------------------
 folder = "./data/placebo/tobacco/"
@@ -240,7 +240,7 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 ## Plot results ----------------------------------------------------------------
 # df.target
-results.target = readRDS("./data/res_tobacco_1204_1.Rds")
+results.target = readRDS("./data/placebo/basque/res_tobacco_1.Rds")
 target = "California"
 
 pre.start = 11
@@ -329,16 +329,6 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_tobacco.Rds")
 
-# # double check t test
-# res = df.gap %>%
-#   filter(time %in% 1990:1997) %>%
-#   group_by(unit, data.id, grid.id) %>%
-#   summarise(mse.sc = mean(gap.sc^2, na.rm = T),
-#             mse.dsc = mean(gap.dsc^2, na.rm = T)) %>%
-#   mutate(log.ratio = log(mse.dsc/mse.sc))
-# 
-# t.test(res$log.ratio)
-
 
 # plot
 df.target = readRDS("./data/df.target_tobacco.Rds")
@@ -359,8 +349,8 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
 
-colors = c("Gap (SC)" = color.sc,
-           "Gap (DSC)" = color.dsc)
+colors = c("TE (SC)" = color.sc,
+           "TE (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
@@ -382,9 +372,9 @@ fig.placebo = df.gap %>%
                   ymax = quantile.dsc.975,
                   fill="95% Quantile (DSC)"),
               data = df.quantile, alpha=0.5) +
-  geom_line(aes(y = gap.sc, color = "Gap (SC)"),
+  geom_line(aes(y = gap.sc, color = "TE (SC)"),
             data = df.target, size = 1) +
-  geom_line(aes(y = gap.dsc, color = "Gap (DSC)"), 
+  geom_line(aes(y = gap.dsc, color = "TE (DSC)"), 
             data = df.target, size = 1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
@@ -396,15 +386,11 @@ fig.placebo = df.gap %>%
            label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +
   xlab("Year") +
-  ylab("Gap(y - Synthetic Control)") +
+  ylab("TE(y - Synthetic Control)") +
   theme_bw() +
   theme(legend.position = "none",
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
-
-# ggsave("./figures/placebo_tobacco.pdf",
-#        fig.placebo, width = 8, height = 6,
-#        units = "in", limitsize = FALSE)
 
 saveRDS(fig.placebo, "./data/placebo_tobacco.Rds")
 

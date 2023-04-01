@@ -10,11 +10,11 @@ plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/misc.R")
-source("./R/TFDTW.R")
-source("./R/synth.R")
-source("./R/implement.R")
-source("./R/grid.search.R")
+source("./R/utility/misc.R")
+source("./R/utility/TFDTW.R")
+source("./R/utility/synth.R")
+source("./R/utility/implement.R")
+source("./R/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -155,6 +155,7 @@ for (index in 1:length(data.list)) {
   )
   
   saveRDS(results, paste0("./data/placebo/basque/res_basque_", index, ".Rds"))
+  print(index)
 }
 
 
@@ -339,8 +340,8 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
   
-colors = c("Gap (SC)" = color.sc,
-           "Gap (DSC)" = color.dsc)
+colors = c("TE (SC)" = color.sc,
+           "TE (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
@@ -362,9 +363,9 @@ fig.placebo = df.gap %>%
                   ymax = quantile.dsc.975,
                   fill="95% Quantile (DSC)"),
               data = df.quantile, alpha=0.5) +
-  geom_line(aes(y = gap.sc, color = "Gap (SC)"),
+  geom_line(aes(y = gap.sc, color = "TE (SC)"),
             data = df.target, size = 1) +
-  geom_line(aes(y = gap.dsc, color = "Gap (DSC)"), 
+  geom_line(aes(y = gap.dsc, color = "TE (DSC)"), 
             data = df.target, size = 1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
@@ -376,16 +377,12 @@ fig.placebo = df.gap %>%
            label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1950, 1990), ylim = c(-1, 1)) +
   xlab("Year") +
-  ylab("Gap(y - Synthetic Control)") +
+  ylab("TE(y - Synthetic Control)") +
   theme_bw() +
   theme(legend.position = "none",
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
   
-# ggsave("./figures/placebo_basque.pdf",
-#        fig.placebo, width = 8, height = 6,
-#        units = "in", limitsize = FALSE)
-
 saveRDS(fig.placebo, "./data/placebo_basque.Rds")
 
 

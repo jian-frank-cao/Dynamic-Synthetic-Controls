@@ -1,22 +1,20 @@
-args = commandArgs(trailingOnly=TRUE)
-index = as.integer(args[1])
-job.start = Sys.time()
-
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
 
+library(parallel)
+n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = 8)
+plan(multisession, workers = n.cores - 1)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/misc.R")
-source("./R/TFDTW.R")
-source("./R/synth.R")
-source("./R/implement.R")
-source("./R/grid.search.R")
+source("./R/utility/misc.R")
+source("./R/utility/TFDTW.R")
+source("./R/utility/synth.R")
+source("./R/utility/implement.R")
+source("./R/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -130,18 +128,19 @@ args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
                                   detailed.output = TRUE,
                                   all.units.parallel = FALSE)
 
-args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-results = SimDesign::quiet(
-  grid.search(filter.width.range = filter.width.range,
-              k.range = k.range,
-              step.pattern.range = step.pattern.range,
-              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-              grid.search.parallel = grid.search.parallel)
-)
-
-saveRDS(results, paste0("./data/res_germany_1222_", index, ".Rds"))
-job.end = Sys.time()
-print(job.end - job.start)
+for (index in 1:length(data.list)) {
+  args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+  results = SimDesign::quiet(
+    grid.search(filter.width.range = filter.width.range,
+                k.range = k.range,
+                step.pattern.range = step.pattern.range,
+                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+                grid.search.parallel = grid.search.parallel)
+  )
+  
+  saveRDS(results, paste0("./data/placebo/basque/res_germany_", index, ".Rds"))
+  print(index)
+}
 
 
 ## Placebo ---------------------------------------------------------------------

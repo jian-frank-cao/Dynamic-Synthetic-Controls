@@ -4,7 +4,7 @@ checkpoint("2022-04-01")
 
 library(tidyverse)
 library(emojifont)
-source("./R/misc.R")
+source("./R/utility/misc.R")
 
 ## Functions -------------------------------------------------------------------
 # normalization
