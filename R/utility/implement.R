@@ -191,3 +191,30 @@ TFDTW.synth.all.units = function(data, target,
 }
 
 
+TFDTW.synth.target.only = function(data, target, id,
+                                   args.TFDTW.synth,
+                                   filter.width = NULL,
+                                   res.synth.raw.list = NULL){
+  # prepare data
+  if (!is.null(filter.width)) {
+    data = preprocessing(data, filter.width)
+  }
+  args.TFDTW.synth[["data"]] = data
+
+  # run TFDTW.synth
+  args.TFDTW.synth[["dependent"]] = target
+  args.TFDTW.synth[["dependent.id"]] = id
+  args.TFDTW.synth[["res.synth.raw"]] = res.synth.raw.list
+  results = do.call(TFDTW.synth, args.TFDTW.synth)
+  
+  # output
+  res.synth.target.raw = results$res.synth.raw
+  res.synth.target.TFDTW = results$res.synth.TFDTW
+  
+  return(list(target = target,
+              filter.width = filter.width,
+              args.TFDTW.synth = args.TFDTW.synth,
+              results.TFDTW.synth = results,
+              res.synth.target.raw = res.synth.target.raw,
+              res.synth.target.TFDTW = res.synth.target.TFDTW))
+}
