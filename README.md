@@ -4,6 +4,7 @@
 
 ### 1.1 Speed Problem
 * R/figure_speed_problem.R --> plot Figure 1.
+* R/figure_speed_problem_v2.R --> plot Figure A1.
 
 ### 1.2 Two Fold Dynamic Time Warping
 * R/figure_TFDTW_method.R --> plot Figure 2.
@@ -21,3 +22,5 @@
 * R/figure_placebo.R --> plot Figure 5.
 
 ## 2. Sample Run
+* R/run_sample_fast.R --> compare SC and DSC on Basque Country data (20 seconds)
+* R/run_sample_slow.R --> compare SC and DSC on Basque Country data (full process)
