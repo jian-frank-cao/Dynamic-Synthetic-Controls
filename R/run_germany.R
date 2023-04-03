@@ -138,7 +138,7 @@ for (index in 1:length(data.list)) {
                 grid.search.parallel = grid.search.parallel)
   )
   
-  saveRDS(results, paste0("./data/placebo/basque/res_germany_", index, ".Rds"))
+  saveRDS(results, paste0("./data/placebo/germany/res_germany_", index, ".Rds"))
   print(index)
 }
 
@@ -218,7 +218,7 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 ## Plot results ----------------------------------------------------------------
 # df.target
-results.target = readRDS("./data/res_germany_1204_1.Rds")
+results.target = readRDS("./data/placebo/germany/res_germany_1.Rds")
 target = "West Germany"
 
 pre.start = 22
@@ -307,16 +307,6 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_germany.Rds")
 
-# double check t test
-# res = df.gap %>%
-#   filter(time %in% 1991:2000) %>%
-#   group_by(unit, data.id, grid.id) %>%
-#   summarise(mse.sc = mean(gap.sc^2, na.rm = T),
-#             mse.dsc = mean(gap.dsc^2, na.rm = T)) %>%
-#   mutate(log.ratio = log(mse.dsc/mse.sc))
-# 
-# t.test(res$log.ratio)
-
 
 # plot
 df.target = readRDS("./data/df.target_germany.Rds")
@@ -335,8 +325,8 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
 
-colors = c("Gap (SC)" = color.sc,
-           "Gap (DSC)" = color.dsc)
+colors = c("TE (SC)" = color.sc,
+           "TE (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
@@ -358,9 +348,9 @@ fig.placebo = df.gap %>%
                   ymax = quantile.dsc.975,
                   fill="95% Quantile (DSC)"),
               data = df.quantile, alpha=0.5) +
-  geom_line(aes(y = gap.sc, color = "Gap (SC)"),
+  geom_line(aes(y = gap.sc, color = "TE (SC)"),
             data = df.target, size = 1) +
-  geom_line(aes(y = gap.dsc, color = "Gap (DSC)"), 
+  geom_line(aes(y = gap.dsc, color = "TE (DSC)"), 
             data = df.target, size = 1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
@@ -372,15 +362,11 @@ fig.placebo = df.gap %>%
            label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +
-  ylab("Gap(y - Synthetic Control)") +
+  ylab("TE(y - Synthetic Control)") +
   theme_bw() +
   theme(legend.position = c(0.25, 0.2),
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
-
-# ggsave("./figures/placebo_germany.pdf",
-#        fig.placebo, width = 8, height = 6,
-#        units = "in", limitsize = FALSE)
 
 saveRDS(fig.placebo, "./data/placebo_germany.Rds")
   

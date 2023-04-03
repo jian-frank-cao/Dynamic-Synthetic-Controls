@@ -240,7 +240,7 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 ## Plot results ----------------------------------------------------------------
 # df.target
-results.target = readRDS("./data/placebo/basque/res_tobacco_1.Rds")
+results.target = readRDS("./data/placebo/tobacco/res_tobacco_1.Rds")
 target = "California"
 
 pre.start = 11
