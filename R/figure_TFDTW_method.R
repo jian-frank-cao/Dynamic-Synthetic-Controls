@@ -202,7 +202,7 @@ fig.dtwA = df %>%
            size = 5, col = "grey10", parse=TRUE) +
   annotate("text", x = 460, y = df$value[1000+cutoff]-3, label = "C",
            size = 5, col = "#fe4a49", parse=TRUE) +
-  annotate("text", x = 250, y = 15, label = "W[pre]",
+  annotate("text", x = 250, y = 15, label = "P[pre]",
            size = 6, col = "grey20", parse = TRUE) +
   coord_cartesian(ylim = c(0, 45), xlim = c(-150, 1150)) +
   theme_bw() +
@@ -261,7 +261,7 @@ fig.dtwB = df %>%
   #          size = 7, col = "#2ab7ca", parse=TRUE) +
   annotate("text", x = 490, y = df$value[1000+cutoff]+3, label = "C",
            size = 5, col = "#fe4a49", parse=TRUE) +
-  annotate("text", x = 500, y = 3, label = "W[Q]",
+  annotate("text", x = 500, y = 3, label = "P[Q%->%R]",
            size = 6, col = "grey20", parse = TRUE) +
   scale_color_manual(name = NULL, values = c("grey80", "#fe4a49")) +
   coord_cartesian(ylim = c(-3, 45), xlim = c(-150, 1150)) +
@@ -305,12 +305,13 @@ fig.dtwC = df %>%
            size = 5, col = "#2ab7ca", parse=TRUE) +
   annotate("text", x = 460, y = df$value[2000+cutoff]-3, label = "C",
            size = 5, col = "#fe4a49", parse=TRUE) +
-  annotate("text", x = 250, y = 5, label = "W[pre]",
+  annotate("text", x = 250, y = 5, label = "P[pre]",
            size = 6, col = "grey20", parse=TRUE) +
-  annotate("text", x = 750, y = 14, label = "W[post]==W[Q](W[pre])",
+  annotate("text", x = 750, y = 14, label = "P[post]==P[Q%->%R](P[pre])",
            size = 6, col = "grey20", parse=TRUE) +
-  scale_color_manual(name = NULL, values = c("grey80","#fe4a49", # "#f4b6c2"
-                                              "#2ab7ca")) + # "#adcbe3"
+  scale_color_manual(name = NULL, labels = c("Y", "X", expression(paste(X^w))),
+                     values = c("grey80","#fe4a49", # "#f4b6c2"
+                                  "#2ab7ca")) + # "#adcbe3"
   # scale_color_manual(name = NULL, values = c("grey80","grey80","#fe4a49",
   #                                            "#fe4a49","#2ab7ca","#2ab7ca")) +
   coord_cartesian(ylim = c(-10, 45), xlim = c(-150, 1150)) +
@@ -329,9 +330,9 @@ fig.dtwC = df %>%
 fig.all = ggpubr::ggarrange(fig.dtwA,
                             fig.dtwB,
                             fig.dtwC,
-                            labels = c("1. Match Y and X", 
+                            labels = c("1. Match Ypre and Xpre", 
                                        "2. Match Xpre and Xpost",
-                                       "3. Warp X"),
+                                       "3. Warp Xpre and Xpost"),
                             label.x = 0.1,
                             label.y = 0.9,
                             hjust = c(0, 0, 0),
