@@ -205,12 +205,14 @@ fig.dtwA = df %>%
   annotate("text", x = 250, y = 15, label = "P[pre]",
            size = 6, col = "grey20", parse = TRUE) +
   coord_cartesian(ylim = c(0, 45), xlim = c(-150, 1150)) +
+  # ggtitle(expression(paste("1. Match ", Y[pre], " and ", X[pre]))) +
   theme_bw() +
   theme(legend.position = "none",
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
+        # plot.title = element_text(hjust = 0.1, vjust = -20),
         axis.title=element_blank(),
         axis.text=element_blank(),
         axis.ticks=element_blank())
@@ -265,12 +267,14 @@ fig.dtwB = df %>%
            size = 6, col = "grey20", parse = TRUE) +
   scale_color_manual(name = NULL, values = c("grey80", "#fe4a49")) +
   coord_cartesian(ylim = c(-3, 45), xlim = c(-150, 1150)) +
+  # ggtitle(expression(paste("2. Match ", X[pre], " and ", X[post]))) +
   theme_bw() +
   theme(legend.position = "none",
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
+        # plot.title = element_text(hjust = 0.1, vjust = -20),
         axis.title=element_blank(),
         axis.text=element_blank(),
         axis.ticks=element_blank())
@@ -315,12 +319,14 @@ fig.dtwC = df %>%
   # scale_color_manual(name = NULL, values = c("grey80","grey80","#fe4a49",
   #                                            "#fe4a49","#2ab7ca","#2ab7ca")) +
   coord_cartesian(ylim = c(-10, 45), xlim = c(-150, 1150)) +
+  # ggtitle(expression(paste("3. Warp ", X[pre], " and ", X[post]))) +
   theme_bw() +
   theme(legend.position = c(0.92,0.6),
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
+        # plot.title = element_text(hjust = 0.1, vjust = -20),
         axis.title=element_blank(),
         axis.text=element_blank(),
         axis.ticks=element_blank())
@@ -330,7 +336,7 @@ fig.dtwC = df %>%
 fig.all = ggpubr::ggarrange(fig.dtwA,
                             fig.dtwB,
                             fig.dtwC,
-                            labels = c("1. Match Ypre and Xpre", 
+                            labels = c("1. Match Ypre and Xpre",
                                        "2. Match Xpre and Xpost",
                                        "3. Warp Xpre and Xpost"),
                             label.x = 0.1,
