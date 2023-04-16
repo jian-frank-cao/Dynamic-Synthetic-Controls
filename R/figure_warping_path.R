@@ -24,12 +24,17 @@ long = sin(seq(0, 2*pi, length.out = 100))
 x = c(short, long)
 y = c(long, short)
 
-res_dtw = dtw::dtw(x, y, keep = TRUE)
+res_dtw = dtw::dtw(x, y, keep = TRUE, step.pattern = dtw::symmetric1)
 
-n_line = 150
-match_pairs = get_match_pairs(res_dtw, n_line)
-match_pairs = match_pairs[c(seq(1,100, length.out = 20), 
-                            seq(101,150, length.out = 20)),]
+# n_line = 150
+# match_pairs = get_match_pairs(res_dtw, n_line)
+# match_pairs = match_pairs[c(seq(1,100, length.out = 20), 
+#                             seq(101,150, length.out = 20)),]
+# match_pairs = match_pairs[(1:n_line)%%10 %in% c(1,2),]
+match_pairs = rbind(
+  data.frame(ind_q = )
+)
+
 
 
 df_left = rbind(
