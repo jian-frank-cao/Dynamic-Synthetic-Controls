@@ -82,33 +82,33 @@ fig_left = df_left %>%
   ggplot(aes(x = time, y = value, group = unit)) +
   geom_line(data = df_match %>% filter(group %in% c("red")),
             aes(group = dtw), color = color_line_warp_1,
-            linetype = "dashed", linewidth = size_line_warp - 0.1) +
+            linetype = "dashed", size = size_line_warp - 0.1) +
   geom_line(data = df_match %>% filter(group == "red_end"),
             aes(group = dtw), color = color_line_warp_0,
-            linetype = "twodash", linewidth = size_line_warp - 0.1) +
+            linetype = "twodash", size = size_line_warp - 0.1) +
   geom_line(data = df_match %>% filter(group == "black"),
-            aes(group = dtw), color = "black",
-            linetype = "dashed", linewidth = size_line_warp - 0.1) +
+            aes(group = dtw), color = color_main,
+            linetype = "dashed", size = size_line_warp - 0.1) +
   geom_line(data = df_match %>% filter(group %in% c("blue")),
             aes(group = dtw), color = color_line_warp_2,
-            linetype = "dashed", linewidth = size_line_warp - 0.1) +
+            linetype = "dashed", size = size_line_warp - 0.1) +
   geom_line(size = size_line_ts, color = color_main) + 
   geom_point(aes(x = time[26], y = value[26]),
-             color = "black", size = size_point) +
+             color = color_main, size = size_point) +
   geom_point(aes(x = time[45], y = value[195]),
-             color = "black", size = size_point) +
+             color = color_main, size = size_point) +
   geom_point(aes(x = time[57], y = value[207]),
-             color = "black", size = size_point) +
+             color = color_main, size = size_point) +
   annotate("text", x = df_left$time[26] + 2, y = df_left$value[26] + 0.5, label = "y[3]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = df_left$time[45], y = df_left$value[195] - 0.5, label = "x[5]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = df_left$time[57], y = df_left$value[207] - 0.5, label = "x[6]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 75, y = -1.5, label = "X", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 75, y = 6.5, label = "Y", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   ggtitle("DTW") +
   theme_minimal() +
   theme(legend.position = "none",
@@ -138,19 +138,19 @@ fig_right = df_right %>%
             lwd = 1.5,
             linetype = 1) +
   scale_fill_manual(values = c("#fe4a49", "#94818A", "#2ab7ca", "white")) +
-  geom_text(aes(label = value), size = 5, color = "black") +
-  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3), linewidth = 1,
+  geom_text(aes(label = value), size = 5, color = color_main) +
+  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3), size = 1,
                arrow = arrow(length = unit(0.2, "cm"))) +
-  geom_segment(aes(x = 5, y = 2.6, xend = 5, yend = 0.5), linewidth = 1,
+  geom_segment(aes(x = 5, y = 2.6, xend = 5, yend = 0.5), size = 1,
                arrow = arrow(length = unit(0.2, "cm"))) +
-  geom_segment(aes(x = 6, y = 2.6, xend = 6, yend = 0.5), linewidth = 1,
+  geom_segment(aes(x = 6, y = 2.6, xend = 6, yend = 0.5), size = 1,
                arrow = arrow(length = unit(0.2, "cm"))) +
   annotate("text", x = -0.1, y = 3, label = "y[3]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 5, y = -0.1, label = "x[5]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 6, y = -0.1, label = "x[6]", fontface = "bold",
-           size = 6, col = "black", parse=TRUE) +
+           size = 6, col = color_main, parse=TRUE) +
   xlab("X") +
   ylab("Y") +
   ggtitle("Warping Path") +
