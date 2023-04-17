@@ -328,10 +328,10 @@ fig = df %>%
                                    "Unit C2-sq" = "dotted", "SC" = "solid",
                                    "DSC" = "solid")) +
   scale_color_manual(name = NULL,
-                     values = c("Unit T" = "#4a4e4d", "Unit C1" = "#ffcc5c", 
-                                "Unit C1-lag1" = "#ffcc5c", "Unit C1-sq" = "#ffcc5c",
-                                "Unit C2" = "#00b159", "Unit C2-lag1" = "#00b159",
-                                "Unit C2-sq" = "#00b159", "SC" = "#2ab7ca",
+                     values = c("Unit T" = "#4a4e4d", "Unit C1" = "#eecc16", 
+                                "Unit C1-lag1" = "#eecc16", "Unit C1-sq" = "#eecc16",
+                                "Unit C2" = "#008176", "Unit C2-lag1" = "#008176",
+                                "Unit C2-sq" = "#008176", "SC" = "#2ab7ca",
                                 "DSC" = "#fe4a49")) +
   geom_vline(xintercept = 600, linetype="dashed", col = "grey20") +
   annotate("text", x = 590, y = 18.5,
