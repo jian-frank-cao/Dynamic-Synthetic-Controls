@@ -177,7 +177,8 @@ df.mse = readRDS(paste0("./data/df.mse_sim_beta_", beta, ".Rds"))
 df.mse = df.mse %>% 
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw))
 t.test(df.mse$log.ratio)
-
+sum(df.mse$log.ratio<0)/nrow(df.mse)
+wilcox.test(df.mse$log.ratio)
 
 ## Plot result -----------------------------------------------------------------
 # df.gap
