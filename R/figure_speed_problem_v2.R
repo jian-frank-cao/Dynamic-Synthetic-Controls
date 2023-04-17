@@ -300,26 +300,38 @@ df = rbind(
              value = approx(data[1:85,4], n = 850)$y),
   data.frame(id = 2, unit = "Unit C1", time = 151:1000,
              value = approx(data[86:170,4], n = 850)$y),
-  data.frame(id = 3, unit = "Unit C2", time = 151:1000,
+  data.frame(id = 3, unit = "Unit C1-lag1", time = 151:1000,
+             value = approx(data[256:340,4], n = 850)$y),
+  data.frame(id = 4, unit = "Unit C1-sq", time = 151:1000,
+             value = approx(data[681:765,4], n = 850)$y),
+  data.frame(id = 5, unit = "Unit C2", time = 151:1000,
              value = approx(data[171:255,4], n = 850)$y),
-  data.frame(id = 4, unit = "SC", time = 151:1000,
+  data.frame(id = 6, unit = "Unit C2-lag1", time = 151:1000,
+             value = approx(data[1021:1105,4], n = 850)$y),
+  data.frame(id = 7, unit = "Unit C2-sq", time = 151:1000,
+             value = approx(data[1446:1530,4], n = 850)$y),
+  data.frame(id = 8, unit = "SC", time = 151:1000,
              value = approx(synthetic.original, n = 850)$y),
-  data.frame(id = 5, unit = "DSC", time = 151:1000,
+  data.frame(id = 9, unit = "DSC", time = 151:1000,
              value = c(approx(synthetic.dsc, n = (85-n.na)*10)$y, rep(NA, n.na*10)))
 )
 
-df$value = df$value + rnorm(4250, mean = 0, sd = 0.1)
+df$value = df$value + rnorm(nrow(df), mean = 0, sd = 0.1)
 
 fig = df %>% 
   ggplot(aes(x = time, y = value, color = unit, linetype = unit)) +
   geom_line(size = 0.7) + 
   scale_linetype_manual(name = NULL,
-                        values = c("Unit T" = "solid", "Unit C1" = "dashed",
-                                   "Unit C2" = "dotted", "SC" = "solid",
+                        values = c("Unit T" = "solid", "Unit C1" = "solid", 
+                                   "Unit C1-lag1" = "dashed", "Unit C1-sq" = "dotted",
+                                   "Unit C2" = "solid", "Unit C2-lag1" = "dashed", 
+                                   "Unit C2-sq" = "dotted", "SC" = "solid",
                                    "DSC" = "solid")) +
   scale_color_manual(name = NULL,
-                     values = c("Unit T" = "#4a4e4d", "Unit C1" = "#aaaaaa",
-                                "Unit C2" = "#aaaaaa", "SC" = "#2ab7ca",
+                     values = c("Unit T" = "#4a4e4d", "Unit C1" = "#ffcc5c", 
+                                "Unit C1-lag1" = "#ffcc5c", "Unit C1-sq" = "#ffcc5c",
+                                "Unit C2" = "#00b159", "Unit C2-lag1" = "#00b159",
+                                "Unit C2-sq" = "#00b159", "SC" = "#2ab7ca",
                                 "DSC" = "#fe4a49")) +
   geom_vline(xintercept = 600, linetype="dashed", col = "grey20") +
   annotate("text", x = 590, y = 18.5,
@@ -329,7 +341,7 @@ fig = df %>%
   xlab("Time") +
   ylab("Y") +
   theme_minimal() +
-  theme(legend.position=c(0.23,0.2), 
+  theme(legend.position=c(0.23,0.3), 
         legend.box = "horizontal",
         legend.background = element_blank(),
         panel.grid.major = element_blank(),
