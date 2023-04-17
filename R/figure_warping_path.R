@@ -73,7 +73,7 @@ df_match = df_match %>%
 size_line_ts = 1
 size_line_warp = 1
 size_point = 3
-color_main = "grey40"
+color_main = "grey20"
 color_line_warp_0 = "#fe4a49"
 color_line_warp_1 = "#fe4a49"
 color_line_warp_2 = "#2ab7ca"
@@ -139,12 +139,12 @@ fig_right = df_right %>%
             linetype = 1) +
   scale_fill_manual(values = c("#fe4a49", "#94818A", "#2ab7ca", "white")) +
   geom_text(aes(label = value), size = 5, color = color_main) +
-  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3), size = 1,
-               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3), size = 1, 
+               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
   geom_segment(aes(x = 5, y = 2.6, xend = 5, yend = 0.5), size = 1,
-               arrow = arrow(length = unit(0.2, "cm"))) +
+               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
   geom_segment(aes(x = 6, y = 2.6, xend = 6, yend = 0.5), size = 1,
-               arrow = arrow(length = unit(0.2, "cm"))) +
+               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
   annotate("text", x = -0.1, y = 3, label = "y[3]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 5, y = -0.1, label = "x[5]", fontface = "bold",
