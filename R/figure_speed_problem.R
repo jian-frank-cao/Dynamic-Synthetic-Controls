@@ -220,6 +220,12 @@ fig = df %>%
                                 "Unit C2" = "#aaaaaa", "SC" = "#3da4ab",
                                 "DSC" = "#fe8a71")) +
   geom_vline(xintercept = 600, linetype="dashed", col = "grey20") +
+  annotate("segment", x = 730, y = df$value[3730]+0.1,
+           xend = 730, yend = df$value[630],
+           arrow = arrow(ends = "both", length = unit(.2,"cm")),
+           colour = "grey20", size = 0.8) +
+  annotate("label", x = 680, y = 18, size = 3,
+           label = "SC estimated\nTreatment Effect", col = "grey20") +
   annotate("text", x = 590, y = 18.5,
            label = "Treatment", col = "grey20",
            angle = 90) +
