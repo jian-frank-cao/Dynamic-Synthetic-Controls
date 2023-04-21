@@ -73,7 +73,7 @@ df_match = df_match %>%
 size_line_ts = 1
 size_line_warp = 1
 size_point = 3
-color_main = "grey20"
+color_main = "grey30"
 color_line_warp_0 = "#fe4a49"
 color_line_warp_1 = "#fe4a49"
 color_line_warp_2 = "#2ab7ca"
@@ -134,7 +134,7 @@ df_right$colors[is.na(df_right$colors)] = "white"
 
 fig_right = df_right %>% 
   ggplot(aes(x = Var2, y = Var1)) +
-  geom_tile(aes(fill=colors),color = "grey40",
+  geom_tile(aes(fill=colors), color = color_main,
             lwd = 1.5,
             linetype = 1) +
   scale_fill_manual(values = c("#fe4a49", "#94818A", "#2ab7ca", "white")) +
