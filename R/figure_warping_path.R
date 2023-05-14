@@ -60,8 +60,8 @@ df_match = rbind(
 )
 
 df_match = df_match %>% 
-  mutate(group = case_when(dtw >= 11 ~ "blue",
-                           dtw %in% c(3,8) ~ "black",
+  mutate(group = case_when(dtw %in% c(3,8,15,20) ~ "black",
+                           dtw >= 11 ~ "blue",
                            dtw == 10 ~ "red_end",
                            TRUE ~ "red"))
 
@@ -99,11 +99,23 @@ fig_left = df_left %>%
              color = color_main, size = size_point) +
   geom_point(aes(x = time[57], y = value[207]),
              color = color_main, size = size_point) +
+  geom_point(aes(x = time[139], y = value[139]),
+             color = color_main, size = size_point) +
+  geom_point(aes(x = time[150], y = value[150]),
+             color = color_main, size = size_point) +
+  geom_point(aes(x = time[150], y = value[300]),
+             color = color_main, size = size_point) +
   annotate("text", x = df_left$time[26] + 2, y = df_left$value[26] + 0.5, label = "y[3]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = df_left$time[45], y = df_left$value[195] - 0.5, label = "x[5]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = df_left$time[57], y = df_left$value[207] - 0.5, label = "x[6]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[139], y = df_left$value[139] + 0.7, label = "y[13]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[150], y = df_left$value[150] + 0.7, label = "y[14]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[150] + 5, y = df_left$value[300] - 0.5, label = "x[14]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 75, y = -1.5, label = "X", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
@@ -139,17 +151,35 @@ fig_right = df_right %>%
             linetype = 1) +
   scale_fill_manual(values = c("#fe4a49", "#94818A", "#2ab7ca", "white")) +
   geom_text(aes(label = value), size = 5, color = color_main) +
-  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3), size = 1, 
-               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
-  geom_segment(aes(x = 5, y = 2.6, xend = 5, yend = 0.5), size = 1,
-               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
-  geom_segment(aes(x = 6, y = 2.6, xend = 6, yend = 0.5), size = 1,
-               color = color_main, arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 4.6, y = 3, xend = 0.5, yend = 3),
+               size = 1, color = "grey30", color = color_main,
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 5, y = 2.6, xend = 5, yend = 0.5),
+               size = 1, color = "grey30", color = color_main,
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 6, y = 2.6, xend = 6, yend = 0.5),
+               size = 1, color = "grey30", color = color_main,
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 13.6, y = 14, xend = 0.5, yend = 14), 
+               size = 1,  color = "grey30", color = color_main,
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 13.6, y = 13, xend = 0.5, yend = 13), 
+               size = 1, color = "grey30", color = color_main, 
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_segment(aes(x = 14, y = 12.6, xend = 14, yend = 0.5), 
+               size = 1, color = "grey30", color = color_main, 
+               arrow = arrow(length = unit(0.2, "cm"))) +
   annotate("text", x = -0.1, y = 3, label = "y[3]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 5, y = -0.1, label = "x[5]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   annotate("text", x = 6, y = -0.1, label = "x[6]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = -0.4, y = 14, label = "y[14]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = -0.4, y = 13, label = "y[13]", fontface = "bold",
+           size = 6, col = color_main, parse=TRUE) +
+  annotate("text", x = 14, y = -0.1, label = "x[14]", fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   xlab("X") +
   ylab("Y") +
