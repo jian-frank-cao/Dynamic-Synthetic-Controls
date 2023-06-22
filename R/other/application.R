@@ -7,12 +7,39 @@ library(tidyverse)
 
 ## Data ------------------------------------------------------------------------
 folder = "/Users/jiancao/Downloads/dataverse_files/all_files_in_csv_format/"
-data = read.csv(paste0(folder, "CNR_QJE_apple.csv"))
-iphone4 = read.csv(paste0(folder, "iPhone4.csv"))
 exchange = read.csv(paste0(folder, "exchange_long.csv"))
 
 
 ## Functions -------------------------------------------------------------------
+# prepare one company
+one_company = function(path, exchange){
+  data = read.csv(path)
+  
+  # prepare data
+  data$date = as.Date(data$date, format = "%d %b %y")
+  exchange$date = as.Date(exchange$date, format = "%d %b %y")
+  
+  # compute diff of log price
+  df = left_join(data, exchange, by = c("country" = "country_string", 
+                                        "date" = "date")) %>% 
+    mutate(price_usd = price*usdx,
+           log_price_usd = log(price_usd)) %>% 
+    group_by(country) %>% 
+    mutate(diff_log = log_price_usd - lag(log_price_usd)) %>% 
+    ungroup()
+  
+  # filter outliers and compute average diff_log
+  df = df %>% 
+    filter(diff_log > quantile(diff_log, 0.25, na.rm = TRUE) -
+             3*IQR(diff_log, na.rm = TRUE) &
+             diff_log < quantile(diff_log, 0.75, na.rm = TRUE) +
+             3*IQR(diff_log, na.rm = TRUE)) %>% 
+    group_by(country, date) %>% 
+    summarise(avg_log = mean(diff_log, na.rm = TRUE))
+  
+  return(df)
+}
+
 # normalization
 t.normalize = function(data, reference = NULL){
   if (is.null(reference)) {
@@ -23,18 +50,6 @@ t.normalize = function(data, reference = NULL){
     sigma = sd(reference)
   }
   res = (data - mu)/sigma
-  return(res)
-}
-
-minmax.normalize = function(data, reference = NULL){
-  if (is.null(reference)) {
-    minimum = min(data)
-    maximum = max(data)
-  }else{
-    minimum = min(reference)
-    maximum = max(reference)
-  }
-  res = (data - minimum)/(maximum - minimum)
   return(res)
 }
 
@@ -51,89 +66,44 @@ warp2weight = function(W){
   return(weight)
 }
 
-# smooth speed profile
-smooth_profile = function(W){
-  n = length(W)
-  for (i in 2:(n-1)) {
-    if (abs(W[i]) < min(abs(W[i - 1]), abs(W[i + 1]))) {
-      ind_min = which(c(abs(W[i - 1]), abs(W[i + 1])) == 
-                        min(abs(W[i - 1]), abs(W[i + 1])))[1]
-      W[i] = c(W[i - 1], W[i + 1])[ind_min]
-    }
-  }
-  return(W)
-}
-
 
 ## Run -------------------------------------------------------------------------
-data$date = as.Date(data$date, format = "%d %b %y")
-exchange$date = as.Date(exchange$date, format = "%d %b %y")
+# prepare data
+df_apple = one_company(paste0(folder, "CNR_QJE_apple.csv"),
+                       exchange = exchange)
+gc()
+df_ikea = one_company(paste0(folder, "CNR_QJE_ikea.csv"),
+                       exchange = exchange)
+gc()
+df_handm = one_company(paste0(folder, "CNR_QJE_handm.csv"),
+                       exchange = exchange)
+gc()
+df_zara = one_company(paste0(folder, "CNR_QJE_zara.csv"),
+                       exchange = exchange)
+gc()
 
-# df = NULL
-# for (i in 1:nrow(iphone4)) {
-#   target = iphone4[i,]
-#   models = strsplit(target$Model, split = ", ")[[1]]
-#   res = data %>% filter(id %in% models)
-#   res$a.number = target$A.Number
-#   res$identifier = target$Identifier
-#   res$finish = target$Finish
-#   res$storage = target$Storage
-#   name = paste0(target$Identifier, "-", target$Finish, "-", target$Storage)
-#   df[[name]] = res
-#   print(name)
-# }
-# 
-# df_8gb = rbind(df[[1]], df[[4]]) %>% 
-#   group_by(country, date) %>% 
-#   summarise(price = mean(price, na.rm = TRUE))
-# 
-# df_8gb %>% 
-#   ggplot(aes(x = date, y = price, color = country)) +
-#   geom_line()
-
-exchange = exchange %>% 
-  group_by(country_string) %>% 
-  mutate(index_ratio = usdx/first(usdx)) %>% 
-  ungroup()
-
-df = left_join(data, exchange, by = c("country" = "country_string", 
-                                    "date" = "date"))
-
+# compute index
 df = df %>% 
-  group_by(id, country, idc) %>% 
-  mutate(price_adj = price*usdx,
-         relative_price_adj = price_adj/first(price_adj)) %>% 
-  ungroup() %>% 
   group_by(country) %>% 
-  mutate(diff_relative_price_adj = relative_price_adj - lag(relative_price_adj)) %>% 
-  ungroup()
+  mutate(cum_log = cumsum(avg_log),
+         index = exp(cum_log))
 
-df = df %>% 
-  group_by(country, date) %>% 
-  summarise(avg_delta = mean(diff_relative_price_adj, na.rm = TRUE))
-
-# df = df %>% 
-#   mutate(index_adj = index/index_ratio)
-
-df_na = df %>% 
-  group_by(country) %>% 
-  summarise(count_na = sum(is.na(delta_price)))
-
-df = df %>% 
-  filter(!(country %in% c("ph", "cd", "pl", "xf")))
-
+# plot index
+oecd = c("at", "be", "ca", "dk", "fr", "de", "gr", "is", "ie",
+         "it", "lu", "nl", "no", "pt", "es", "se", "ch", "tr",
+         "uk", "us")
 df %>%
-  filter(date <= as.Date("2012-01-01")) %>% 
-  ggplot(aes(x = date, y = avg_delta, color = country)) +
+  filter(country %in% oecd) %>%
+  ggplot(aes(x = date, y = index, color = country)) +
   geom_line()
 
-countries = unique(df$country)
-df_a = df %>% filter(country == "jp")
-df_b = df %>% filter(country == "cn")
+countries = unique(df2$country)
+df_a = df2 %>% filter(country == "jp")
+df_b = df2 %>% filter(country == "us")
 
 
-align = dtw::dtw(diff(t.normalize(df_a$avg_delta)),
-                 diff(t.normalize(df_b$avg_delta)),
+align = dtw::dtw(diff(t.normalize(df_a$index)),
+                 diff(t.normalize(df_b$index)),
                  keep = TRUE,
                  step.pattern = dtw::symmetricP2)
 dtw::dtwPlotThreeWay(align) 
