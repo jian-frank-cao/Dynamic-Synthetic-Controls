@@ -114,67 +114,118 @@ df = rbind(df_apple, df_ikea, df_handm, df_zara) %>% # df_ikea,
   mutate(cum_log = cumsum(avg_log),
          index = exp(cum_log))
 
-# # plot index
-# oecd = c("at", "ca", "dk", "fr", "de", "gr", "is", "ie", "be", 
-#          "lu", "nl", "no", "pt", "es", "se", "tr", "it", "ch", 
-#          "uk", "us")
-# 
-# df_oecd = df %>% filter(country %in% c("jp", oecd))
-# 
-# range_oecd = df_oecd %>% 
-#   group_by(country) %>% 
-#   summarise(min_date = min(date),
-#             max_date = max(date))
-# 
-# select_country = range_oecd %>%
-#   filter(min_date == as.Date("2009-04-01")) %>% 
-#   .[["country"]]
+# plot index
+oecd = c("at", "ca", "dk", "fr", "de", "gr", "is", "ie", "be",
+         "lu", "nl", "no", "pt", "es", "se", "tr", "it", "ch",
+         "uk", "us")
 
-# df %>%
-#   filter(country %in% oecd) %>%
-#   ggplot(aes(x = date, y = index, color = country)) +
-#   geom_line()
-# 
-# 
-# df_a = df %>% filter(country == "jp")
-# df_b = df %>% filter(country == "uk")
-# 
-# 
-# align = dtw::dtw(diff(t.normalize(df_a$index)),
-#                  diff(t.normalize(df_b$index)),
-#                  keep = TRUE,
-#                  step.pattern = dtw::symmetricP2)
-# dtw::dtwPlotThreeWay(align) 
-# P = Matrix::sparseMatrix(align$index1,
-#                          align$index2)
-# W = warp2weight(P)
-# a = fitted(forecast::ets(W))
-# plot(ts(a))
+df_oecd = df %>% filter(country %in% c("jp", oecd))
 
-## Exchange --------------------------------------------------------------------
-select_country = exchange %>% 
-  group_by(country_string) %>%
-  summarise(sd = sd(usdx),
-            avg = mean(usdx),
-            ratio = sd/avg) %>% 
-  filter(ratio > 0.001)
+range_oecd = df_oecd %>%
+  group_by(country) %>%
+  summarise(min_date = min(date),
+            max_date = max(date))
 
-exchange %>%
-  filter(country_string %in% select_country$country_string) %>%
-  ggplot(aes(x = date, y = usdx, color = country_string)) +
+select_country = range_oecd %>%
+  filter(min_date == as.Date("2009-04-01")) %>%
+  .[["country"]]
+
+df %>%
+  filter(country %in% oecd) %>%
+  ggplot(aes(x = date, y = index, color = country)) +
   geom_line()
 
 
-
-
-df_a = exchange %>% filter(country_string == "jp")
-df_b = exchange %>% filter(country_string == "uk")
+df_a = df %>% filter(country == "jp")
+df_b = df %>% filter(country == "uk")
 
 
 align = dtw::dtw(diff(t.normalize(df_a$index)),
                  diff(t.normalize(df_b$index)),
                  keep = TRUE,
                  step.pattern = dtw::symmetricP2)
+dtw::dtwPlotThreeWay(align)
+P = Matrix::sparseMatrix(align$index1,
+                         align$index2)
+W = warp2weight(P)
+a = fitted(forecast::ets(W))
+plot(ts(a))
+
+
+## Exchange --------------------------------------------------------------------
+# countries = readRDS("./data/country_selected.Rds")
+# 
+# euro_diff = exchange %>% 
+#   filter(country_string %in% countries) %>% 
+#   group_by(country_string) %>% 
+#   mutate(diff_euro = usdx - euro) %>% 
+#   summarise(avg = mean(diff_euro, na.rm = T),
+#             sd = sd(diff_euro, na.rm = T))
+# 
+# count_sd = data.frame(table(euro_diff$sd)) %>% 
+#   arrange(desc(Freq))
+# 
+# 
+# chf_countries = euro_diff %>% filter(sd == count_sd$Var[9]) %>% 
+#   .[["country_string"]]
+# 
+# mad_countries = euro_diff %>% filter(sd == count_sd$Var[7]) %>% 
+#   .[["country_string"]]
+# 
+# nok_countries = euro_diff %>% filter(sd == count_sd$Var[6]) %>% 
+#   .[["country_string"]]
+# 
+# dkk_countries = euro_diff %>% filter(sd == count_sd$Var[5]) %>% 
+#   .[["country_string"]]
+# 
+# gbp_countries = euro_diff %>% filter(sd %in% count_sd$Var[c(4,8)]) %>% 
+#   .[["country_string"]]
+# 
+# nzd_countries = euro_diff %>% filter(sd == count_sd$Var[3]) %>% 
+#   .[["country_string"]]
+# 
+# aud_countries = euro_diff %>% filter(sd == count_sd$Var[2]) %>% 
+#   .[["country_string"]]
+# 
+# euro_countries = euro_diff %>% filter(sd == count_sd$Var[1]) %>% 
+#   .[["country_string"]]
+# 
+# currency = data.frame(country = countries) %>% 
+#   mutate(currency = case_when(country %in% euro_countries ~ "EURO",
+#                               country %in% aud_countries ~ "AUD",
+#                               country %in% nzd_countries ~ "NZD",
+#                               country %in% gbp_countries ~ "GBP",
+#                               country %in% dkk_countries ~ "DKK",
+#                               country %in% nok_countries ~ "NOK",
+#                               country %in% mad_countries ~ "MAD",
+#                               country %in% chf_countries ~ "CHF",
+#                               TRUE ~ country))
+# 
+# saveRDS(currency, "./data/currency.Rds")
+
+currency = readRDS("./data/currency.Rds")
+
+targets = currency %>% 
+  group_by(currency) %>% 
+  summarise(country = first(country))
+
+df = inner_join(exchange, targets, by = c("country_string" = "country"))
+
+df %>%
+  filter(currency %in% c("EURO", "GBP", "AUD", "NZD",
+                         "DKK", "NOK", "MAD", "CHF")) %>%
+  ggplot(aes(x = date, y = usdx, color = currency)) +
+  geom_line()
+
+
+df_a = df %>% filter(currency == "EURO")
+df_b = df %>% filter(currency == "AUD")
+
+
+align = dtw::dtw(diff(t.normalize(df_a$usdx)),
+                 diff(t.normalize(df_b$usdx)),
+                 keep = TRUE,
+                 step.pattern = dtw::symmetric2)
 dtw::dtwPlotThreeWay(align) 
 P = Matrix::sparseMatrix(align$index1,
                          align$index2)
