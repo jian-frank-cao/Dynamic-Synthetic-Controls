@@ -151,12 +151,13 @@ df = rbind(df_apple, df_ikea, df_handm, df_zara) %>% # df_ikea,
 # a = fitted(forecast::ets(W))
 # plot(ts(a))
 
+## Exchange --------------------------------------------------------------------
 select_country = exchange %>% 
   group_by(country_string) %>%
   summarise(sd = sd(usdx),
             avg = mean(usdx),
             ratio = sd/avg) %>% 
-  filter(ratio > 0.1)
+  filter(ratio > 0.001)
 
 exchange %>%
   filter(country_string %in% select_country$country_string) %>%
