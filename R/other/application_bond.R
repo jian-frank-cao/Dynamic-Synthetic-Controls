@@ -1,0 +1,220 @@
+time_start = Sys.time()
+## Setup -----------------------------------------------------------------------
+library(checkpoint)
+checkpoint("2022-04-01")
+
+library(parallel)
+n.cores = detectCores()
+library(tidyverse)
+library(furrr)
+plan(multisession, workers = n.cores - 1)
+options(future.rng.onMisuse="ignore")
+options(stringsAsFactors = FALSE)
+
+source("./R/utility/misc.R")
+source("./R/utility/TFDTW.R")
+source("./R/utility/synth.R")
+source("./R/utility/implement.R")
+source("./R/utility/grid.search.R")
+set.seed(20220407)
+
+
+## Data ------------------------------------------------------------------------
+# symbols = c("TIP", "INXG.L", "XRB.TO", "IBCI.DE") #,"GTIP" ,"ILB.XA","XSTH.TO"
+# 
+# data_list = NULL
+# 
+# # Loop over the symbols and download the data
+# for(symbol in symbols) {
+#   response = quantmod::getSymbols(symbol, auto.assign = FALSE,
+#                              from = "2010-02-01", to = "2022-12-31")
+#   
+#   data_list[[symbol]] = response %>% 
+#     data.frame(.) %>% 
+#     mutate(date = as.Date(rownames(.))) %>% 
+#     `rownames<-`(NULL) %>% 
+#     .[,c(7:6)] %>% 
+#     `colnames<-`(c("date", symbol))
+# }
+# 
+# data = Reduce(function(...) merge(..., by = "date", all = TRUE), data_list)
+# cols_to_fill <- names(data)[-1]
+# data = data %>% fill(all_of(cols_to_fill))
+# 
+# saveRDS(data, "./data/bond.Rds")
+
+data = readRDS("./data/bond.Rds")
+data = reshape2::melt(data, id.vars = 1)
+data_monthly = data %>% 
+  mutate(date = as.Date(date),
+         month = format(date, "%Y-%m"),
+         unit = as.character(variable),
+         id = as.numeric(variable)) %>% 
+  group_by(id, unit, month) %>% 
+  summarise(value = mean(value, na.rm = T)) %>% 
+  mutate(time = 1:155,
+         value_raw = value) %>% 
+  ungroup() %>% 
+  select(c("id", "unit", "time", "value", "value_raw", "month")) %>% 
+  data.frame(.)
+
+## Functions -------------------------------------------------------------------
+# grid.search = function(filter.width.range, k.range, step.pattern.range,
+#                        args.TFDTW.synth.all.units,
+#                        grid.search.parallel = TRUE){
+#   if (grid.search.parallel) {
+#     fun.map = furrr::future_map
+#   }else{
+#     fun.map = purrr::map
+#   }
+#   
+#   # vanilla synthetic control
+#   target = args.TFDTW.synth.all.units[["target"]]
+#   data = args.TFDTW.synth.all.units[["data"]]
+#   units = data[c("id", "unit")] %>% distinct %>% filter(unit == target)
+#   units.list = units %>% split(., seq(nrow(units)))
+#   
+#   args.synth = args.TFDTW.synth.all.units$args.TFDTW.synth$args.synth
+#   args.synth[["df"]] = data
+#   args.synth[["dep.var"]] = "value_raw"
+#   
+#   res.synth.raw.list = units.list %>% 
+#     set_names(units$unit) %>% 
+#     fun.map(
+#       ~{
+#         item = .
+#         dependent.id = item$id
+#         args.synth[["dependent.id"]] = dependent.id
+#         res = do.call(do.synth, args.synth)
+#       }
+#     )
+#   
+#   # grid search space
+#   search.grid = expand.grid(filter.width.range, k.range,
+#                             names(step.pattern.range)) %>% 
+#     `colnames<-`(c("filter.width", "k", "step.pattern"))
+#   search.grid.list = search.grid %>% split(., seq(nrow(search.grid)))
+#   
+#   # search start
+#   results = search.grid.list %>% 
+#     fun.map(
+#       ~{
+#         task = .
+#         args.TFDTW.synth.all.units[["filter.width"]] = task$filter.width
+#         args.TFDTW.synth.all.units$args.TFDTW.synth$args.TFDTW[["k"]] = task$k
+#         args.TFDTW.synth.all.units$args.TFDTW.synth$args.TFDTW[["step.pattern1"]] =
+#           step.pattern.range[[task$step.pattern]]
+#         args.TFDTW.synth.all.units[["res.synth.raw.list"]] = res.synth.raw.list
+#         do.call(TFDTW.synth.target.only, args.TFDTW.synth.all.units)
+#       }
+#     )
+#   
+#   return(results)
+# }
+
+
+
+
+
+
+## Grid Search -----------------------------------------------------------------
+treat_time = 110
+target = "IBCI.DE"
+
+# parameters
+filter.width.range = c(7, 9, 11, 13, 15)
+k.range = 6:12
+step.pattern.range = list(
+  # symmetricP0 = dtw::symmetricP0, # too bumpy
+  # symmetricP05 = dtw::symmetricP05,
+  symmetricP1 = dtw::symmetricP1,
+  symmetricP2 = dtw::symmetricP2,
+  # asymmetricP0 = dtw::asymmetricP0, # too bumpy
+  # asymmetricP05 = dtw::asymmetricP05,
+  asymmetricP1 = dtw::asymmetricP1,
+  asymmetricP2 = dtw::asymmetricP2,
+  typeIc = dtw::typeIc,
+  # typeIcs = dtw::typeIcs,
+  # typeIIc = dtw::typeIIc,  # jumps
+  # typeIIIc = dtw::typeIIIc, # jumps
+  # typeIVc = dtw::typeIVc,  # jumps
+  typeId = dtw::typeId,
+  # typeIds = dtw::typeIds,
+  # typeIId = dtw::typeIId, # jumps
+  mori2006 = dtw::mori2006
+)
+grid.search.parallel = TRUE
+
+
+args.TFDTW = list(buffer = 0, match.method = "fixed",
+                  dist.quant = 0.95,
+                  window.type = "none",
+                  ## other
+                  norm.method = "t",
+                  step.pattern2 = dtw::asymmetricP2,
+                  n.burn = 3, n.IQR = 3,
+                  ma = 3, ma.na = "original",
+                  default.margin = 3,
+                  n.q = 1, n.r = 1)
+
+args.synth = list(predictors = NULL,
+                  special.predictors =
+                    list(
+                      list("value_raw",(treat_time - 12):(treat_time - 1),c("mean"))
+                    ),
+                  time.predictors.prior = 1:(treat_time - 1),
+                  time.optimize.ssr = 1:(treat_time - 1))
+
+args.TFDTW.synth = list(start.time = 1, end.time = 155, treat.time = treat_time,
+                        args.TFDTW = args.TFDTW, args.synth = args.synth,
+                        ## 2nd
+                        n.mse = 24,
+                        ## other
+                        plot.figures = FALSE,
+                        plot.path = "./figures/",
+                        legend.pos = c(0.3, 0.3))
+
+args.TFDTW.synth.all.units = list(target = target,
+                                  # data = data,
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  ## 2nd
+                                  detailed.output = TRUE,
+                                  all.units.parallel = FALSE)
+
+args.TFDTW.synth.all.units[["data"]] = data_monthly
+results = SimDesign::quiet(
+  grid.search(filter.width.range = filter.width.range,
+              k.range = k.range,
+              step.pattern.range = step.pattern.range,
+              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+              grid.search.parallel = grid.search.parallel)
+)
+
+time_end = Sys.time()
+print(time_end - time_start)
+
+
+
+## Test ------------------------------------------------------------------------
+# plot
+data_monthly %>%
+  ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line()
+
+# dtw
+df_a = data$TIP
+df_b = data$INXG.L
+
+align = dtw::dtw(diff(t.normalize(df_a)),
+                 diff(t.normalize(df_b)),
+                 keep = TRUE,
+                 step.pattern = dtw::symmetricP2)
+dtw::dtwPlotThreeWay(align)
+P = Matrix::sparseMatrix(align$index1,
+                         align$index2)
+W = warp2weight(P)
+a = fitted(forecast::ets(W))
+plot(ts(a))
+
+
+
