@@ -1,4 +1,7 @@
-time_start = Sys.time()
+args = commandArgs(trailingOnly=TRUE)
+treat_time  = as.integer(args[1])
+job.start = Sys.time()
+
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
@@ -118,7 +121,6 @@ data_monthly = data %>%
 
 
 ## Grid Search -----------------------------------------------------------------
-treat_time = 110
 target = "IBCI.DE"
 
 # parameters
@@ -190,31 +192,32 @@ results = SimDesign::quiet(
               grid.search.parallel = grid.search.parallel)
 )
 
-time_end = Sys.time()
-print(time_end - time_start)
+saveRDS(results, paste0("./data/bond_", treat_time, ".Rds"))
+job.end = Sys.time()
+print(job.end - job.start)
 
 
 
 ## Test ------------------------------------------------------------------------
-# plot
-data_monthly %>%
-  ggplot(aes(x = time, y = value, color = unit)) +
-  geom_line()
-
-# dtw
-df_a = data$TIP
-df_b = data$INXG.L
-
-align = dtw::dtw(diff(t.normalize(df_a)),
-                 diff(t.normalize(df_b)),
-                 keep = TRUE,
-                 step.pattern = dtw::symmetricP2)
-dtw::dtwPlotThreeWay(align)
-P = Matrix::sparseMatrix(align$index1,
-                         align$index2)
-W = warp2weight(P)
-a = fitted(forecast::ets(W))
-plot(ts(a))
+# # plot
+# data_monthly %>%
+#   ggplot(aes(x = time, y = value, color = unit)) +
+#   geom_line()
+# 
+# # dtw
+# df_a = data$TIP
+# df_b = data$INXG.L
+# 
+# align = dtw::dtw(diff(t.normalize(df_a)),
+#                  diff(t.normalize(df_b)),
+#                  keep = TRUE,
+#                  step.pattern = dtw::symmetricP2)
+# dtw::dtwPlotThreeWay(align)
+# P = Matrix::sparseMatrix(align$index1,
+#                          align$index2)
+# W = warp2weight(P)
+# a = fitted(forecast::ets(W))
+# plot(ts(a))
 
 
 
