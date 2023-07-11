@@ -199,46 +199,54 @@ print(job.end - job.start)
 
 
 ## Results ---------------------------------------------------------------------
-folder = "./data/bond/"
-file.list = list.files(folder)
+# folder = "./data/bond/"
+# file.list = list.files(folder)
+# 
+# results = NULL
+# for (file in file.list) {
+#   print(file)
+#   df = readRDS(paste0(folder, file))
+#   treat_time = as.numeric(strsplit(strsplit(file, "[.]")[[1]][1], "_")[[1]][2])
+#   mse = future_map2(
+#     as.list(1:length(df)),
+#     df,
+#     ~{
+#       id = .x
+#       item = .y
+#       item$mse$id = id
+#       item$mse$diff = 0
+#       item$mse$error20 = 0
+#       for (i in 1:4) {
+#         unit = item$mse$unit[i]
+#         error = (item$results.TFDTW.synth[[unit]]$res.synth.raw$value -
+#                    item$results.TFDTW.synth[[unit]]$res.synth.TFDTW$synthetic)
+#         difference = (item$results.TFDTW.synth[[unit]]$res.synth.raw$synthetic -
+#           item$results.TFDTW.synth[[unit]]$res.synth.TFDTW$synthetic)
+#         msd = mean((difference[treat_time:(treat_time + 23)])^2, na.rm = TRUE)
+#         item$mse$diff[i] = msd
+#         error20 = mean((error[(treat_time-20):(treat_time-1)])^2, na.rm = TRUE)
+#         item$mse$error20[i] = error20
+#       }
+#       item$mse
+#     }
+#   ) %>%
+#     do.call("rbind", .)
+#   mse$file = file
+#   results[[file]] = mse
+# }
+# 
+# results = results %>%
+#   do.call("rbind", .) %>%
+#   `rownames<-`(NULL)
+# 
+# saveRDS(results, "./data/bond_results.Rds")
+results = readRDS("./data/bond_results.Rds")
 
-results = NULL
-for (file in file.list) {
-  print(file)
-  df = readRDS(paste0(folder, file))
-  treat_time = as.numeric(strsplit(strsplit(file, "[.]")[[1]][1], "_")[[1]][2])
-  mse = future_map2(
-    as.list(1:length(df)),
-    df,
-    ~{
-      id = .x
-      item = .y
-      item$mse$id = id
-      item$mse$diff = 0
-      for (i in 1:4) {
-        unit = item$mse$unit[i]
-        difference = (item$results.TFDTW.synth[[unit]]$res.synth.raw$synthetic - 
-          item$results.TFDTW.synth[[unit]]$res.synth.TFDTW$synthetic)
-        msd = mean((difference[treat_time:(treat_time + 23)])^2, na.rm = TRUE)
-        item$mse$diff[i] = msd
-      }
-      item$mse
-    }
-  ) %>% 
-    do.call("rbind", .)
-  mse$file = file
-  results[[file]] = mse
-}
-
-results = results %>% 
-  do.call("rbind", .) %>% 
-  `rownames<-`(NULL)
-
-
+target = "TIP"
 mse = results %>% 
-  filter(unit == "INXG.L") %>% 
+  filter(unit == target) %>% 
   group_by(file) %>% 
-  filter(mse.preT.TFDTW == min(mse.preT.TFDTW)) %>% 
+  filter(error20 == min(error20)) %>% 
   filter(id == min(id))
 
 data_monthly %>% 
@@ -246,19 +254,26 @@ data_monthly %>%
   geom_line() +
   geom_vline(xintercept = 116)
 
-df = readRDS("./data/bond/bond_110.Rds")[[75]]
+treat_t = 119
+id = 4
+#TIP 110 75, 119 4, 111 5, 
+df = readRDS(paste0("./data/bond/bond_", treat_t, ".Rds"))[[id]] 
 
 rbind(data.frame(time = 1:155,
-                 value = df$results.TFDTW.synth$TIP$res.synth.raw$value - 
-                   df$results.TFDTW.synth$TIP$res.synth.raw$synthetic,
+                 value = df$results.TFDTW.synth[[target]]$res.synth.raw$value - 
+                   df$results.TFDTW.synth[[target]]$res.synth.raw$synthetic,
                  unit = "sc"),
       data.frame(time = 1:155,
-                 value = df$results.TFDTW.synth$TIP$res.synth.raw$value - 
-                   df$results.TFDTW.synth$TIP$res.synth.TFDTW$synthetic,
+                 value = df$results.TFDTW.synth[[target]]$res.synth.raw$value - 
+                   df$results.TFDTW.synth[[target]]$res.synth.TFDTW$synthetic,
                  unit = "dsc")) %>% 
   ggplot(aes(x = time, y = value, color = unit)) +
   geom_line()  +
-  geom_vline(xintercept = 110)
+  ylab("Observed - Synthetic Control") +
+  labs(color = "") +
+  geom_vline(xintercept = treat_t) +
+  scale_x_continuous(breaks = c(0, 48, 96, 144),
+                     labels = c("2010", "2014", "2018", "2022"))
 
 # rbind(data.frame(time = 1:155,
 #                  value = df$results.TFDTW.synth$TIP$res.synth.raw$value,
