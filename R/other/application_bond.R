@@ -1,6 +1,6 @@
-args = commandArgs(trailingOnly=TRUE)
-treat_time  = as.integer(args[1])
-job.start = Sys.time()
+# args = commandArgs(trailingOnly=TRUE)
+# treat_time  = as.integer(args[1])
+# job.start = Sys.time()
 
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
@@ -198,26 +198,90 @@ print(job.end - job.start)
 
 
 
-## Test ------------------------------------------------------------------------
-# # plot
-# data_monthly %>%
+## Results ---------------------------------------------------------------------
+folder = "./data/bond/"
+file.list = list.files(folder)
+
+results = NULL
+for (file in file.list) {
+  print(file)
+  df = readRDS(paste0(folder, file))
+  treat_time = as.numeric(strsplit(strsplit(file, "[.]")[[1]][1], "_")[[1]][2])
+  mse = future_map2(
+    as.list(1:length(df)),
+    df,
+    ~{
+      id = .x
+      item = .y
+      item$mse$id = id
+      item$mse$diff = 0
+      for (i in 1:4) {
+        unit = item$mse$unit[i]
+        difference = (item$results.TFDTW.synth[[unit]]$res.synth.raw$synthetic - 
+          item$results.TFDTW.synth[[unit]]$res.synth.TFDTW$synthetic)
+        msd = mean((difference[treat_time:(treat_time + 23)])^2, na.rm = TRUE)
+        item$mse$diff[i] = msd
+      }
+      item$mse
+    }
+  ) %>% 
+    do.call("rbind", .)
+  mse$file = file
+  results[[file]] = mse
+}
+
+results = results %>% 
+  do.call("rbind", .) %>% 
+  `rownames<-`(NULL)
+
+
+mse = results %>% 
+  filter(unit == "INXG.L") %>% 
+  group_by(file) %>% 
+  filter(mse.preT.TFDTW == min(mse.preT.TFDTW)) %>% 
+  filter(id == min(id))
+
+data_monthly %>% 
+  ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line() +
+  geom_vline(xintercept = 116)
+
+df = readRDS("./data/bond/bond_110.Rds")[[75]]
+
+rbind(data.frame(time = 1:155,
+                 value = df$results.TFDTW.synth$TIP$res.synth.raw$value - 
+                   df$results.TFDTW.synth$TIP$res.synth.raw$synthetic,
+                 unit = "sc"),
+      data.frame(time = 1:155,
+                 value = df$results.TFDTW.synth$TIP$res.synth.raw$value - 
+                   df$results.TFDTW.synth$TIP$res.synth.TFDTW$synthetic,
+                 unit = "dsc")) %>% 
+  ggplot(aes(x = time, y = value, color = unit)) +
+  geom_line()  +
+  geom_vline(xintercept = 110)
+
+# rbind(data.frame(time = 1:155,
+#                  value = df$results.TFDTW.synth$TIP$res.synth.raw$value,
+#                  unit = "value"),
+#       data.frame(time = 1:155,
+#                  value = df$results.TFDTW.synth$TIP$res.synth.raw$synthetic,
+#                  unit = "sc"),
+#       data.frame(time = 1:155,
+#                  value = df$results.TFDTW.synth$TIP$res.synth.TFDTW$synthetic,
+#                  unit = "dsc")) %>% 
 #   ggplot(aes(x = time, y = value, color = unit)) +
-#   geom_line()
+#   geom_line()  +
+#   geom_vline(xintercept = 111)
 # 
-# # dtw
-# df_a = data$TIP
-# df_b = data$INXG.L
-# 
-# align = dtw::dtw(diff(t.normalize(df_a)),
-#                  diff(t.normalize(df_b)),
-#                  keep = TRUE,
-#                  step.pattern = dtw::symmetricP2)
-# dtw::dtwPlotThreeWay(align)
-# P = Matrix::sparseMatrix(align$index1,
-#                          align$index2)
-# W = warp2weight(P)
-# a = fitted(forecast::ets(W))
-# plot(ts(a))
-
-
-
+# rbind(data.frame(time = 1:155,
+#                  value = df$res.synth.target.raw$value,
+#                  unit = "value"),
+#       data.frame(time = 1:155,
+#                  value = df$res.synth.target.raw$synthetic,
+#                  unit = "sc"),
+#       data.frame(time = 1:155,
+#                  value = df$res.synth.target.TFDTW$synthetic,
+#                  unit = "dsc")) %>% 
+#   ggplot(aes(x = time, y = value, color = unit)) +
+#   geom_line()  +
+#   geom_vline(xintercept = 29)
