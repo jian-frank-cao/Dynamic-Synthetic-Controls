@@ -252,10 +252,12 @@ mse = results %>%
 data_monthly %>% 
   ggplot(aes(x = time, y = value, color = unit)) +
   geom_line() +
-  geom_vline(xintercept = 116)
+  geom_vline(xintercept = 123) +
+  scale_x_continuous(breaks = c(0, 48, 96, 144),
+                     labels = c("2010", "2014", "2018", "2022"))
 
-treat_t = 119
-id = 4
+treat_t = 122
+id = 214
 #TIP 110 75, 119 4, 111 5, 
 df = readRDS(paste0("./data/bond/bond_", treat_t, ".Rds"))[[id]] 
 
