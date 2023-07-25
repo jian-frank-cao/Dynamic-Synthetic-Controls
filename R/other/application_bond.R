@@ -54,7 +54,9 @@ data_monthly = data %>%
          unit = as.character(variable),
          id = as.numeric(variable)) %>% 
   group_by(id, unit, month) %>% 
-  summarise(value = mean(value, na.rm = T)) %>% 
+  # summarise(value = mean(value, na.rm = T)) %>% 
+  summarise(value = first(value)) %>% 
+  # summarise(value = last(value)) %>% 
   mutate(time = 1:155,
          value_raw = value) %>% 
   ungroup() %>% 
