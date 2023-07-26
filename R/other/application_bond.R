@@ -55,8 +55,8 @@ data_monthly = data %>%
          id = as.numeric(variable)) %>% 
   group_by(id, unit, month) %>% 
   # summarise(value = mean(value, na.rm = T)) %>% 
-  summarise(value = first(value)) %>% 
-  # summarise(value = last(value)) %>% 
+  # summarise(value = first(value)) %>% 
+  summarise(value = last(value)) %>%
   mutate(time = 1:155,
          value_raw = value) %>% 
   ungroup() %>% 
@@ -258,10 +258,10 @@ data_monthly %>%
   scale_x_continuous(breaks = c(0, 48, 96, 144),
                      labels = c("2010", "2014", "2018", "2022"))
 
-treat_t = 122
-id = 214
+treat_t = 128
+id = 71
 #TIP 110 75, 119 4, 111 5, 
-df = readRDS(paste0("./data/bond/bond_", treat_t, ".Rds"))[[id]] 
+df = readRDS(paste0("./data/bond2/bond_last_", treat_t, ".Rds"))[[id]] 
 
 rbind(data.frame(time = 1:155,
                  value = df$results.TFDTW.synth[[target]]$res.synth.raw$value - 
