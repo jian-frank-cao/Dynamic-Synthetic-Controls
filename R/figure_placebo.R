@@ -40,12 +40,12 @@ fig_all = ggpubr::ggarrange(fig_basque + ggpubr::rremove("ylab") +
                             align = "hv")
 
 fig_all = ggpubr::annotate_figure(fig_all,
-                                  left = grid::textGrob("TE (y - Synthetic Control)",
+                                  left = grid::textGrob("Treatment Effect (TE)",
                                                         rot = 90, vjust = 1, 
                                                         gp = grid::gpar(cex = 1.3)),
                                   bottom = grid::textGrob("Time", 
                                                           gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/placebo_all.pdf",
+ggsave("./figures/placebo_all_230928.pdf",
        fig_all, width = 7, height = 7,
        units = "in", limitsize = FALSE)

@@ -309,6 +309,7 @@ saveRDS(df.gap, "./data/df.gap_germany.Rds")
 
 
 # plot
+set.seed(20230901)
 df.target = readRDS("./data/df.target_germany.Rds")
 df.gap = readRDS("./data/df.gap_germany.Rds")
 
@@ -325,12 +326,13 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
 
-colors = c("TE (SC)" = color.sc,
-           "TE (DSC)" = color.dsc)
+colors = c("Target TE (SC)" = color.sc,
+           "Target TE (DSC)" = color.dsc)
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
 
+set.seed(20230812)
 group.sample = sample(unique(df.gap$group), 100)
 
 fig.placebo = df.gap %>%
@@ -348,9 +350,9 @@ fig.placebo = df.gap %>%
                   ymax = quantile.dsc.975,
                   fill="95% Quantile (DSC)"),
               data = df.quantile, alpha=0.5) +
-  geom_line(aes(y = gap.sc, color = "TE (SC)"),
+  geom_line(aes(y = gap.sc, color = "Target TE (SC)"),
             data = df.target, size = 1) +
-  geom_line(aes(y = gap.dsc, color = "TE (DSC)"), 
+  geom_line(aes(y = gap.dsc, color = "Target TE (DSC)"), 
             data = df.target, size = 1) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
@@ -362,7 +364,7 @@ fig.placebo = df.gap %>%
            label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +
-  ylab("TE(y - Synthetic Control)") +
+  ylab("Treatment Effect") +
   theme_bw() +
   theme(legend.position = c(0.25, 0.2),
         legend.box = "horizontal",

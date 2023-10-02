@@ -105,21 +105,21 @@ fig_left = df_left %>%
              color = color_main, size = size_point) +
   geom_point(aes(x = time[150], y = value[300]),
              color = color_main, size = size_point) +
-  annotate("text", x = df_left$time[26] + 2, y = df_left$value[26] + 0.5, label = "y[3]", fontface = "bold",
+  annotate("text", x = df_left$time[26] + 5, y = df_left$value[26] + 0.5, label = expression(y[1*","*3]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[45], y = df_left$value[195] - 0.5, label = expression(y[j*","*5]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[57], y = df_left$value[207] - 0.5, label = expression(y[j*","*6]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[139] - 2, y = df_left$value[139] + 0.7, label = expression(y[1*","*13]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[150], y = df_left$value[150] + 0.7, label = expression(y[1*","*14]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = df_left$time[150] + 7, y = df_left$value[300] - 0.5, label = expression(y[j*","*14]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = 75, y = -1.5, label = expression(bold(y)[j]), fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = df_left$time[45], y = df_left$value[195] - 0.5, label = "x[5]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = df_left$time[57], y = df_left$value[207] - 0.5, label = "x[6]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = df_left$time[139], y = df_left$value[139] + 0.7, label = "y[13]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = df_left$time[150], y = df_left$value[150] + 0.7, label = "y[14]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = df_left$time[150] + 5, y = df_left$value[300] - 0.5, label = "x[14]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = 75, y = -1.5, label = "X", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = 75, y = 6.5, label = "Y", fontface = "bold",
+  annotate("text", x = 75, y = 6.5, label = expression(bold(y)[1]), fontface = "bold",
            size = 6, col = color_main, parse=TRUE) +
   ggtitle("DTW") +
   theme_minimal() +
@@ -169,20 +169,21 @@ fig_right = df_right %>%
   geom_segment(aes(x = 14, y = 12.6, xend = 14, yend = 0.5), 
                size = 1, color = "grey30", color = color_main, 
                arrow = arrow(length = unit(0.2, "cm"))) +
-  annotate("text", x = -0.1, y = 3, label = "y[3]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = 5, y = -0.1, label = "x[5]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = 6, y = -0.1, label = "x[6]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = -0.4, y = 14, label = "y[14]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = -0.4, y = 13, label = "y[13]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  annotate("text", x = 14, y = -0.1, label = "x[14]", fontface = "bold",
-           size = 6, col = color_main, parse=TRUE) +
-  xlab("X") +
-  ylab("Y") +
+  annotate("text", x = -0.4, y = 3, label = expression(y[1*","*3]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = 4.8, y = -0.1, label = expression(y[j*","*5]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = 6.2, y = -0.1, label = expression(y[j*","*6]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = -0.5, y = 14, label = expression(y[1*","*14]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = -0.5, y = 13, label = expression(y[1*","*13]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  annotate("text", x = 14, y = -0.1, label = expression(y[j*","*14]), fontface = "bold",
+           size = 5, col = color_main, parse=TRUE) +
+  xlab(expression(bold(y)[j])) +
+  ylab(expression(bold(y)[1])) +
+  xlim(c(-0.6, 15)) +
   ggtitle("Warping Path") +
   theme_minimal() +
   theme(legend.position = "none",

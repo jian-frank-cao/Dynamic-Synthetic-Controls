@@ -212,10 +212,18 @@ fig = df %>%
   ggplot(aes(x = time, y = value, color = unit, linetype = unit)) +
   geom_line(size = 0.7) + 
   scale_linetype_manual(name = NULL,
+                        labels = c(expression(paste("Unit ", bold(y)[1])),
+                                   expression(paste("Unit ", bold(y)[2])),
+                                   expression(paste("Unit ", bold(y)[3])),
+                                   "SC", "DSC"),
                         values = c("Unit T" = "solid", "Unit C1" = "dashed",
                                    "Unit C2" = "dotted", "SC" = "solid",
                                    "DSC" = "solid")) +
   scale_color_manual(name = NULL,
+                     labels = c(expression(paste("Unit ", bold(y)[1])),
+                                expression(paste("Unit ", bold(y)[2])),
+                                expression(paste("Unit ", bold(y)[3])),
+                                "SC", "DSC"),
                      values = c("Unit T" = "#4a4e4d", "Unit C1" = "#aaaaaa",
                                 "Unit C2" = "#aaaaaa", "SC" = "#3da4ab",
                                 "DSC" = "#fe8a71")) +
@@ -235,6 +243,7 @@ fig = df %>%
   theme_minimal() +
   theme(legend.position=c(0.23,0.2), 
         legend.box = "horizontal",
+        legend.text.align = 0,
         legend.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),

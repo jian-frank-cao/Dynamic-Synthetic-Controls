@@ -248,9 +248,13 @@ color.dsc = "#fe4a49"
 # color.sc = "grey70"
 # color.dsc = "grey30"
 
-colors = c("Treatment Effect" = "grey20",
-           "Mean TE (SC)" = color.sc,
-           "Mean TE (DSC)" = color.dsc)
+colors = c("TE" = "grey20",
+           "Avg. TE (SC)" = color.sc,
+           "Avg. TE (DSC)" = color.dsc)
+
+linetypes = c("TE" = "solid",
+           "Avg. TE (SC)" = "dashed",
+           "Avg. TE (DSC)" = "dashed")
 
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
@@ -265,21 +269,22 @@ fig.big = df.gap %>%
                   fill = "95% Quantile (SC)"), data = df.quantile, alpha=0.6) +
   geom_ribbon(aes(ymin = quantile.dsc.025, ymax = quantile.dsc.975,
                   fill = "95% Quantile (DSC)"), data = df.quantile, alpha=0.6) +
-  geom_line(aes(x = time, y = treatment, color = "Treatment Effect"),
-            data = df.quantile, alpha=1) +
-  geom_line(aes(x = time, y = mean.sc, color = "Mean TE (SC)"),
-            data = df.quantile, alpha=1) +
-  geom_line(aes(x = time, y = mean.dsc, col = "Mean TE (DSC)"),
-            data = df.quantile, alpha=1) +
+  geom_line(aes(x = time, y = treatment, color = "TE", linetype = "TE"),
+            data = df.quantile, size = 1) +
+  geom_line(aes(x = time, y = mean.sc, color = "Avg. TE (SC)", linetype = "Avg. TE (SC)"),
+            data = df.quantile, size = 0.6) +
+  geom_line(aes(x = time, y = mean.dsc, color = "Avg. TE (DSC)", linetype = "Avg. TE (DSC)"),
+            data = df.quantile, size = 0.6) +
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
+  scale_linetype_manual(name = NULL, values = linetypes) +
   geom_vline(xintercept = 61, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 59, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
-  ylab("Gap (y - Synthetic Control)") +
+  ylab("Treatment Effect (TE)") +
   theme_bw() + 
   theme(legend.position=c(0.3,0.15), 
         legend.box = "horizontal",

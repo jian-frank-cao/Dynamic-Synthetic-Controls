@@ -38,6 +38,10 @@ df.sim = rbind(
              value = data %>% filter(unit == "A") %>% .[["value"]] - synth.dsc)
 )
 
+df.sim$unit = factor(df.sim$unit, levels = c("Unit T", "Unit C1", "Unit C2",
+                                             "Unit C3", "SC", "DSC", "TE",
+                                             "Est. TE (SC)", "Est. TE (DSC)"))
+
 
 ## plot figure
 fig.1 = df.sim %>% 
@@ -50,6 +54,10 @@ fig.1 = df.sim %>%
   #                       values = c("Unit T" = "solid", "Unit C1" = "dashed",
   #                                  "Unit C2" = "dotted", "Unit C3" = "dotdash")) +
   scale_color_manual(name = NULL,
+                     labels = c(expression(paste("Unit ", bold(y)[2])),
+                                expression(paste("Unit ", bold(y)[3])),
+                                expression(paste("Unit ", bold(y)[4])),
+                                expression(paste("Unit ", bold(y)[1]))),
                      values = c("Unit T" = "grey10", "Unit C1" = "grey60",
                                 "Unit C2" = "grey70", "Unit C3" = "grey80")) +
   geom_vline(xintercept = 61, linetype="dashed", col = "grey20") +
@@ -62,6 +70,7 @@ fig.1 = df.sim %>%
   theme_bw() +
   theme(legend.position = c(0.4,0.4),
         legend.box = "horizontal",
+        legend.text.align = 0,
         legend.background = element_rect(fill=NA))
 
 fig.2 = df.sim %>% 

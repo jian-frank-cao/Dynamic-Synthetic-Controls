@@ -182,6 +182,14 @@ df$dtwC1[match_pairsA$ind_r + 3000] = 1:nrow(match_pairsA)
 df$dtwC2[match_pairsC$ind_r + 2000 + cutoff] = 1:nrow(match_pairsC)
 df$dtwC2[match_pairsC$ind_q + 3500] = 1:nrow(match_pairsC)
 
+# Creating the labels as expressions
+label1 <- expression("1. Match " * bold(y)[1*","*pre]~
+                       " and " * bold(y)[j*","*pre])
+label2 <- expression("2. Match " * bold(y)[j*","*pre]~
+                       " and " * bold(y)[j*","*post])
+label3 <- expression("3. Warp " * bold(y)[j*","*pre]~
+                       " and " * bold(y)[j*","*post])
+
 
 ## dtwA ------------------------------------------------------------------------
 fig.dtwA = df %>%
@@ -204,6 +212,8 @@ fig.dtwA = df %>%
            size = 5, col = "#fe4a49", parse=TRUE) +
   annotate("text", x = 250, y = 15, label = "P[pre]",
            size = 6, col = "grey20", parse = TRUE) +
+  annotate("text", x = 375, y = df$value[t_treat]+10, label = label1, parse = TRUE, 
+           hjust = 1, vjust = 1, size = 7, colour = "grey20") +
   coord_cartesian(ylim = c(0, 45), xlim = c(-150, 1150)) +
   # ggtitle(expression(paste("1. Match ", Y[pre], " and ", X[pre]))) +
   theme_bw() +
@@ -265,6 +275,8 @@ fig.dtwB = df %>%
            size = 5, col = "#fe4a49", parse=TRUE) +
   annotate("text", x = 500, y = 3, label = "P[Q%->%R]",
            size = 6, col = "grey20", parse = TRUE) +
+  annotate("text", x = 380, y = df$value[t_treat]+10, label = label2, parse = TRUE, 
+           hjust = 1, vjust = 1, size = 7, colour = "grey20") +
   scale_color_manual(name = NULL, values = c("grey80", "#fe4a49")) +
   coord_cartesian(ylim = c(-3, 45), xlim = c(-150, 1150)) +
   # ggtitle(expression(paste("2. Match ", X[pre], " and ", X[post]))) +
@@ -313,7 +325,11 @@ fig.dtwC = df %>%
            size = 6, col = "grey20", parse=TRUE) +
   annotate("text", x = 750, y = 14, label = "P[post]==P[Q%->%R](P[pre])",
            size = 6, col = "grey20", parse=TRUE) +
-  scale_color_manual(name = NULL, labels = c("Y", "X", expression(paste(X^w))),
+  annotate("text", x = 360, y = df$value[t_treat]+10, label = label3, parse = TRUE, 
+           hjust = 1, vjust = 1, size = 7, colour = "grey20") +
+  scale_color_manual(name = NULL, labels = c(expression(bold(y)[1]),
+                                             expression(bold(y)[j]),
+                                             expression(bold(y)[j]^w)),
                      values = c("grey80","#fe4a49", # "#f4b6c2"
                                   "#2ab7ca")) + # "#adcbe3"
   # scale_color_manual(name = NULL, values = c("grey80","grey80","#fe4a49",
@@ -323,6 +339,7 @@ fig.dtwC = df %>%
   theme_bw() +
   theme(legend.position = c(0.92,0.6),
         legend.box = "horizontal",
+        legend.text.align = 0,
         legend.background = element_rect(fill=NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -333,20 +350,30 @@ fig.dtwC = df %>%
 
 
 ## Plot ------------------------------------------------------------------------
-fig.all = ggpubr::ggarrange(fig.dtwA,
-                            fig.dtwB,
-                            fig.dtwC,
-                            labels = c("1. Match Ypre and Xpre",
-                                       "2. Match Xpre and Xpost",
-                                       "3. Warp Xpre and Xpost"),
-                            label.x = 0.1,
-                            label.y = 0.9,
-                            hjust = c(0, 0, 0),
-                            font.label = list(size = 16, color = "grey20",
-                                              face = "bold"),
-                            ncol = 1, nrow = 3,
-                            # common.legend = TRUE, legend = "bottom",
-                            align = "hv")
+# fig.all = ggpubr::ggarrange(fig.dtwA,
+#                             fig.dtwB,
+#                             fig.dtwC,
+#                             labels = c("1. Match Ypre and Xpre",
+#                                        "2. Match Xpre and Xpost",
+#                                        "3. Warp Xpre and Xpost"),
+#                             label.x = 0.1,
+#                             label.y = 0.9,
+#                             hjust = c(0, 0, 0),
+#                             font.label = list(size = 16, color = "grey20",
+#                                               face = "bold"),
+#                             ncol = 1, nrow = 3,
+#                             # common.legend = TRUE, legend = "bottom",
+#                             align = "hv")
+
+
+# Arranging plots without labels
+fig.all <- ggpubr::ggarrange(
+  fig.dtwA,
+  fig.dtwB,
+  fig.dtwC,
+  ncol = 1, nrow = 3,
+  align = "hv"
+)
 
 ggsave("./figures/figure_TFDTW.pdf",
        fig.all, width = 8, height = 8,

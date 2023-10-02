@@ -355,6 +355,7 @@ colors = c("TE (SC)" = color.sc,
 fills = c("95% Quantile (SC)" = color.sc,
           "95% Quantile (DSC)" = color.dsc)
 
+set.seed(20230812)
 group.sample = sample(unique(df.gap$group), 100)
 
 fig.placebo = df.gap %>%
