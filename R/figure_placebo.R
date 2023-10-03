@@ -46,6 +46,6 @@ fig_all = ggpubr::annotate_figure(fig_all,
                                   bottom = grid::textGrob("Time", 
                                                           gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/placebo_all.eps",
-       plot = fig_all, device = Cairo::cairo_eps, width = 7, height = 7,
+ggsave("./figures/placebo_all.pdf",
+       fig_all,  width = 7, height = 7,
        units = "in", limitsize = FALSE)
