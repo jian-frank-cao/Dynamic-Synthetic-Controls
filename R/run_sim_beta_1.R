@@ -309,7 +309,7 @@ fig.small = df.t.test %>%
                      labels = c("0", "0.5", "1")) +
   scale_y_continuous(breaks = c(-10, -5, 0)) +
   coord_cartesian(ylim = c(-10, 0), xlim = c(0, 1)) +
-  xlab(expression(beta)) +
+  xlab(expression(psi)) +
   ylab("t") +
   theme_bw() +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
