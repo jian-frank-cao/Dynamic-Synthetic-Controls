@@ -137,14 +137,14 @@ args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.3))
 
-args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
-                                  # data = data,
-                                  args.TFDTW.synth = args.TFDTW.synth,
-                                  ## 2nd
-                                  detailed.output = TRUE,
-                                  all.units.parallel = FALSE)
-
 for (index in 1:length(data.list)) {
+  args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
+                                    # data = data,
+                                    args.TFDTW.synth = args.TFDTW.synth,
+                                    ## 2nd
+                                    detailed.output = TRUE,
+                                    all.units.parallel = FALSE)
+  
   args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
   results = SimDesign::quiet(
     grid.search(filter.width.range = filter.width.range,
