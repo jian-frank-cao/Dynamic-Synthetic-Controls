@@ -1,3 +1,7 @@
+args = commandArgs(trailingOnly=TRUE)
+i = as.integer(args[1])
+job.start = Sys.time()
+
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
 checkpoint("2022-04-01")
@@ -83,14 +87,14 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
           warpWITHweight(pred.target[res$cutoff:length(pred.target)],
                          res$avg.weight)[-1]
         )
-        item[[pred.var]] = pred.target[1:length(y.raw)]
+        item[[pred.var]] = pred.target.warped[1:length(y.raw)]
       }
     }
     
     df.synth = item %>% 
       mutate(time = 1:length(y.raw) + start.time - 1,
              unit = unit)
-
+    
     fig.warp = NULL
     if (plot.figures) {
       fig.warp = plot.warped(unit = unit, dependent = dependent,
@@ -123,6 +127,7 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
            unit = dependent,
            value_warped = y.raw)
   df.synth = rbind(df.synth, df.dependent)
+  df.synth = data.frame(df.synth)
   
   args.synth[["df"]] = df.synth
   args.synth[["dependent.id"]] = dependent.id
@@ -168,7 +173,6 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
 }
 
 
-
 ## Basque Terrorism Data -------------------------------------------------------
 data(basque, package = "Synth")
 data = basque
@@ -182,7 +186,8 @@ data = data %>% mutate(invest_ratio = invest/value,
                        value_raw = value) %>% 
   group_by(unit) %>% 
   mutate(across(pred.vars, ~impute_values(.))) %>% 
-  ungroup()
+  ungroup() %>% 
+  data.frame
 
 # rescale
 df.rescale = data %>%
@@ -298,26 +303,50 @@ args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.3))
 
-for (index in 1:length(data.list)) {
-  args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
-                                    # data = data,
-                                    args.TFDTW.synth = args.TFDTW.synth,
-                                    ## 2nd
-                                    detailed.output = TRUE,
-                                    all.units.parallel = FALSE)
-  
-  args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-  results = SimDesign::quiet(
-    grid.search(filter.width.range = filter.width.range,
-                k.range = k.range,
-                step.pattern.range = step.pattern.range,
-                args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-                grid.search.parallel = grid.search.parallel)
-  )
-  
-  saveRDS(results, paste0("./data/placebo/basque/res_basque_", index, ".Rds"))
-  print(index)
-}
+
+args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
+                                  # data = data,
+                                  args.TFDTW.synth = args.TFDTW.synth,
+                                  ## 2nd
+                                  detailed.output = TRUE,
+                                  all.units.parallel = FALSE)
+
+cat("Basque data set ", i, "...")
+args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+results = SimDesign::quiet(
+  grid.search(filter.width.range = filter.width.range,
+              k.range = k.range,
+              step.pattern.range = step.pattern.range,
+              args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+              grid.search.parallel = grid.search.parallel)
+)
+
+saveRDS(results, paste0("./data/pred/basque/res_basque_", index, ".Rds"))
+cat("Done.\n")
+
+job.end = Sys.time()
+print(job.end - job.start)
+
+# for (index in 1:length(data.list)) {
+#   args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
+#                                     # data = data,
+#                                     args.TFDTW.synth = args.TFDTW.synth,
+#                                     ## 2nd
+#                                     detailed.output = TRUE,
+#                                     all.units.parallel = FALSE)
+#   
+#   args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+#   results = SimDesign::quiet(
+#     grid.search(filter.width.range = filter.width.range,
+#                 k.range = k.range,
+#                 step.pattern.range = step.pattern.range,
+#                 args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+#                 grid.search.parallel = grid.search.parallel)
+#   )
+#   
+#   saveRDS(results, paste0("./data/placebo/basque/res_basque_", index, ".Rds"))
+#   print(index)
+# }
 
 
 # ## Placebo ---------------------------------------------------------------------

@@ -21,29 +21,29 @@ set.seed(20220407)
 ## Function --------------------------------------------------------------------
 # sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
 #                     t.treat = 60, shock = 10, arima.order = c(1,1,0),
-#                     ar.x = 0.6, ma.x = NULL, n.SMA = 1, n.diff = 1, 
+#                     ar.x = 0.6, ma.x = NULL, n.SMA = 1, n.diff = 1,
 #                     speed.upper = 2, speed.lower = 0.5,
-#                     treat.last = 0.1, reweight = TRUE, rescale = TRUE, 
+#                     treat.last = 0.1, reweight = TRUE, rescale = TRUE,
 #                     rescale.multiplier = 20, beta = 1){
 #   # common exogenous shocks
 #   x = arima.sim(list(order = arima.order, ar = ar.x, ma = ma.x),
 #                 n = length + extra.x + n.SMA + n.diff - 2)
-#   
+# 
 #   # smoothing
 #   x.SMA = ts(TTR::SMA(x, n = n.SMA)[-(1:(n.SMA - 1))])
-#   
+# 
 #   # difference
 #   x.diff = diff(x.SMA, difference = n.diff)
 #   pos.diff = x.diff > 0
 #   if (reweight) {
 #     pos.ratio = sum(pos.diff)/sum(!pos.diff)
 #   }
-#   
+# 
 #   # speeds
 #   log.speeds = seq(log(speed.lower), log(speed.upper), length.out = n)
 #   rnd.ind = sample(c(1:round(0.3*n), round(0.7*n):n), size = 1)
 #   log.speeds = c(log.speeds[rnd.ind], log.speeds[-rnd.ind])
-#   
+# 
 #   # simulate
 #   data = NULL
 #   for (i in 1:n) {
@@ -61,18 +61,18 @@ set.seed(20220407)
 #       pos.speed = exp(log.speed)
 #       neg.speed = exp(-log.speed)
 #     }
-#     
+# 
 #     phi.shape = rep(NA, length.out = length + extra.x)
 #     phi.shape[pos.diff] = pos.speed
 #     phi.shape[!pos.diff] = neg.speed
-#     
+# 
 #     log.phi.mean = mean(log(phi.shape), na.rm = T)
 #     log.phi.sd = sd(log(phi.shape), na.rm = T)
-#     
+# 
 #     phi.random = exp(rnorm(n = length + extra.x,
 #                            mean = log.phi.mean,
 #                            sd = log.phi.sd))
-#     
+# 
 #     # treatment
 #     if (i == 1) {
 #       treatment = c(rep(0, t.treat),
@@ -81,17 +81,17 @@ set.seed(20220407)
 #     }else{
 #       treatment = 0
 #     }
-#     
+# 
 #     phi = beta*phi.shape + (1 - beta)*phi.random
-#     
+# 
 #     y = warpWITHweight(x[1:(length + extra.x)], phi)[1:length]
-#     
+# 
 #     if (rescale) {
 #       y = minmax.normalize(y, reference = y[1:t.treat])*rescale.multiplier
 #     }
-#     
+# 
 #     y = y + treatment
-#     
+# 
 #     data = rbind(data,
 #                  data.frame(id = i,
 #                             unit = LETTERS[i],
@@ -106,34 +106,39 @@ set.seed(20220407)
 
 ## Data Simulation -------------------------------------------------------------
 # n.simulation = 150
-# length = 20
+# length = 100
 # n = 10
 # beta = 1
 # shock = 10
 # 
 # # simulate
-# data.list.n20 = NULL
+# data.list = NULL
 # for (i in 1:n.simulation) {
-#   data.list.n20[[i]] = sim.data(n = n, length = length,
-#                                 t.treat = 12, shock = shock, ar.x = 0.6,
-#                                 n.SMA = 1, n.diff = 1,
-#                                 speed.upper = 2,
-#                                 speed.lower = 0.5,
-#                                 treat.last = 0.15,
-#                                 reweight = TRUE,
-#                                 rescale = TRUE,
-#                                 rescale.multiplier = 10,
-#                                 beta = beta)
+#   data.sim = sim.data(n = n, length = length,
+#                       t.treat = 60, shock = shock, ar.x = 0.6,
+#                       n.SMA = 1, n.diff = 1,
+#                       speed.upper = 2,
+#                       speed.lower = 0.5,
+#                       treat.last = 0.15,
+#                       reweight = TRUE,
+#                       rescale = TRUE,
+#                       rescale.multiplier = 10,
+#                       beta = beta)
+#   data.list[[i]] = data.sim %>% 
+#     filter(time %in% c((1:20)*5)) %>% 
+#     group_by(unit) %>% 
+#     mutate(time = 1:20) %>% 
+#     ungroup
 # }
 # 
-# saveRDS(data.list.n20, paste0("./data/simul_data_beta1_n20.Rds"))
+# saveRDS(data.list, paste0("./data/simul_data_n20.Rds"))
 
-# data.list.n20[[15]] %>%
+# data.list[[12]] %>%
 #   ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line()
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta1_n20.Rds")
+data.list = readRDS("./data/simul_data_n20.Rds")
 
 # parameters
 filter.width.range = (1:3)*2+3
@@ -205,26 +210,27 @@ for (i in 19:length(data.list)) {
                 args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
                 grid.search.parallel = grid.search.parallel)
   )
-  saveRDS(results, paste0("./data/res_sim/n20/res_sim_n20_", i, ".Rds"))
+  saveRDS(results, paste0("./data/res_sim/n20_2/res_sim_n20_", i, ".Rds"))
   cat("Done.\n")
 }
 
 
-# ## Test result -----------------------------------------------------------------
-# folder = paste0("./data/res_sim/beta", beta, "/")
+## Test result -----------------------------------------------------------------
+# folder = paste0("./data/res_sim/n20/")
 # file.list = as.list(list.files(folder))
 # 
-# length = 100
-# treat_time = 60
-# n_mse = 10
+# length = 20
+# treat_time = 12
+# n_mse = 5
+# shock = 10
 # treatment = c(rep(0, treat_time),
-#               seq(0, shock, length.out = round(0.1*length)),
-#               rep(shock, round(0.9*length - treat_time)))
+#               seq(0, shock, length.out = round(0.15*length)),
+#               rep(shock, round(0.85*length - treat_time)))
 # 
-# pre.start = 51
-# pre.end = 60
-# post.start = 61
-# post.end = 70
+# pre.start = 7
+# pre.end = 12
+# post.start = 13
+# post.end = 17
 # 
 # # de.mse
 # df.mse = future_map2(
@@ -253,18 +259,18 @@ for (i in 19:length(data.list)) {
 #       }
 #     ) %>% do.call("rbind", .)
 #     mse$data.id = data.id
-#     
-#     mse %>% 
-#       top_n(-1, mse.preT.TFDTW) %>% 
+# 
+#     mse %>%
+#       top_n(-1, mse.preT.TFDTW) %>%
 #       top_n(-1, grid.id)
 #   }
 # ) %>% do.call("rbind", .)
 # 
-# saveRDS(df.mse, paste0("./data/df.mse_sim_beta_", beta, ".Rds"))
+# saveRDS(df.mse, paste0("./data/df.mse_sim_n20.Rds"))
 # 
 # # t.test for log(MSEdsc/MSEsc)
-# df.mse = readRDS(paste0("./data/df.mse_sim_beta_", beta, ".Rds"))
-# df.mse = df.mse %>% 
+# df.mse = readRDS(paste0("./data/df.mse_sim_n20.Rds"))
+# df.mse = df.mse %>%
 #   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw))
 # t.test(df.mse$log.ratio)
 # sum(df.mse$log.ratio<0)/nrow(df.mse)
@@ -272,8 +278,8 @@ for (i in 19:length(data.list)) {
 # 
 # ## Plot result -----------------------------------------------------------------
 # # df.gap
-# df.mse = readRDS(paste0("./data/df.mse_sim_beta_", beta, ".Rds"))
-# folder = paste0("./data/res_sim/beta", beta, "/")
+# df.mse = readRDS(paste0("./data/df.mse_sim_n20.Rds"))
+# folder = paste0("./data/res_sim/n20/")
 # file.list = as.list(list.files(folder))
 # results = file.list %>%
 #   future_map(
@@ -288,7 +294,7 @@ for (i in 19:length(data.list)) {
 #   data.id = df.mse$data.id[i]
 #   grid.id = df.mse$grid.id[i]
 #   df.gap[[i]] = data.frame(
-#     time = 1:100,
+#     time = 1:20,
 #     data.id = data.id,
 #     grid.id = grid.id,
 #     value = results[[data.id]][[grid.id]][["res.synth.target.raw"]][[1]],
@@ -306,18 +312,18 @@ for (i in 19:length(data.list)) {
 #     group = paste0(data.id, "-", grid.id)
 #   )
 # 
-# saveRDS(df.gap, paste0("./data/df.gap_sim_beta_", beta, ".Rds"))
+# saveRDS(df.gap, paste0("./data/df.gap_sim_n20.Rds"))
 # 
 # # plot
-# df.gap = readRDS(paste0("./data/df.gap_sim_beta_", beta, ".Rds"))
+# df.gap = readRDS(paste0("./data/df.gap_sim_n20.Rds"))
 # 
 # shock = 10
-# length = 100
-# treat_time = 60
-# n_mse = 10
+# length = 20
+# treat_time = 12
+# n_mse = 5
 # treatment = c(rep(0, treat_time),
-#               seq(0, shock, length.out = round(0.1*length)),
-#               rep(shock, round(0.9*length - treat_time)))
+#               seq(0, shock, length.out = round(0.15*length)),
+#               rep(shock, round(0.85*length - treat_time)))
 # 
 # df.quantile = df.gap %>%
 #   group_by(time) %>%
@@ -326,11 +332,11 @@ for (i in 19:length(data.list)) {
 #             quantile.sc.975 = quantile(gap.sc, 0.975, na.rm = T),
 #             quantile.sc.025 = quantile(gap.sc, 0.025, na.rm = T),
 #             quantile.dsc.975 = quantile(gap.dsc, 0.975, na.rm = T),
-#             quantile.dsc.025 = quantile(gap.dsc, 0.025, na.rm = T)) %>% 
+#             quantile.dsc.025 = quantile(gap.dsc, 0.025, na.rm = T)) %>%
 #   mutate(group = "quantile",
 #          treatment = treatment)
 # 
-# df.quantile[95:100, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
+# # df.quantile[95:100, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
 # 
 # 
 # color.sc = "#2ab7ca"
@@ -351,7 +357,7 @@ for (i in 19:length(data.list)) {
 # 
 # fig.big = df.gap %>%
 #   ggplot(aes(x = time, group = group)) +
-#   annotate("rect", xmin = 61, xmax = 70,
+#   annotate("rect", xmin = 12, xmax = 17,
 #            ymin = -25, ymax = 35, alpha = .3) +
 #   geom_line(aes(y = gap.sc), col = color.sc, alpha=0.1) +
 #   geom_line(aes(y = gap.dsc), col = color.dsc, alpha=0.1) +
@@ -368,47 +374,47 @@ for (i in 19:length(data.list)) {
 #   scale_color_manual(name = NULL, values = colors) +
 #   scale_fill_manual(name = NULL, values = fills) +
 #   scale_linetype_manual(name = NULL, values = linetypes) +
-#   geom_vline(xintercept = 61, linetype="dashed", col = "grey20") +
+#   geom_vline(xintercept = 12, linetype="dashed", col = "grey20") +
 #   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-#   annotate("text", x = 59, y = 25, label = "Treatment",
+#   annotate("text", x = 11, y = 25, label = "Treatment",
 #            col = "grey20", angle = 90) +
 #   coord_cartesian(ylim = c(-20, 30)) +
 #   xlab("Time") +
 #   ylab("Treatment Effect (TE)") +
-#   theme_bw() + 
-#   theme(legend.position=c(0.3,0.15), 
+#   theme_bw() +
+#   theme(legend.position=c(0.3,0.15),
 #         legend.box = "horizontal",
 #         legend.background = element_rect(fill=NA))
 # 
 # 
-# df.t.test = data.frame(Beta = c(0, 0.5, 1),
-#                        t = c(-4.7862, -5.8137, -8.2442),
-#                        P = c(0.0001, 0.0001, 0.0001))
+# # df.t.test = data.frame(Beta = c(0, 0.5, 1),
+# #                        t = c(-4.7862, -5.8137, -8.2442),
+# #                        P = c(0.0001, 0.0001, 0.0001))
+# # 
+# # fig.small = df.t.test %>%
+# #   ggplot(aes(x = Beta, y = t)) +
+# #   annotate("rect", xmin = -0.2, xmax = 1.2,
+# #            ymin = -15, ymax = -2.63, alpha = .3) +
+# #   geom_line(size = 1) +
+# #   geom_point(size = 2, col = color.dsc) +
+# #   geom_hline(yintercept = 0, linetype="solid", col = "black") +
+# #   geom_hline(yintercept = -2.63, linetype="dashed", col = "grey20") +
+# #   annotate("text", x = 0.75, y = -4,
+# #            label = "P < 0.01", col = "grey20") +
+# #   scale_x_continuous(breaks = c(0, 0.5, 1),
+# #                      labels = c("0", "0.5", "1")) +
+# #   scale_y_continuous(breaks = c(-10, -5, 0)) +
+# #   coord_cartesian(ylim = c(-10, 0), xlim = c(0, 1)) +
+# #   xlab(expression(psi)) +
+# #   ylab("t") +
+# #   theme_bw() +
+# #   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+# # 
+# # 
+# # fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
+# #                                       xmin = 5, xmax = 45,
+# #                                       ymin = 7, ymax = 30)
 # 
-# fig.small = df.t.test %>% 
-#   ggplot(aes(x = Beta, y = t)) +
-#   annotate("rect", xmin = -0.2, xmax = 1.2,
-#            ymin = -15, ymax = -2.63, alpha = .3) +
-#   geom_line(size = 1) +
-#   geom_point(size = 2, col = color.dsc) +
-#   geom_hline(yintercept = 0, linetype="solid", col = "black") +
-#   geom_hline(yintercept = -2.63, linetype="dashed", col = "grey20") +
-#   annotate("text", x = 0.75, y = -4, 
-#            label = "P < 0.01", col = "grey20") +
-#   scale_x_continuous(breaks = c(0, 0.5, 1), 
-#                      labels = c("0", "0.5", "1")) +
-#   scale_y_continuous(breaks = c(-10, -5, 0)) +
-#   coord_cartesian(ylim = c(-10, 0), xlim = c(0, 1)) +
-#   xlab(expression(psi)) +
-#   ylab("t") +
-#   theme_bw() +
-#   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
-# 
-# 
-# fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
-#                                       xmin = 5, xmax = 45, 
-#                                       ymin = 7, ymax = 30)
-# 
-# ggsave(paste0("./figures/sim_beta_", beta,".pdf"),
-#        fig.sim, width = 6, height = 4.5,
+# ggsave(paste0("./figures/sim_n20.pdf"),
+#        fig.big, width = 6, height = 4.5,
 #        units = "in", limitsize = FALSE)
