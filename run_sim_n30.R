@@ -28,22 +28,22 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
   # common exogenous shocks
   x = arima.sim(list(order = arima.order, ar = ar.x, ma = ma.x),
                 n = length + extra.x + n.SMA + n.diff - 2)
-
+  
   # smoothing
   x.SMA = ts(TTR::SMA(x, n = n.SMA)[-(1:(n.SMA - 1))])
-
+  
   # difference
   x.diff = diff(x.SMA, difference = n.diff)
   pos.diff = x.diff > 0
   if (reweight) {
     pos.ratio = sum(pos.diff)/sum(!pos.diff)
   }
-
+  
   # speeds
   log.speeds = seq(log(speed.lower), log(speed.upper), length.out = n)
   rnd.ind = sample(c(1:round(0.3*n), round(0.7*n):n), size = 1)
   log.speeds = c(log.speeds[rnd.ind], log.speeds[-rnd.ind])
-
+  
   # simulate
   data = NULL
   for (i in 1:n) {
@@ -61,18 +61,18 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
       pos.speed = exp(log.speed)
       neg.speed = exp(-log.speed)
     }
-
+    
     phi.shape = rep(NA, length.out = length + extra.x)
     phi.shape[pos.diff] = pos.speed
     phi.shape[!pos.diff] = neg.speed
-
+    
     log.phi.mean = mean(log(phi.shape), na.rm = T)
     log.phi.sd = sd(log(phi.shape), na.rm = T)
-
+    
     phi.random = exp(rnorm(n = length + extra.x,
                            mean = log.phi.mean,
                            sd = log.phi.sd))
-
+    
     # treatment
     if (i == 1) {
       treatment = c(rep(0, t.treat),
@@ -81,17 +81,17 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
     }else{
       treatment = 0
     }
-
+    
     phi = beta*phi.shape + (1 - beta)*phi.random
-
+    
     y = warpWITHweight(x[1:(length + extra.x)], phi)[1:length]
-
+    
     if (rescale) {
       y = minmax.normalize(y, reference = y[1:t.treat])*rescale.multiplier
     }
-
+    
     y = y + treatment
-
+    
     data = rbind(data,
                  data.frame(id = i,
                             unit = LETTERS[i],
@@ -106,7 +106,7 @@ sim.data = function(n = 10, length = 100, extra.x = round(0.2*length),
 
 ## Data Simulation -------------------------------------------------------------
 n.simulation = 150
-length = 100
+length = 30
 n = 10
 beta = 1
 shock = 10
@@ -114,32 +114,32 @@ shock = 10
 # simulate
 data.list = NULL
 for (i in 1:n.simulation) {
-  data.sim = sim.data(n = n, length = length,
-                      t.treat = 60, shock = shock, ar.x = 0.6,
+  data.list[[i]] = sim.data(n = n, length = length,
+                      t.treat = 20, shock = shock, ar.x = 0.6,
                       n.SMA = 1, n.diff = 1,
-                      speed.upper = 2,
-                      speed.lower = 0.5,
-                      treat.last = 0.15,
+                      speed.upper = 3,
+                      speed.lower = 1/3,
+                      treat.last = 0.1,
                       reweight = TRUE,
                       rescale = TRUE,
                       rescale.multiplier = 10,
                       beta = beta)
-  data.list[[i]] = data.sim %>%
-    filter(time %in% c((1:20)*5)) %>%
-    group_by(unit) %>%
-    mutate(time = 1:20) %>%
-    ungroup %>% 
-    data.frame
+  # data.list[[i]] = data.sim %>%
+  #   filter(time %in% c((1:20)*5)) %>%
+  #   group_by(unit) %>%
+  #   mutate(time = 1:20) %>%
+  #   ungroup %>% 
+  #   data.frame
 }
 
-saveRDS(data.list, paste0("./data/simul_data_beta1_n20_2.Rds"))
+saveRDS(data.list, paste0("./data/simul_data_beta1_n30.Rds"))
 
-# data.list[[12]] %>%
+# data.list[[5]] %>%
 #   ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line()
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta1_n20_2.Rds")
+data.list = readRDS("./data/simul_data_beta1_n30.Rds")
 
 # parameters
 filter.width.range = (1:3)*2+3
@@ -166,7 +166,7 @@ step.pattern.range = list(
 grid.search.parallel = TRUE
 
 
-args.TFDTW = list(buffer = 4, match.method = "open.end",
+args.TFDTW = list(buffer = 3, match.method = "open.end",  # check this
                   dist.quant = 0.95, 
                   window.type = "sakoechiba",
                   ## other
@@ -179,13 +179,13 @@ args.TFDTW = list(buffer = 4, match.method = "open.end",
 
 args.synth = list(predictors = NULL,
                   special.predictors = 
-                    expression(list(list(dep.var, 9:11, c("mean")),
-                                    list(dep.var, 6:8, c("mean")),
-                                    list(dep.var, 3:5, c("mean")))),
-                  time.predictors.prior = 1:11,
-                  time.optimize.ssr = 1:11)
+                    expression(list(list(dep.var, 16:19, c("mean")),
+                                    list(dep.var, 12:15, c("mean")),
+                                    list(dep.var, 8:11, c("mean")))),
+                  time.predictors.prior = 1:19,
+                  time.optimize.ssr = 1:19)
 
-args.TFDTW.synth = list(start.time = 1, end.time = 20, treat.time = 12,
+args.TFDTW.synth = list(start.time = 1, end.time = 30, treat.time = 20,
                         args.TFDTW = args.TFDTW, args.synth = args.synth,
                         ## 2nd
                         n.mse = 5, 
@@ -211,13 +211,13 @@ for (i in 1:length(data.list)) {
                 args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
                 grid.search.parallel = grid.search.parallel)
   )
-  saveRDS(results, paste0("./data/res_sim/n20_2/res_sim_n20_", i, ".Rds"))
+  saveRDS(results, paste0("./data/res_sim/n30/res_sim_n30_", i, ".Rds"))
   cat("Done.\n")
 }
 
 
 ## Test result -----------------------------------------------------------------
-folder = paste0("./data/res_sim/n20_2/")
+folder = paste0("./data/res_sim/n30/")
 file.list = as.list(list.files(folder))
 
 length = 20
@@ -260,7 +260,7 @@ df.mse = future_map2(
       }
     ) %>% do.call("rbind", .)
     mse$data.id = data.id
-
+    
     mse %>%
       top_n(-1, mse.preT.TFDTW) %>%
       top_n(-1, grid.id)
