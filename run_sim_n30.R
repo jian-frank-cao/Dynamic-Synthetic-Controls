@@ -200,7 +200,7 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-for (i in 1:length(data.list)) {
+for (i in 87:length(data.list)) {
   cat("Simulation data set ", i, "...")
   args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
   set.seed(20220407)
