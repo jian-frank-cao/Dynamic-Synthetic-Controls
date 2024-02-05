@@ -173,39 +173,50 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
 }
 
 
-## Basque Terrorism Data -------------------------------------------------------
-data(basque, package = "Synth")
-data = basque
-colnames(data)[1:4] = c("id", "unit", "time", "value")
-pred.vars = c("sec.agriculture", "sec.energy", "sec.industry",
-              "sec.construction", "sec.services.venta",
-              "sec.services.nonventa", "school.illit",
-              "school.prim", "school.med", "school.high",
-              "school.post.high", "popdens", "invest", "invest_ratio")
-data = data %>% mutate(invest_ratio = invest/value,
-                       value_raw = value) %>% 
+## California Tobacco Data -----------------------------------------------------
+load("./data/smoking.rda")
+prop99 = read.csv("./data/prop99.csv")
+
+exclude_states = c("Massachusetts", "Arizona", "Oregon", "Florida",
+                   "Alaska", "Hawaii", "Maryland", "Michigan",
+                   "New Jersey", "New York",
+                   "Washington", "District of Columbia")
+include_states = sort(setdiff(unique(prop99$LocationDesc),
+                              exclude_states))
+states = data.frame(id = 1:length(include_states),
+                    unit = include_states)
+smoking = smoking %>% mutate_all(as.numeric)
+colnames(smoking)[1:3] = c("id", "time", "value")
+smoking = right_join(states, smoking, by = "id")
+smoking = smoking %>%
+  mutate(value_raw = value,
+         age15to24 = age15to24*100)
+
+data = smoking
+pred.vars = c("lnincome", "beer", "age15to24", "retprice")
+data = data %>% 
   group_by(unit) %>% 
   mutate(across(pred.vars, ~impute_values(.))) %>% 
   ungroup() %>% 
   data.frame
 
 # rescale
-df.rescale = data %>%
-  filter(time <= 1970) %>%
-  group_by(unit) %>%
+df.rescale = data %>% 
+  filter(time <= 1989) %>% 
+  group_by(unit) %>% 
   summarise(value.min = min(value),
-            value.max = max(value)) %>%
+            value.max = max(value)) %>% 
   ungroup()
 
 mean.diff = mean(df.rescale$value.max - df.rescale$value.min)
 
-df.rescale = df.rescale %>%
+df.rescale = df.rescale %>% 
   mutate(
     multiplier = mean.diff/(value.max - value.min)
   )
 
 data = left_join(data, df.rescale, by = "unit")
-data = data %>%
+data = data %>% 
   mutate(
     value.bak = value_raw,
     value_raw = (value_raw - value.min)*multiplier,
@@ -213,30 +224,28 @@ data = data %>%
   )
 
 # data list
-data.list = list(list(target = "Basque Country (Pais Vasco)",
+data.list = list(list(target = "California",
                       data = data))
 ids = data$id %>%
   unique
 for (i in ids) {
-  data.temp = data %>% filter(!(id %in% c(i, 17)))
+  data.temp = data %>% filter(!(id %in% c(i, 3)))
   data.list = c(data.list, 
                 list(list(target = data.temp$unit[1],
                           data = data.temp)))
 }
 
-select2 = combn(setdiff(ids, 17), 2, simplify = TRUE)[,1:100]
+select2 = combn(setdiff(ids, 3), 2, simplify = TRUE)[,1:100]
 
 for (i in 1:ncol(select2)) {
-  data.temp = data %>% filter(!(id %in% c(select2[, i], 17)))
+  data.temp = data %>% filter(!(id %in% c(select2[, i], 3)))
   data.list = c(data.list, 
                 list(list(target = data.temp$unit[1],
                           data = data.temp)))
 }
 
 
-
-
-## Grid Search Basque ----------------------------------------------------------
+## Grid Search Tobacco ---------------------------------------------------------
 # parameters
 filter.width.range = (1:9)*2+3
 k.range = 4:9
@@ -276,25 +285,18 @@ args.TFDTW = list(buffer = 0, match.method = "fixed",
 args.synth = list(predictors = NULL,
                   special.predictors =
                     expression(list(
-                      list(dep.var, 1960:1969, c("mean")),
-                      list("invest_ratio", 1964:1969, c("mean")),
-                      list("popdens", 1969, c("mean")),
-                      list("sec.agriculture", 1961:1969, c("mean")),
-                      list("sec.energy", 1961:1969, c("mean")),
-                      list("sec.industry", 1961:1969, c("mean")),
-                      list("sec.construction", 1961:1969, c("mean")),
-                      list("sec.services.venta", 1961:1969, c("mean")),
-                      list("sec.services.nonventa", 1961:1969, c("mean")),
-                      list("school.illit", 1964:1969, c("mean")),
-                      list("school.prim", 1964:1969, c("mean")),
-                      list("school.med", 1964:1969, c("mean")),
-                      list("school.high", 1964:1969, c("mean")),
-                      list("school.post.high", 1964:1969, c("mean"))
+                      list(dep.var, 1988, c("mean")),
+                      list(dep.var, 1980, c("mean")),
+                      list(dep.var, 1975, c("mean")),
+                      list("beer", 1984:1988, c("mean")),
+                      list("lnincome", 1980:1988, c("mean")),
+                      list("age15to24", 1980:1988, c("mean")),
+                      list("retprice", 1980:1988, c("mean"))
                     )),
-                  time.predictors.prior = 1955:1969,
-                  time.optimize.ssr = 1955:1969)
+                  time.predictors.prior = 1970:1988,
+                  time.optimize.ssr = 1970:1988)
 
-args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
+args.TFDTW.synth = list(start.time = 1970, end.time = 2000, treat.time = 1989,
                         args.TFDTW = args.TFDTW, args.synth = args.synth,
                         ## 2nd
                         n.mse = 10, pred.vars = pred.vars,
@@ -303,7 +305,6 @@ args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
                         plot.path = "./figures/",
                         legend.pos = c(0.3, 0.3))
 
-
 # args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
 #                                   # data = data,
 #                                   args.TFDTW.synth = args.TFDTW.synth,
@@ -311,21 +312,19 @@ args.TFDTW.synth = list(start.time = 1955, end.time = 1997, treat.time = 1970,
 #                                   detailed.output = TRUE,
 #                                   all.units.parallel = FALSE)
 # 
-# cat(paste0("Basque data set ", index, "..."))
-# args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-# results = SimDesign::quiet(
-#   grid.search(filter.width.range = filter.width.range,
-#               k.range = k.range,
-#               step.pattern.range = step.pattern.range,
-#               args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
-#               grid.search.parallel = grid.search.parallel)
-# )
-# 
-# saveRDS(results, paste0("./data/pred/basque/res_basque_", index, ".Rds"))
-# cat("Done.\n")
-# 
-# job.end = Sys.time()
-# print(job.end - job.start)
+# for (index in 1:length(data.list)) {
+#   args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
+#   results = SimDesign::quiet(
+#     grid.search(filter.width.range = filter.width.range,
+#                 k.range = k.range,
+#                 step.pattern.range = step.pattern.range,
+#                 args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
+#                 grid.search.parallel = grid.search.parallel)
+#   )
+#   
+#   saveRDS(results, paste0("./data/placebo/tobacco/res_tobacco_", index, ".Rds"))
+#   print(index)
+# }
 
 
 for (index in (task_id*10+1):((task_id+1)*10)) {
@@ -336,7 +335,7 @@ for (index in (task_id*10+1):((task_id+1)*10)) {
                                     detailed.output = TRUE,
                                     all.units.parallel = FALSE)
   args.TFDTW.synth.all.units[["data"]] = data.list[[index]]$data
-  cat(paste0("Basque data set ", index, "..."))
+  cat(paste0("Tobacco data set ", index, "..."))
   set.seed(20220407)
   results = SimDesign::quiet(
     grid.search(filter.width.range = filter.width.range,
@@ -346,94 +345,9 @@ for (index in (task_id*10+1):((task_id+1)*10)) {
                 grid.search.parallel = grid.search.parallel)
   )
   
-  saveRDS(results, paste0("./data/pred/basque/res_basque_", index, ".Rds"))
+  saveRDS(results, paste0("./data/pred/tobacco/res_tobacco_", index, ".Rds"))
   cat("Done.\n")
 }
 
 job.end = Sys.time()
 print(job.end - job.start)
-
-
-# ## Placebo ---------------------------------------------------------------------
-# folder = "./data/placebo/basque/"
-# file.list = as.list(list.files(folder))
-# 
-# pre.start = 7
-# pre.end = 16
-# post.start = 17
-# post.end = 26
-# 
-# # df.mse
-# df.mse = file.list %>% 
-#   future_map(
-#   ~{
-#     file.name = .
-#     data.id = strsplit(file.name, "_")[[1]][4]
-#     data.id = as.numeric(strsplit(data.id, ".R")[[1]][1])
-#     data.list = readRDS(paste0(folder, file.name))
-#     mse = future_map2(
-#       data.list,
-#       as.list(names(data.list)),
-#       ~{
-#         result.synth = .x[["results.TFDTW.synth"]]
-#         grid.id = .y
-#         mse = result.synth %>% 
-#           map(
-#             ~{
-#               task = .
-#               unit = task$dependent
-#               gap.raw = task$gap.raw
-#               gap.TFDTW = task$gap.TFDTW
-#               data.frame(unit = unit,
-#                          mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
-#                          mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
-#                          mse.postT.raw = mean(gap.raw[post.start:post.end]^2, na.rm = T),
-#                          mse.postT.TFDTW = mean(gap.TFDTW[post.start:post.end]^2, na.rm = T))
-#             }
-#           ) %>% do.call("rbind", .)
-#         mse %>% mutate(grid.id = grid.id)
-#       }
-#     ) %>% do.call("rbind", .)
-#     mse$data.id = data.id
-#     
-#     mse %>% 
-#       group_by(unit) %>% 
-#       top_n(-1, mse.preT.TFDTW) %>% 
-#       top_n(-1, grid.id)
-#   }
-# ) %>% do.call("rbind", .)
-# 
-# saveRDS(df.mse, "./data/df.mse_basque.x.Rds")
-# 
-# 
-# ## Preparation -----------------------------------------------------------------
-# df.mse = readRDS("./data/df.mse_basque.x.Rds")
-# 
-# filter.width.range = (1:9)*2+3
-# k.range = 4:9
-# step.pattern.range = list(
-#   # symmetricP0 = dtw::symmetricP0, # too bumpy
-#   # symmetricP05 = dtw::symmetricP05,
-#   symmetricP1 = dtw::symmetricP1,
-#   symmetricP2 = dtw::symmetricP2,
-#   # asymmetricP0 = dtw::asymmetricP0, # too bumpy
-#   # asymmetricP05 = dtw::asymmetricP05,
-#   asymmetricP1 = dtw::asymmetricP1,
-#   asymmetricP2 = dtw::asymmetricP2,
-#   typeIc = dtw::typeIc,
-#   # typeIcs = dtw::typeIcs,
-#   # typeIIc = dtw::typeIIc,  # jumps
-#   # typeIIIc = dtw::typeIIIc, # jumps
-#   # typeIVc = dtw::typeIVc,  # jumps
-#   typeId = dtw::typeId,
-#   # typeIds = dtw::typeIds,
-#   # typeIId = dtw::typeIId, # jumps
-#   mori2006 = dtw::mori2006
-# )
-# 
-# # grid search space
-# search.grid = expand.grid(filter.width.range, k.range,
-#                           names(step.pattern.range)) %>% 
-#   `colnames<-`(c("filter.width", "k", "step.pattern"))
-# search.grid.list = search.grid %>% split(., seq(nrow(search.grid)))
-
