@@ -220,18 +220,18 @@ for (i in 87:length(data.list)) {
 folder = paste0("./data/res_sim/n30/")
 file.list = as.list(list.files(folder))
 
-length = 20
-treat_time = 12
+length = 30
+treat_time = 20
 n_mse = 5
 shock = 10
 treatment = c(rep(0, treat_time),
-              seq(0, shock, length.out = round(0.15*length)),
-              rep(shock, round(0.85*length - treat_time)))
+              seq(0, shock, length.out = round(0.1*length)),
+              rep(shock, round(0.9*length - treat_time)))
 
-pre.start = 7
-pre.end = 12
-post.start = 13
-post.end = 17
+pre.start = 11
+pre.end = 20
+post.start = 21
+post.end = 30
 
 # de.mse
 df.mse = future_map2(
@@ -267,10 +267,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, paste0("./data/df.mse_sim_n20_2.Rds"))
+saveRDS(df.mse, paste0("./data/df.mse_sim_n30.Rds"))
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS(paste0("./data/df.mse_sim_n20_2.Rds"))
+df.mse = readRDS(paste0("./data/df.mse_sim_n30.Rds"))
 df.mse = df.mse %>%
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw))
 t.test(df.mse$log.ratio)
@@ -279,8 +279,8 @@ wilcox.test(df.mse$log.ratio)
 
 ## Plot result -----------------------------------------------------------------
 # df.gap
-df.mse = readRDS(paste0("./data/df.mse_sim_n20_2.Rds"))
-folder = paste0("./data/res_sim/n20_2/")
+df.mse = readRDS(paste0("./data/df.mse_sim_n30.Rds"))
+folder = paste0("./data/res_sim/n30/")
 file.list = as.list(list.files(folder))
 results = file.list %>%
   future_map(
@@ -295,7 +295,7 @@ for (i in 1:nrow(df.mse)) {
   data.id = df.mse$data.id[i]
   grid.id = df.mse$grid.id[i]
   df.gap[[i]] = data.frame(
-    time = 1:20,
+    time = 1:30,
     data.id = data.id,
     grid.id = grid.id,
     value = results[[data.id]][[grid.id]][["res.synth.target.raw"]][[1]],
@@ -313,18 +313,18 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id)
   )
 
-saveRDS(df.gap, paste0("./data/df.gap_sim_n20_2.Rds"))
+saveRDS(df.gap, paste0("./data/df.gap_sim_n30.Rds"))
 
 # plot
-df.gap = readRDS(paste0("./data/df.gap_sim_n20_2.Rds"))
+df.gap = readRDS(paste0("./data/df.gap_sim_n30.Rds"))
 
 shock = 10
-length = 20
-treat_time = 12
+length = 30
+treat_time = 20
 n_mse = 5
 treatment = c(rep(0, treat_time),
-              seq(0, shock, length.out = round(0.15*length)),
-              rep(shock, round(0.85*length - treat_time)))
+              seq(0, shock, length.out = round(0.1*length)),
+              rep(shock, round(0.9*length - treat_time)))
 
 df.quantile = df.gap %>%
   group_by(time) %>%
@@ -337,7 +337,7 @@ df.quantile = df.gap %>%
   mutate(group = "quantile",
          treatment = treatment)
 
-# df.quantile[95:100, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
+df.quantile[28:30, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
 
 
 color.sc = "#2ab7ca"
@@ -358,7 +358,7 @@ fills = c("95% Quantile (SC)" = color.sc,
 
 fig.big = df.gap %>%
   ggplot(aes(x = time, group = group)) +
-  annotate("rect", xmin = 12, xmax = 17,
+  annotate("rect", xmin = 21, xmax = 26,
            ymin = -25, ymax = 35, alpha = .3) +
   geom_line(aes(y = gap.sc), col = color.sc, alpha=0.1) +
   geom_line(aes(y = gap.dsc), col = color.dsc, alpha=0.1) +
@@ -375,9 +375,9 @@ fig.big = df.gap %>%
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
   scale_linetype_manual(name = NULL, values = linetypes) +
-  geom_vline(xintercept = 12, linetype="dashed", col = "grey20") +
+  geom_vline(xintercept = 21, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  annotate("text", x = 11, y = 25, label = "Treatment",
+  annotate("text", x = 20, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
@@ -416,6 +416,6 @@ fig.big = df.gap %>%
 #                                       xmin = 5, xmax = 45,
 #                                       ymin = 7, ymax = 30)
 
-ggsave(paste0("./figures/sim_n20_2.pdf"),
+ggsave(paste0("./figures/sim_n30.pdf"),
        fig.big, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
