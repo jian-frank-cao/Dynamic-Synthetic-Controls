@@ -115,25 +115,25 @@ shock = 10
 data.list = NULL
 for (i in 1:n.simulation) {
   data.list[[i]] = sim.data(n = n, length = length,
-                      t.treat = 10, shock = shock, ar.x = 0.6,
-                      n.SMA = 1, n.diff = 1,
-                      speed.upper = 3,
-                      speed.lower = 1/3,
-                      treat.last = 0.15,
-                      reweight = TRUE,
-                      rescale = TRUE,
-                      rescale.multiplier = 10,
-                      beta = beta)
+                            t.treat = 10, shock = shock, ar.x = 0.6,
+                            n.SMA = 1, n.diff = 1,
+                            speed.upper = 2,
+                            speed.lower = 1/2,
+                            treat.last = 0.15,
+                            reweight = TRUE,
+                            rescale = TRUE,
+                            rescale.multiplier = 10,
+                            beta = beta)
 }
 
-saveRDS(data.list, paste0("./data/simul_data_beta1_n20_3x.Rds"))
+saveRDS(data.list, paste0("./data/simul_data_beta1_n20_2x.Rds"))
 
 # data.list[[30]] %>%
 #   ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line()
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta1_n20_3x.Rds")
+data.list = readRDS("./data/simul_data_beta1_n20_2x.Rds")
 
 # parameters
 filter.width.range = (1:3)*2+3
@@ -194,7 +194,7 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-for (i in 1:100) {
+for (i in 1:length(data.list)) {
   cat("Simulation data set ", i, "...")
   args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
   set.seed(20220407)
@@ -205,13 +205,13 @@ for (i in 1:100) {
                 args.TFDTW.synth.all.units = args.TFDTW.synth.all.units,
                 grid.search.parallel = grid.search.parallel)
   )
-  saveRDS(results, paste0("./data/res_sim/n20_3x/res_sim_n20_", i, ".Rds"))
+  saveRDS(results, paste0("./data/res_sim/n20_2x/res_sim_n20_", i, ".Rds"))
   cat("Done.\n")
 }
 
 
 ## Test result -----------------------------------------------------------------
-folder = paste0("./data/res_sim/n20_3x/")
+folder = paste0("./data/res_sim/n20_2x/")
 file.list = as.list(list.files(folder))
 
 length = 20
