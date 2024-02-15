@@ -1,5 +1,5 @@
-# args = commandArgs(trailingOnly=TRUE)
-# task_id = as.integer(args[1])
+args = commandArgs(trailingOnly=TRUE)
+task_id = as.integer(args[1])
 job.start = Sys.time()
 
 ## Setup -----------------------------------------------------------------------
@@ -326,8 +326,16 @@ args.TFDTW.synth = list(start.time = 1970, end.time = 2000, treat.time = 1989,
 #   print(index)
 # }
 
+original_vector = setdiff(1:100, c((1:9)*10-9, (1:9)*10-8))
 
-for (index in (task_id*10+1):((task_id+1)*10)) {
+# Create an index to group every four elements
+group_index <- ceiling(seq_along(original_vector) / 4)
+
+# Split the original vector into a list of vectors, each containing 4 elements
+task_list <- split(original_vector, group_index)
+
+
+for (index in task_list[[task_id]]) {
   args.TFDTW.synth.all.units = list(target = data.list[[index]]$target,
                                     # data = data,
                                     args.TFDTW.synth = args.TFDTW.synth,
