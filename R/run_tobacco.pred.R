@@ -1,6 +1,6 @@
-args = commandArgs(trailingOnly=TRUE)
-task_id = as.integer(args[1])
-job.start = Sys.time()
+# args = commandArgs(trailingOnly=TRUE)
+# task_id = as.integer(args[1])
+# job.start = Sys.time()
 
 ## Setup -----------------------------------------------------------------------
 library(checkpoint)
@@ -584,7 +584,7 @@ fig.placebo = df.gap %>%
   geom_vline(xintercept = 1989, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 1994, y = 33,
-           label = "t = -7.24\nP < 0.0001", col = "grey20") +
+           label = "t = -9.09\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1988, y = 25, angle = 90,
            label = "Treatment", col = "grey20") +
   coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +

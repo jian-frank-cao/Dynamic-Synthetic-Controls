@@ -331,7 +331,7 @@ df.quantile = df.gap %>%
   mutate(group = "quantile",
          treatment = treatment)
 
-# df.quantile[95:100, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
+df.quantile[18:20, c("mean.dsc", "quantile.dsc.975", "quantile.dsc.025")] = NA
 
 
 color.sc = "#2ab7ca"
@@ -352,7 +352,7 @@ fills = c("95% Quantile (SC)" = color.sc,
 
 fig.big = df.gap %>%
   ggplot(aes(x = time, group = group)) +
-  annotate("rect", xmin = 10, xmax = 15,
+  annotate("rect", xmin = 11, xmax = 16,
            ymin = -25, ymax = 35, alpha = .3) +
   geom_line(aes(y = gap.sc), col = color.sc, alpha=0.1) +
   geom_line(aes(y = gap.dsc), col = color.dsc, alpha=0.1) +
@@ -369,9 +369,9 @@ fig.big = df.gap %>%
   scale_color_manual(name = NULL, values = colors) +
   scale_fill_manual(name = NULL, values = fills) +
   scale_linetype_manual(name = NULL, values = linetypes) +
-  geom_vline(xintercept = 10, linetype="dashed", col = "grey20") +
+  geom_vline(xintercept = 11, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  annotate("text", x = 9, y = 25, label = "Treatment",
+  annotate("text", x = 10, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
@@ -410,6 +410,6 @@ fig.big = df.gap %>%
 #                                       xmin = 5, xmax = 45,
 #                                       ymin = 7, ymax = 30)
 
-ggsave(paste0("./figures/sim_n20_2.pdf"),
+ggsave(paste0("./figures/sim_n20_3x.pdf"),
        fig.big, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)

@@ -126,14 +126,14 @@ for (i in 1:n.simulation) {
                             beta = beta)
 }
 
-saveRDS(data.list, paste0("./data/simul_data_beta1_n20_2x.Rds"))
+saveRDS(data.list, paste0("./data/simul_data_n20_2x.Rds"))
 
 # data.list[[30]] %>%
 #   ggplot(aes(x = time, y = value, color = unit)) +
 #   geom_line()
 
 ## Run -------------------------------------------------------------------------
-data.list = readRDS("./data/simul_data_beta1_n20_2x.Rds")
+data.list = readRDS("./data/simul_data_n20_2x.Rds")
 
 # parameters
 filter.width.range = (1:3)*2+3
@@ -194,7 +194,7 @@ args.TFDTW.synth.all.units = list(target = "A",
                                   ## 2nd
                                   all.units.parallel = FALSE)
 
-for (i in 1:length(data.list)) {
+for (i in 71:105) {
   cat("Simulation data set ", i, "...")
   args.TFDTW.synth.all.units[["data"]] = data.list[[i]]
   set.seed(20220407)
@@ -261,10 +261,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, paste0("./data/df.mse_sim_n20_3x.Rds"))
+saveRDS(df.mse, paste0("./data/df.mse_sim_n20_2x.Rds"))
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS(paste0("./data/df.mse_sim_n20_3x.Rds"))
+df.mse = readRDS(paste0("./data/df.mse_sim_n20_2x.Rds"))
 df.mse = df.mse %>%
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw))
 t.test(df.mse$log.ratio)
@@ -273,8 +273,8 @@ wilcox.test(df.mse$log.ratio)
 
 ## Plot result -----------------------------------------------------------------
 # df.gap
-df.mse = readRDS(paste0("./data/df.mse_sim_n20_3x.Rds"))
-folder = paste0("./data/res_sim/n20_3x/")
+df.mse = readRDS(paste0("./data/df.mse_sim_n20_2x.Rds"))
+folder = paste0("./data/res_sim/n20_2x/")
 file.list = as.list(list.files(folder))
 results = file.list %>%
   future_map(
@@ -307,10 +307,10 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id)
   )
 
-saveRDS(df.gap, paste0("./data/df.gap_sim_n20_3x.Rds"))
+saveRDS(df.gap, paste0("./data/df.gap_sim_n20_2x.Rds"))
 
 # plot
-df.gap = readRDS(paste0("./data/df.gap_sim_n20_3x.Rds"))
+df.gap = readRDS(paste0("./data/df.gap_sim_n20_2x.Rds"))
 
 shock = 10
 length = 20

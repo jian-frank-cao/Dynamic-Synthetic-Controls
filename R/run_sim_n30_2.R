@@ -231,7 +231,7 @@ treatment = c(rep(0, treat_time),
 pre.start = 11
 pre.end = 20
 post.start = 21
-post.end = 30
+post.end = 26
 
 # de.mse
 df.mse = future_map2(
@@ -267,10 +267,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, paste0("./data/df.mse_sim_n30_2.Rds"))
+saveRDS(df.mse, paste0("./data/df.mse_sim_n30_2x.Rds"))
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS(paste0("./data/df.mse_sim_n30_2.Rds"))
+df.mse = readRDS(paste0("./data/df.mse_sim_n30_2x.Rds"))
 df.mse = df.mse %>%
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw))
 t.test(df.mse$log.ratio)
@@ -279,7 +279,7 @@ wilcox.test(df.mse$log.ratio)
 
 ## Plot result -----------------------------------------------------------------
 # df.gap
-df.mse = readRDS(paste0("./data/df.mse_sim_n30_2.Rds"))
+df.mse = readRDS(paste0("./data/df.mse_sim_n30_2x.Rds"))
 folder = paste0("./data/res_sim/n30_2/")
 file.list = as.list(list.files(folder))
 results = file.list %>%
@@ -313,10 +313,10 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id)
   )
 
-saveRDS(df.gap, paste0("./data/df.gap_sim_n30_2.Rds"))
+saveRDS(df.gap, paste0("./data/df.gap_sim_n30_2x.Rds"))
 
 # plot
-df.gap = readRDS(paste0("./data/df.gap_sim_n30_2.Rds"))
+df.gap = readRDS(paste0("./data/df.gap_sim_n30_2x.Rds"))
 
 shock = 10
 length = 30
@@ -416,6 +416,6 @@ fig.big = df.gap %>%
 #                                       xmin = 5, xmax = 45,
 #                                       ymin = 7, ymax = 30)
 
-ggsave(paste0("./figures/sim_n30_2.pdf"),
+ggsave(paste0("./figures/sim_n30_2x.pdf"),
        fig.big, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)

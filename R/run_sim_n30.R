@@ -231,7 +231,7 @@ treatment = c(rep(0, treat_time),
 pre.start = 11
 pre.end = 20
 post.start = 21
-post.end = 30
+post.end = 26
 
 # de.mse
 df.mse = future_map2(
