@@ -373,6 +373,8 @@ fig.big = df.gap %>%
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 10, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
+  annotate("text", x = 5, y = 20, label = "N = 20\nt = -2.10\nP = 0.0375",
+           col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
   ylab("Treatment Effect (TE)") +

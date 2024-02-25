@@ -379,6 +379,8 @@ fig.big = df.gap %>%
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 20, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
+  annotate("text", x = 10, y = 20, label = "N = 30\nt = -2.15\nP = 0.0345",
+           col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
   ylab("Treatment Effect (TE)") +
@@ -416,6 +418,6 @@ fig.big = df.gap %>%
 #                                       xmin = 5, xmax = 45,
 #                                       ymin = 7, ymax = 30)
 
-ggsave(paste0("./figures/sim_n30.pdf"),
+ggsave(paste0("./figures/sim_n30_3x.pdf"),
        fig.big, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
