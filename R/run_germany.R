@@ -307,6 +307,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_germany.Rds")
 
+avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
+avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
 
 # plot
 set.seed(20230901)
@@ -335,7 +337,7 @@ fills = c("95% Quantile (SC)" = color.sc,
 set.seed(20230812)
 group.sample = sample(unique(df.gap$group), 100)
 
-fig.placebo = df.gap %>%
+fig_germany = df.gap %>%
   filter(group %in% group.sample) %>% 
   ggplot(aes(x = time, group = group)) +
   annotate("rect", xmin = 1990, xmax = 2000, 
@@ -362,6 +364,10 @@ fig.placebo = df.gap %>%
            label = "t = -4.0951\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1989, y = 4800, angle = 90,
            label = "Treatment", col = "grey20") +
+  # annotate("text", x = 2007, y = -3000, label = "bar(MSE)[SC]==2.47(M)", parse = TRUE,
+  #          col = "grey20", size = 4, fontface = "bold") +
+  # annotate("text", x = 2007, y = -5000, label = "bar(MSE)[DSC]==2.75(M)", parse = TRUE,
+  #          col = "grey20", size = 4, fontface = "bold") +
   coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +
   ylab("Treatment Effect") +
@@ -370,6 +376,6 @@ fig.placebo = df.gap %>%
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
 
-saveRDS(fig.placebo, "./data/placebo_germany.Rds")
+saveRDS(fig_germany, "./data/placebo_germany.Rds")
   
 

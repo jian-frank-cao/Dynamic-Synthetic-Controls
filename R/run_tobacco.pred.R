@@ -531,6 +531,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_tobacco_pred.Rds")
 
+avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
+avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
 
 # plot
 df.target = readRDS("./data/df.target_tobacco_pred.Rds")
@@ -560,7 +562,7 @@ fills = c("95% Quantile (SC)" = color.sc,
 set.seed(20230812)
 group.sample = sample(unique(df.gap$group), 100)
 
-fig.placebo = df.gap %>%
+fig_tobacco = df.gap %>%
   filter(group %in% group.sample) %>% 
   ggplot(aes(x = time, group = group)) +
   annotate("rect", xmin = 1989, xmax = 1999, 
@@ -587,6 +589,10 @@ fig.placebo = df.gap %>%
            label = "t = -9.09\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1988, y = 25, angle = 90,
            label = "Treatment", col = "grey20") +
+  annotate("text", x = 2005, y = -20, label = "bar(MSE)[SC]==149.15", parse = TRUE,
+           col = "grey20", size = 4, fontface = "bold") +
+  annotate("text", x = 2005, y = -30, label = "bar(MSE)[DSC]==121.36", parse = TRUE,
+           col = "grey20", size = 4, fontface = "bold") +
   coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +
   xlab("Year") +
   ylab("TE(y - Synthetic Control)") +
@@ -595,4 +601,4 @@ fig.placebo = df.gap %>%
         legend.box = "horizontal",
         legend.background = element_rect(fill=NA))
 
-saveRDS(fig.placebo, "./data/placebo_tobacco_pred.Rds")
+saveRDS(fig_tobacco, "./data/placebo_tobacco_pred.Rds")

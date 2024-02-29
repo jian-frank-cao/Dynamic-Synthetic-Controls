@@ -332,6 +332,9 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, paste0("./data/df.gap_sim_arima111.Rds"))
 
+avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
+avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+
 # plot
 df.gap = readRDS(paste0("./data/df.gap_sim_arima111.Rds"))
 
@@ -396,7 +399,11 @@ fig.big = df.gap %>%
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 59, y = 25, label = "Treatment",
            col = "grey20", angle = 90) +
-  annotate("text", x = 28, y = 20, label = "ARIMA(1,1,1)\nar = 0.6, ma = 0.6\nt = -6.91\nP < 0.0001",
+  annotate("text", x = 28, y = 25, label = "ARIMA(1,1,1)\nar = 0.6, ma = 0.6\nt = -7.51, P < 0.0001",
+           col = "grey20", size = 5, fontface = "bold") +
+  annotate("text", x = 28, y = 16, label = "bar(MSE)[SC]==10.23", parse = TRUE,
+           col = "grey20", size = 5, fontface = "bold") +
+  annotate("text", x = 28, y = 12, label = "bar(MSE)[DSC]==1.62", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
