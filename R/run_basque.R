@@ -187,8 +187,16 @@ df.mse = future_map2(
             ~{
               task = .
               unit = task$dependent
-              gap.raw = task$gap.raw
-              gap.TFDTW = task$gap.TFDTW
+              ###
+              scales = df.rescale %>% filter(unit == task$dependent)
+              value.min = scales$value.min
+              multiplier = scales$multiplier
+              value.true = task$res.synth.TFDTW$value/multiplier + value.min
+              value.sc = task$res.synth.raw$synthetic/multiplier + value.min
+              value.dsc = task$res.synth.TFDTW$synthetic/multiplier + value.min
+              gap.raw = value.true - value.true
+              gap.TFDTW = value.dsc - value.sc
+              ###
               data.frame(unit = unit,
                          mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                          mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
