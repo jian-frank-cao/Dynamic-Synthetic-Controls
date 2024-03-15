@@ -337,8 +337,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_basque2.Rds")
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
 df.target = readRDS("./data/df.target_basque2.Rds")
@@ -393,9 +393,9 @@ fig_basque = df.gap %>%
            label = "t = -7.6121\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1969, y = 600, angle = 90,
            label = "Treatment", col = "grey20") +
-  # annotate("text", x = 1960, y = -0.5, label = "bar(MSE)[SC]==0.0469", parse = TRUE,
+  # annotate("text", x = 1960, y = -500, label = "bar(log(MSE))[SC]==10.05", parse = TRUE,
   #          col = "grey20", size = 4, fontface = "bold") +
-  # annotate("text", x = 1960, y = -0.8, label = "bar(MSE)[DSC]==0.032", parse = TRUE,
+  # annotate("text", x = 1960, y = -800, label = "bar(log(MSE))[DSC]==9.88", parse = TRUE,
   #          col = "grey20", size = 4, fontface = "bold") +
   coord_cartesian(xlim=c(1950, 1990), ylim = c(-1200, 1200)) +
   xlab("Year") +

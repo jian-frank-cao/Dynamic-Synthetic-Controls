@@ -343,8 +343,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, "./data/df.gap_tobacco2.Rds")
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
 df.target = readRDS("./data/df.target_tobacco2.Rds")
@@ -401,9 +401,9 @@ fig_tobacco = df.gap %>%
            label = "t = -4.8774\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1988, y = 25, angle = 90,
            label = "Treatment", col = "grey20") +
-  # annotate("text", x = 2005, y = -20, label = "bar(MSE)[SC]==149.15", parse = TRUE,
+  # annotate("text", x = 2005, y = -20, label = "bar(log(MSE))[SC]==4.08", parse = TRUE,
   #          col = "grey20", size = 4, fontface = "bold") +
-  # annotate("text", x = 2005, y = -30, label = "bar(MSE)[DSC]==124.99", parse = TRUE,
+  # annotate("text", x = 2005, y = -30, label = "bar(log(MSE))[DSC]==4.01", parse = TRUE,
   #          col = "grey20", size = 4, fontface = "bold") +
   coord_cartesian(xlim=c(1969, 2009), ylim=c(-40,40)) +
   xlab("Year") +
