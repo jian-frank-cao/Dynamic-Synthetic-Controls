@@ -191,11 +191,6 @@ df.mse = future_map2(
               scales = df.rescale %>% filter(unit == task$dependent)
               # value.min = scales$value.min
               multiplier = scales$multiplier
-              # value.true = task$res.synth.TFDTW$value/multiplier + value.min
-              # value.sc = task$res.synth.raw$synthetic/multiplier + value.min
-              # value.dsc = task$res.synth.TFDTW$synthetic/multiplier + value.min
-              # gap.raw = value.true - value.true
-              # gap.TFDTW = value.dsc - value.sc
               gap.raw = task$gap.raw*1000/multiplier
               gap.TFDTW = task$gap.TFDTW*1000/multiplier
               ###

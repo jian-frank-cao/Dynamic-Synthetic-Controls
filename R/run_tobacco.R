@@ -193,8 +193,13 @@ df.mse = future_map2(
             ~{
               task = .
               unit = task$dependent
-              gap.raw = task$gap.raw
-              gap.TFDTW = task$gap.TFDTW
+              ###
+              scales = df.rescale %>% filter(unit == task$dependent)
+              # value.min = scales$value.min
+              multiplier = scales$multiplier
+              gap.raw = task$gap.raw/multiplier
+              gap.TFDTW = task$gap.TFDTW/multiplier
+              ###
               data.frame(unit = unit,
                          mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                          mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
@@ -214,10 +219,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, "./data/df.mse_tobacco.Rds")
+saveRDS(df.mse, "./data/df.mse_tobacco2.Rds")
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS("./data/df.mse_tobacco.Rds")
+df.mse = readRDS("./data/df.mse_tobacco2.Rds")
 df.mse = df.mse %>% 
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw),
          data.id = as.character(data.id))
@@ -240,8 +245,10 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 
 ## Plot results ----------------------------------------------------------------
 # df.target
-results.target = readRDS("./data/placebo/tobacco/res_tobacco_1.Rds")
+results.target = readRDS("./data/res_tobacco_1204_1.Rds")
 target = "California"
+scales = df.rescale %>% filter(unit == target)
+multiplier = scales$multiplier
 
 pre.start = 11
 pre.end = 20
@@ -254,8 +261,8 @@ mse = future_map2(
   ~{
     result.synth = .x[["results.TFDTW.synth"]][[target]]
     grid.id = .y
-    gap.raw = result.synth$gap.raw
-    gap.TFDTW = result.synth$gap.TFDTW
+    gap.raw = result.synth$gap.raw/multiplier
+    gap.TFDTW = result.synth$gap.TFDTW/multiplier
     data.frame(grid.id = grid.id,
                mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
@@ -281,16 +288,16 @@ df.target = data.frame(
 
 df.target = df.target %>% 
   mutate(
-    gap.sc = value - synth.sc,
-    gap.dsc = value - synth.dsc,
+    gap.sc = (value - synth.sc)/multiplier,
+    gap.dsc = (value - synth.dsc)/multiplier,
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.target, "./data/df.target_tobacco.Rds")
+saveRDS(df.target, "./data/df.target_tobacco2.Rds")
 
 
 # df.gap
-df.mse = readRDS("./data/df.mse_tobacco.Rds")
+df.mse = readRDS("./data/df.mse_tobacco2.Rds")
 folder = "./data/placebo/tobacco/"
 file.list = as.list(list.files(folder))
 results = file.list %>%
@@ -305,16 +312,23 @@ results = file.list %>%
 df.gap = NULL
 for (i in 1:nrow(df.mse)) {
   unit = df.mse$unit[i]
-  data.id = df.mse$data.id[i]
+  data.id = as.numeric(df.mse$data.id[i])
   grid.id = df.mse$grid.id[i]
+  scales = df.rescale %>% filter(unit == df.mse$unit[i])
+  value.min = scales$value.min
+  multiplier = scales$multiplier
+  value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]]
+  synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]]
+  synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+  
   df.gap[[i]] = data.frame(
     time = 1970:2000,
     unit = unit,
     data.id = data.id,
     grid.id = grid.id,
-    value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]],
-    synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]],
-    synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+    value = value/multiplier + value.min,
+    synth.sc = synth.sc/multiplier + value.min,
+    synth.dsc = synth.dsc/multiplier + value.min
   )
   print(i)
 }
@@ -327,14 +341,14 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.gap, "./data/df.gap_tobacco.Rds")
+saveRDS(df.gap, "./data/df.gap_tobacco2.Rds")
 
 avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
 avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
 
 # plot
-df.target = readRDS("./data/df.target_tobacco.Rds")
-df.gap = readRDS("./data/df.gap_tobacco.Rds")
+df.target = readRDS("./data/df.target_tobacco2.Rds")
+df.gap = readRDS("./data/df.gap_tobacco2.Rds")
 
 df.quantile = df.gap %>%
   group_by(time) %>%
