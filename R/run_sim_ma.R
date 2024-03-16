@@ -329,8 +329,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, paste0("./data/df.gap_sim_ma06.Rds"))
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
 df.gap = readRDS(paste0("./data/df.gap_sim_ma06.Rds"))
@@ -398,9 +398,9 @@ fig.big = df.gap %>%
            col = "grey20", angle = 90) +
   annotate("text", x = 28, y = 25, label = "ARIMA(0,1,1)\nma = 0.6\nt = -13.56, P < 0.0001",
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 28, y = 16, label = "bar(MSE)[SC]==11.59", parse = TRUE,
+  annotate("text", x = 28, y = 16, label = "bar(log(MSE))[SC]==1.49", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 28, y = 12, label = "bar(MSE)[DSC]==2.82", parse = TRUE,
+  annotate("text", x = 28, y = 12, label = "bar(log(MSE))[DSC]==-0.33", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
@@ -426,8 +426,8 @@ wilcox.test(df.mse$log.ratio)
 
 df.gap = readRDS(paste0("./data/df.gap_sim_beta_1.Rds"))
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 shock = 10
 length = 100
@@ -492,9 +492,9 @@ fig.big = df.gap %>%
            col = "grey20", angle = 90) +
   annotate("text", x = 28, y = 25, label = "ARIMA(1,1,0)\nar = 0.6\nt = -8.24, P < 0.0001",
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 28, y = 16, label = "bar(MSE)[SC]==7.74", parse = TRUE,
+  annotate("text", x = 28, y = 16, label = "bar(log(MSE))[SC]==0.73", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 28, y = 12, label = "bar(MSE)[DSC]==2.49", parse = TRUE,
+  annotate("text", x = 28, y = 12, label = "bar(log(MSE))[DSC]==-0.53", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +

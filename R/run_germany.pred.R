@@ -334,8 +334,13 @@ df.mse = future_map2(
             ~{
               task = .
               unit = task$dependent
-              gap.raw = task$gap.raw
-              gap.TFDTW = task$gap.TFDTW
+              ###
+              scales = df.rescale %>% filter(unit == task$dependent)
+              # value.min = scales$value.min
+              multiplier = scales$multiplier
+              gap.raw = task$gap.raw/multiplier
+              gap.TFDTW = task$gap.TFDTW/multiplier
+              ###
               data.frame(unit = unit,
                          mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                          mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
@@ -355,10 +360,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, "./data/df.mse_germany_pred.Rds")
+saveRDS(df.mse, "./data/df.mse_germany_pred2.Rds")
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS("./data/df.mse_germany_pred.Rds")
+df.mse = readRDS("./data/df.mse_germany_pred2.Rds")
 df.mse = df.mse %>% 
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw),
          data.id = as.character(data.id))
@@ -383,6 +388,8 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # df.target
 results.target = readRDS("./data/pred/germany/res_germany_1.Rds")
 target = "West Germany"
+scales = df.rescale %>% filter(unit == target)
+multiplier = scales$multiplier
 
 pre.start = 22
 pre.end = 31
@@ -395,8 +402,8 @@ mse = future_map2(
   ~{
     result.synth = .x[["results.TFDTW.synth"]][[target]]
     grid.id = .y
-    gap.raw = result.synth$gap.raw
-    gap.TFDTW = result.synth$gap.TFDTW
+    gap.raw = result.synth$gap.raw/multiplier
+    gap.TFDTW = result.synth$gap.TFDTW/multiplier
     data.frame(grid.id = grid.id,
                mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
@@ -422,16 +429,16 @@ df.target = data.frame(
 
 df.target = df.target %>% 
   mutate(
-    gap.sc = value - synth.sc,
-    gap.dsc = value - synth.dsc,
+    gap.sc = (value - synth.sc)/multiplier,
+    gap.dsc = (value - synth.dsc)/multiplier,
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.target, "./data/df.target_germany_pred.Rds")
+saveRDS(df.target, "./data/df.target_germany_pred2.Rds")
 
 
 # df.gap
-df.mse = readRDS("./data/df.mse_germany_pred.Rds")
+df.mse = readRDS("./data/df.mse_germany_pred2.Rds")
 folder = "./data/pred/germany/"
 file.list = as.list(list.files(folder))
 results = file.list %>%
@@ -446,16 +453,23 @@ results = file.list %>%
 df.gap = NULL
 for (i in 1:nrow(df.mse)) {
   unit = df.mse$unit[i]
-  data.id = df.mse$data.id[i]
+  data.id = as.numeric(df.mse$data.id[i])
   grid.id = df.mse$grid.id[i]
+  scales = df.rescale %>% filter(unit == df.mse$unit[i])
+  value.min = scales$value.min
+  multiplier = scales$multiplier
+  value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]]
+  synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]]
+  synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+  
   df.gap[[i]] = data.frame(
     time = 1960:2003,
     unit = unit,
     data.id = data.id,
     grid.id = grid.id,
-    value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]],
-    synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]],
-    synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+    value = value/multiplier + value.min,
+    synth.sc = synth.sc/multiplier + value.min,
+    synth.dsc = synth.dsc/multiplier + value.min
   )
   print(i)
 }
@@ -468,15 +482,15 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.gap, "./data/df.gap_germany_pred.Rds")
+saveRDS(df.gap, "./data/df.gap_germany_pred2.Rds")
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
 set.seed(20220407)
-df.target = readRDS("./data/df.target_germany_pred.Rds")
-df.gap = readRDS("./data/df.gap_germany_pred.Rds")
+df.target = readRDS("./data/df.target_germany_pred2.Rds")
+df.gap = readRDS("./data/df.gap_germany_pred2.Rds")
 
 df.quantile = df.gap %>%
   group_by(time) %>%
@@ -524,12 +538,12 @@ fig_germany = df.gap %>%
   geom_vline(xintercept = 1990, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
   annotate("text", x = 1995, y = 6800,
-           label = "t = -5.47\nP < 0.0001", col = "grey20") +
+           label = "t = -5.472\nP < 0.0001", col = "grey20") +
   annotate("text", x = 1989, y = 4800, angle = 90,
            label = "Treatment", col = "grey20") +
-  annotate("text", x = 2007, y = -3000, label = "bar(MSE)[SC]==2.47(M)", parse = TRUE,
+  annotate("text", x = 2007, y = -3000, label = "bar(log(MSE))[SC]==13.89", parse = TRUE,
            col = "grey20", size = 4, fontface = "bold") +
-  annotate("text", x = 2007, y = -5000, label = "bar(MSE)[DSC]==2.72(M)", parse = TRUE,
+  annotate("text", x = 2007, y = -5000, label = "bar(log(MSE))[DSC]==13.73", parse = TRUE,
            col = "grey20", size = 4, fontface = "bold") +
   coord_cartesian(xlim=c(1970, 2010),ylim=c(-8000,8000)) +
   xlab("Year") +

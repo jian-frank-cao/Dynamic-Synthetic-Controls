@@ -416,10 +416,10 @@ df.mse = future_map2(
   }
 ) %>% do.call("rbind", .)
 
-saveRDS(df.mse, "./data/df.mse_basque_pred.Rds")
+saveRDS(df.mse, "./data/df.mse_basque_pred2.Rds")
 
 # t.test for log(MSEdsc/MSEsc)
-df.mse = readRDS("./data/df.mse_basque_pred.Rds")
+df.mse = readRDS("./data/df.mse_basque_pred2.Rds")
 df.mse = df.mse %>%
   mutate(log.ratio = log(mse.postT.TFDTW/mse.postT.raw),
          data.id = as.character(data.id))
@@ -444,6 +444,8 @@ p.value = pt(t.value, df = DF, lower.tail = TRUE)*2
 # df.target
 results.target = readRDS("./data/pred/basque/res_basque_1.Rds")
 target = "Basque Country (Pais Vasco)"
+scales = df.rescale %>% filter(unit == target)
+multiplier = scales$multiplier
 
 pre.start = 7
 pre.end = 16
@@ -456,8 +458,8 @@ mse = future_map2(
   ~{
     result.synth = .x[["results.TFDTW.synth"]][[target]]
     grid.id = .y
-    gap.raw = result.synth$gap.raw
-    gap.TFDTW = result.synth$gap.TFDTW
+    gap.raw = result.synth$gap.raw*1000/multiplier
+    gap.TFDTW = result.synth$gap.TFDTW*1000/multiplier
     data.frame(grid.id = grid.id,
                mse.preT.raw = mean(gap.raw[pre.start:pre.end]^2, na.rm = T),
                mse.preT.TFDTW = mean(gap.TFDTW[pre.start:pre.end]^2, na.rm = T),
@@ -483,16 +485,16 @@ df.target = data.frame(
 
 df.target = df.target %>%
   mutate(
-    gap.sc = value - synth.sc,
-    gap.dsc = value - synth.dsc,
+    gap.sc = (value - synth.sc)*1000/multiplier,
+    gap.dsc = (value - synth.dsc)*1000/multiplier,
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.target, "./data/df.target_basque_pred.Rds")
+saveRDS(df.target, "./data/df.target_basque_pred2.Rds")
 
 
 # df.gap
-df.mse = readRDS("./data/df.mse_basque_pred.Rds")
+df.mse = readRDS("./data/df.mse_basque_pred2.Rds")
 folder = "./data/pred/basque/"
 file.list = as.list(list.files(folder))
 all.ids = sapply(list.files(folder), get_data_id)
@@ -509,16 +511,23 @@ results = file.list %>%
 df.gap = NULL
 for (i in 1:nrow(df.mse)) {
   unit = df.mse$unit[i]
-  data.id = as.character(df.mse$data.id[i])
+  data.id = df.mse$data.id[i]
   grid.id = df.mse$grid.id[i]
+  scales = df.rescale %>% filter(unit == df.mse$unit[i])
+  value.min = scales$value.min
+  multiplier = scales$multiplier
+  value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]]
+  synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]]
+  synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+  
   df.gap[[i]] = data.frame(
     time = 1955:1997,
     unit = unit,
     data.id = data.id,
     grid.id = grid.id,
-    value = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["value"]],
-    synth.sc = results[[data.id]][[grid.id]][[4]][[unit]][[3]][["synthetic"]],
-    synth.dsc = results[[data.id]][[grid.id]][[4]][[unit]][[4]][["synthetic"]]
+    value = value*1000/multiplier + value.min,
+    synth.sc = synth.sc*1000/multiplier + value.min,
+    synth.dsc = synth.dsc*1000/multiplier + value.min
   )
   print(i)
 }
@@ -531,14 +540,14 @@ df.gap = df.gap %>%
     group = paste0(data.id, "-", grid.id, "-", unit)
   )
 
-saveRDS(df.gap, "./data/df.gap_basque_pred.Rds")
+saveRDS(df.gap, "./data/df.gap_basque_pred2.Rds")
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
-df.target = readRDS("./data/df.target_basque_pred.Rds")
-df.gap = readRDS("./data/df.gap_basque_pred.Rds")
+df.target = readRDS("./data/df.target_basque_pred2.Rds")
+df.gap = readRDS("./data/df.gap_basque_pred2.Rds")
 
 df.quantile = df.gap %>%
   group_by(time) %>%
@@ -566,7 +575,7 @@ fig_basque = df.gap %>%
   filter(group %in% group.sample) %>%
   ggplot(aes(x = time, group = group)) +
   annotate("rect", xmin = 1970, xmax = 1980,
-           ymin = -3, ymax = 3, alpha = .3) +
+           ymin = -2000, ymax = 2000, alpha = .3) +
   geom_line(aes(y = gap.sc), col = color.sc, alpha = 0.4) +
   geom_line(aes(y = gap.dsc), col = color.dsc, alpha = 0.4) +
   geom_ribbon(aes(ymin = quantile.sc.025,
@@ -585,15 +594,15 @@ fig_basque = df.gap %>%
   scale_fill_manual(name = NULL, values = fills) +
   geom_vline(xintercept = 1970, linetype="dashed", col = "grey20") +
   geom_hline(yintercept = 0, linetype="dashed", col = "grey20") +
-  annotate("text", x = 1975, y = 0.85,
-           label = "t = -6.05\nP < 0.0001", col = "grey20") +
-  annotate("text", x = 1969, y = 0.6, angle = 90,
+  annotate("text", x = 1975, y = 850,
+           label = "t = -6.03\nP < 0.0001", col = "grey20") +
+  annotate("text", x = 1969, y = 600, angle = 90,
            label = "Treatment", col = "grey20") +
-  annotate("text", x = 1960, y = -0.5, label = "bar(MSE)[SC]==0.0469", parse = TRUE,
+  annotate("text", x = 1960, y = -500, label = "bar(log(MSE))[SC]==10.05", parse = TRUE,
            col = "grey20", size = 4, fontface = "bold") +
-  annotate("text", x = 1960, y = -0.8, label = "bar(MSE)[DSC]==0.0333", parse = TRUE,
+  annotate("text", x = 1960, y = -800, label = "bar(log(MSE))[DSC]==9.92", parse = TRUE,
            col = "grey20", size = 4, fontface = "bold") +
-  coord_cartesian(xlim=c(1950, 1990), ylim = c(-1, 1)) +
+  coord_cartesian(xlim=c(1950, 1990), ylim = c(-1200, 1200)) +
   xlab("Year") +
   ylab("TE(y - Synthetic Control)") +
   theme_bw() +

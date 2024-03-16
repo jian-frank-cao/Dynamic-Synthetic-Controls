@@ -309,8 +309,8 @@ df.gap = df.gap %>%
 
 saveRDS(df.gap, paste0("./data/df.gap_sim_n20_3x.Rds"))
 
-avg.mse.sc = mean(df.mse$mse.postT.raw, na.rm = TRUE)
-avg.mse.dsc = mean(df.mse$mse.postT.TFDTW, na.rm = TRUE)
+avg.log.mse.sc = mean(log(df.mse$mse.postT.raw), na.rm = TRUE)
+avg.log.mse.dsc = mean(log(df.mse$mse.postT.TFDTW), na.rm = TRUE)
 
 # plot
 df.gap = readRDS(paste0("./data/df.gap_sim_n20_3x.Rds"))
@@ -378,9 +378,9 @@ fig.big = df.gap %>%
            col = "grey20", angle = 90) +
   annotate("text", x = 5, y = 25, label = "N = 20\nt = -2.10\nP = 0.0375",
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 5, y = 16, label = "bar(MSE)[SC]==32.73", parse = TRUE,
+  annotate("text", x = 5, y = 16, label = "bar(log(MSE))[SC]==1.68", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
-  annotate("text", x = 5, y = 12, label = "bar(MSE)[DSC]==27.47", parse = TRUE,
+  annotate("text", x = 5, y = 12, label = "bar(log(MSE))[DSC]==1.38", parse = TRUE,
            col = "grey20", size = 5, fontface = "bold") +
   coord_cartesian(ylim = c(-20, 30)) +
   xlab("Time") +
