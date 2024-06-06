@@ -5,7 +5,9 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
                        res.synth.raw = NULL,
                        n.mse = 10, plot.figures = FALSE,
                        plot.path = "./figures/",
-                       legend.pos = c(0.3, 0.3)){
+                       legend.pos = c(0.3, 0.3),
+                       rnd.seed = 1234){
+  set.seed(rnd.seed)
   # prepare data for TFDTW
   t.treat = (treat.time - start.time) + 1
 
@@ -194,8 +196,10 @@ TFDTW.synth.all.units = function(data, target,
 TFDTW.synth.target.only = function(data, target, id,
                                    args.TFDTW.synth,
                                    filter.width = NULL,
-                                   res.synth.raw.list = NULL){
+                                   res.synth.raw.list = NULL,
+                                   rnd.seed = 1234){
   # prepare data
+  set.seed(rnd.seed)
   if (!is.null(filter.width)) {
     data = preprocessing(data, filter.width)
   }
@@ -216,5 +220,6 @@ TFDTW.synth.target.only = function(data, target, id,
               args.TFDTW.synth = args.TFDTW.synth,
               results.TFDTW.synth = results,
               res.synth.target.raw = res.synth.target.raw,
-              res.synth.target.TFDTW = res.synth.target.TFDTW))
+              res.synth.target.TFDTW = res.synth.target.TFDTW,
+              random.seed = .Random.seed))
 }
