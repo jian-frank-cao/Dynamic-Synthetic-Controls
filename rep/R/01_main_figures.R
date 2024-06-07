@@ -1,0 +1,55 @@
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_1.R'... ")
+source("./R/utility/Figure_1.R")
+car("Done. Figure_1.pdf saved in 'figures/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_2.R'... ")
+source("./R/utility/Figure_2.R")
+car("Done. Figure_2.pdf saved in 'figures/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_3.R'... ")
+source("./R/utility/Figure_3.R")
+car("Done. Figure_3.pdf saved in 'figures/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_4.R'... ")
+source("./R/utility/Figure_4.R")
+car("Done. Figure_4.pdf saved in 'figures/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_5_1.R'... ")
+source("./R/utility/Figure_5_1.R")
+car("Done. Figure_5_1.Rds saved in 'data/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_5_2.R'... ")
+source("./R/utility/Figure_5_2.R")
+car("Done. Figure_5_2.Rds saved in 'data/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_5_3.R'... ")
+source("./R/utility/Figure_5_3.R")
+car("Done. Figure_5_3.Rds saved in 'data/'.\n")
+toc = Sys.time()
+toc - tic
+
+tic = Sys.time()
+cat("Runing script 'R/utility/Figure_5_all.R'... ")
+source("./R/utility/Figure_5_all.R")
+car("Done. Figure_5.pdf saved in 'figures/'.\n")
+toc = Sys.time()
+toc - tic
