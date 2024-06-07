@@ -1,4 +1,4 @@
-setwd("PATH_TO_README.MD")
+setwd("./rep/")
 set.seed(1234)
 
 ppm.date <- "2023-11-01"
@@ -27,3 +27,7 @@ global.libraries <- c("dtw", "emojifont", "forecast", "furrr", "ggpubr",
                       "SimDesign", "Synth", "tidyverse", "TTR", "zoo")
 
 results <- sapply(as.list(global.libraries), pkgTest)
+
+source("./R/01_main_figures.R")
+source("./R/02_appendix_figures.R")
+
