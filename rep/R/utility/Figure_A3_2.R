@@ -3,7 +3,7 @@ library(parallel)
 n.cores = detectCores()
 library(tidyverse)
 library(furrr)
-plan(multisession, workers = n.cores - 1)
+plan(multisession, workers = n.cores)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
