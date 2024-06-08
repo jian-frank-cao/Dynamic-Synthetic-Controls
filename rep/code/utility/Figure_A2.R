@@ -1,4 +1,6 @@
-library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
 
 shock = 10
 length = 100

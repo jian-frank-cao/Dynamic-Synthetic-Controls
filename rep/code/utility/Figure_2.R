@@ -1,5 +1,7 @@
 ## Setup -----------------------------------------------------------------------
-library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
 library(emojifont)
 source("./code/utility/misc.R")
 

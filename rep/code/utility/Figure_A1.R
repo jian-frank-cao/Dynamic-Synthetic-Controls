@@ -1,7 +1,9 @@
 ## Setup -----------------------------------------------------------------------
 library(parallel)
 n.cores = detectCores()
-library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
 library(furrr)
 library(SimDesign)
 plan(multisession, workers = n.cores)

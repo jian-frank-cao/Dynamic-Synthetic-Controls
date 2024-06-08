@@ -107,8 +107,7 @@ The code was run on a **12-core Intel desktop with Windows version 11 with 24GB 
 ## Description of programs/code
 
 - Programs in `00_setup.R` install necessary packages for the other program files in the package.
-- Programs in `01_main_figures.R` source and run program files `Figure_1.R`, `Figure_2.R`, `Figure_3.R`, `Figure_4.R`, `Figure_5_1.R`, `Figure_5_2.R`, `Figure_5_3.R`, `Figure_5_all.R`, output `Figure_1.pdf`, `Figure_2.pdf`, `Figure_3.pdf`, `Figure_4.pdf`, `Figure_5.pdf`, and save them in folder `./results/`.
-- Programs in `02_appendix_figures.R` source and run program files `Figure_A1.R`, `Figure_A2.R`, `Figure_A3_1.R`, `Figure_A3_2.R`, `Figure_A3_3.R`, `Figure_A3_all.R`, output `Figure_A1.pdf`, `Figure_A2.pdf`, `Figure_A3.pdf`, and save them in folder `./results/`.
+- Programs in `01_produce_figures.R` source and run program files `Figure_1.R`, `Figure_2.R`, `Figure_3.R`, `Figure_4.R`, `Figure_5_1.R`, `Figure_5_2.R`, `Figure_5_3.R`, `Figure_5_all.R`, `Figure_A1.R`, `Figure_A2.R`, `Figure_A3_1.R`, `Figure_A3_2.R`, `Figure_A3_3.R`, `Figure_A3_all.R`, output `Figure_1.pdf`, `Figure_2.pdf`, `Figure_3.pdf`, `Figure_4.pdf`, `Figure_5.pdf`, `Figure_A1.pdf`, `Figure_A2.pdf`, `Figure_A3.pdf`, and save them in folder `./results/`.
 - Programs in `Figure_1.R` create an illustration figure `Figure_1.pdf` for the speed problem, and save it in folder `./results/`.
 - Programs in `Figure_2.R` create an illustration figure `Figure_2.pdf` for the Dynamic Synthetic Control method, and save it in folder `./results/`.
 - Programs in `Figure_3.R` create an illustration figure `Figure_3.pdf` for the Dynamic Time Warping path, and save it in folder `./results/`.
@@ -133,9 +132,7 @@ The code was run on a **12-core Intel desktop with Windows version 11 with 24GB 
 ## Instructions to Replicators
 
 - Edit and run `./code/00_setup.R` to adjust the default path and install necessary packages.
-- Run `./code/01_main_figures.R` to produce main paper figures 1-5. The figures are saved in folder `./results/`.
-- Run `./code/02_appendix_figures.R` to produce appendix figures A1-A3. The figures are saved in folder `./results/`.
-
+- Run `./code/01_produce_figures.R` to produce main paper figures 1-5 and appendix figures A1-A3. The figures are saved in folder `./results/`.
 
 ## List of tables and programs
 

@@ -28,6 +28,3 @@ global.libraries <- c("dtw", "emojifont", "forecast", "furrr", "ggpubr",
 
 results <- sapply(as.list(global.libraries), pkgTest)
 
-source("./code/01_main_figures.R")
-source("./code/02_appendix_figures.R")
-
