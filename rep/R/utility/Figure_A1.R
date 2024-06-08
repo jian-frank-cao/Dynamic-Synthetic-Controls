@@ -7,12 +7,12 @@ library(SimDesign)
 plan(multisession, workers = n.cores)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
-source("./R/utility/misc.R")
-source("./R/utility/TFDTW.R")
-source("./R/utility/synth.R")
-source("./R/utility/implement.R")
-source("./R/utility/simulate.R")
-source("./R/utility/grid.search.R")
+source("./code/utility/misc.R")
+source("./code/utility/TFDTW.R")
+source("./code/utility/synth.R")
+source("./code/utility/implement.R")
+source("./code/utility/simulate.R")
+source("./code/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -264,7 +264,7 @@ args.TFDTW.synth = list(start.time = 16, end.time = 100, treat.time = 60,
                         n.mse = 10, 
                         ## other
                         plot.figures = FALSE,
-                        plot.path = "./figures/",
+                        plot.path = "./results/",
                         legend.pos = c(0.3, 0.7))
 
 args.TFDTW.synth.all.units = list(target = "A",
@@ -352,7 +352,7 @@ fig = df %>%
         axis.text=element_blank(),
         axis.ticks=element_blank())
 
-ggsave("./figures/Figure_A1.pdf",
+ggsave("./results/Figure_A1.pdf",
        fig, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 

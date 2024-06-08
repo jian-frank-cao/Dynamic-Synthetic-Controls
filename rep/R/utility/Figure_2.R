@@ -1,7 +1,7 @@
 ## Setup -----------------------------------------------------------------------
 library(tidyverse)
 library(emojifont)
-source("./R/utility/misc.R")
+source("./code/utility/misc.R")
 
 ## Functions -------------------------------------------------------------------
 # normalization
@@ -372,7 +372,7 @@ fig.all <- ggpubr::ggarrange(
   align = "hv"
 )
 
-ggsave("./figures/Figure_2.pdf",
+ggsave("./results/Figure_2.pdf",
        fig.all, width = 8, height = 8,
        units = "in", limitsize = FALSE)
 

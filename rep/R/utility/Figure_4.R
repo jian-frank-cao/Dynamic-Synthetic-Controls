@@ -6,12 +6,12 @@ library(furrr)
 plan(multisession, workers = n.cores)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
-source("./R/utility/misc.R")
-source("./R/utility/TFDTW.R")
-source("./R/utility/synth.R")
-source("./R/utility/implement.R")
-source("./R/utility/simulate.R")
-source("./R/utility/grid.search.R")
+source("./code/utility/misc.R")
+source("./code/utility/TFDTW.R")
+source("./code/utility/synth.R")
+source("./code/utility/implement.R")
+source("./code/utility/simulate.R")
+source("./code/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -92,7 +92,7 @@ args.TFDTW.synth = list(start.time = 1, end.time = 100, treat.time = 60,
                         n.mse = 10, 
                         ## other
                         plot.figures = FALSE,
-                        plot.path = "./figures/",
+                        plot.path = "./results/",
                         legend.pos = c(0.3, 0.7))
 
 args.TFDTW.synth.target.only = list(target = "A", id = 1,
@@ -281,7 +281,7 @@ fig.sim = fig.big + annotation_custom(ggplotGrob(fig.small),
                                       xmin = 5, xmax = 45,
                                       ymin = 7, ymax = 30)
 
-ggsave("./figures/Figure_4.pdf",
+ggsave("./results/Figure_4.pdf",
        fig.sim, width = 6, height = 4.5,
        units = "in", limitsize = FALSE)
 

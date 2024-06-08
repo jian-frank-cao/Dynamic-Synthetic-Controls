@@ -195,7 +195,7 @@ fig_right = df_right %>%
 
 fig_all = gridExtra::grid.arrange(fig_left, fig_right, ncol = 2)
 
-ggsave("./figures/Figure_3.pdf",
+ggsave("./results/Figure_3.pdf",
        fig_all, width = 8, height = 4,
        units = "in", limitsize = FALSE)
 

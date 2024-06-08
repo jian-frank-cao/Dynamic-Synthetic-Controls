@@ -4,7 +4,7 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
                        args.TFDTW, args.synth,
                        res.synth.raw = NULL,
                        n.mse = 10, plot.figures = FALSE,
-                       plot.path = "./figures/",
+                       plot.path = "./results/",
                        legend.pos = c(0.3, 0.3),
                        rnd.seed = 1234){
   set.seed(rnd.seed)

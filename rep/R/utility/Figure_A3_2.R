@@ -7,11 +7,11 @@ plan(multisession, workers = n.cores)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/utility/misc.R")
-source("./R/utility/TFDTW.R")
-source("./R/utility/synth.R")
-source("./R/utility/implement.R")
-source("./R/utility/grid.search.R")
+source("./code/utility/misc.R")
+source("./code/utility/TFDTW.R")
+source("./code/utility/synth.R")
+source("./code/utility/implement.R")
+source("./code/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -33,7 +33,7 @@ TFDTW.synth = function(data, start.time, end.time, treat.time,
                        pred.vars = NULL,
                        res.synth.raw = NULL,
                        n.mse = 10, plot.figures = FALSE,
-                       plot.path = "./figures/",
+                       plot.path = "./results/",
                        legend.pos = c(0.3, 0.3)){
   # prepare data for TFDTW
   t.treat = (treat.time - start.time) + 1
@@ -312,7 +312,7 @@ args.TFDTW.synth = list(start.time = 1970, end.time = 2000, treat.time = 1989,
                         n.mse = 10, pred.vars = pred.vars,
                         ## other
                         plot.figures = FALSE,
-                        plot.path = "./figures/",
+                        plot.path = "./results/",
                         legend.pos = c(0.3, 0.3))
 
 results = as.list(1:nrow(grid.opt)) %>%

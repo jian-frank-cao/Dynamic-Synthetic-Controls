@@ -7,11 +7,11 @@ plan(multisession, workers = n.cores)
 options(future.rng.onMisuse="ignore")
 options(stringsAsFactors = FALSE)
 
-source("./R/utility/misc.R")
-source("./R/utility/TFDTW.R")
-source("./R/utility/synth.R")
-source("./R/utility/implement.R")
-source("./R/utility/grid.search.R")
+source("./code/utility/misc.R")
+source("./code/utility/TFDTW.R")
+source("./code/utility/synth.R")
+source("./code/utility/implement.R")
+source("./code/utility/grid.search.R")
 set.seed(20220407)
 
 
@@ -44,6 +44,6 @@ fig_all = ggpubr::annotate_figure(fig_all,
                                   bottom = grid::textGrob("Time", 
                                                           gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/Figure_A3.pdf",
+ggsave("./results/Figure_A3.pdf",
        fig_all,  width = 7, height = 7,
        units = "in", limitsize = FALSE)

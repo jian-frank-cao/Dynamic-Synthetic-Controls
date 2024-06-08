@@ -35,8 +35,8 @@ The code in this replication package constructs the analysis file from the three
 | Data.Name  | Data.Files | Location | Provided | Citation |
 | -- | -- | -- | -- | -- | 
 | “Panel Data from Spanish Regions 1955-1997” | "basque" in R package "Synth" | None | FALSE | Abadie and Gardeazabal, 2003 |
-| “Cigarette Consumption in United States 1970-2000” | smoking.rda; prop99.csv | data/ | TRUE | Abadie, Diamond, and Hainmueller, 2010 |
-| “OECD Country Panel Data 1960-2003” | repgermany.Rds | data/ | TRUE | Abadie, Diamond, and Hainmueller, 2015 |
+| “Cigarette Consumption in United States 1970-2000” | smoking.rda; prop99.csv | ./data/ | TRUE | Abadie, Diamond, and Hainmueller, 2010 |
+| “OECD Country Panel Data 1960-2003” | repgermany.Rds | ./data/ | TRUE | Abadie, Diamond, and Hainmueller, 2015 |
 
 The data set "basque" is publicly available in R package "Synth". The R package "Synth" can be obtained from [CRAN](https://cran.r-project.org/web/packages/Synth/index.html).
 
@@ -69,7 +69,7 @@ The data file "repgermany.tab" is available for replication at [Dataverse](https
 
 ### Controlled Randomness
 
-- [x] Random seed is set at line 1 of program "`00_setup.R`"
+- [x] Random seed is set at line 2 of program "`00_setup.R`"
 - [ ] No Pseudo random generator is used in the analysis described here.
 
 ### Memory, Runtime, Storage Requirements
@@ -100,39 +100,29 @@ Approximate storage space needed:
 
 #### Details
 
-The code was last run on a **8-core Apple M1 Pro laptop with MacOS version 14.5 with 300GB of free space**. 
+The code was last run on a **8-core Apple M1 Pro laptop with MacOS version 14.5 with 300GB of free space**.  Computation took **11 hours**.
 
-Portions of the code were last run on a **32-core Intel server with 1024 GB of RAM, 12 TB of fast local storage**. Computation took **734 hours**. 
-
-Portions of the code were last run on a **12-node AWS R3 cluster, consuming 20,000 core-hours, with 2TB of attached storage**.  
-
-> INSTRUCTIONS: Identifiying hardware and OS can be obtained through a variety of ways:
-> Some of these details can be found as follows:
->
-> - (Windows) by right-clicking on "This PC" in File Explorer and choosing "Properties"
-> - (Mac) Apple-menu > "About this Mac"
-> - (Linux) see code in [linux-system-info.sh](https://github.com/AEADataEditor/replication-template/blob/master/tools/linux-system-info.sh)`
-
+The code was run on a **12-core Intel desktop with Windows version 11 with 24GB of RAM, 200 GB free space**.  Computation took **20 hours**.
 
 ## Description of programs/code
 
 - Programs in `00_setup.R` install necessary packages for the other program files in the package.
-- Programs in `01_main_figures.R` source and run program files `Figure_1.R`, `Figure_2.R`, `Figure_3.R`, `Figure_4.R`, `Figure_5_1.R`, `Figure_5_2.R`, `Figure_5_3.R`, `Figure_5_all.R`, output `Figure_1.pdf`, `Figure_2.pdf`, `Figure_3.pdf`, `Figure_4.pdf`, `Figure_5.pdf`, and save them in folder `figures/`.
-- Programs in `02_appendix_figures.R` source and run program files `Figure_A1.R`, `Figure_A2.R`, `Figure_A3_1.R`, `Figure_A3_2.R`, `Figure_A3_3.R`, `Figure_A3_all.R`, output `Figure_A1.pdf`, `Figure_A2.pdf`, `Figure_A3.pdf`, and save them in folder `figures/`.
-- Programs in `Figure_1.R` create an illustration figure `Figure_1.pdf` for the speed problem, and save it in folder `figures/`.
-- Programs in `Figure_2.R` create an illustration figure `Figure_2.pdf` for the Dynamic Synthetic Control method, and save it in folder `figures/`.
-- Programs in `Figure_3.R` create an illustration figure `Figure_3.pdf` for the Dynamic Time Warping path, and save it in folder `figures/`.
-- Programs in `Figure_4.R` simulate 100 data sets, apply the standard Synthetic Control method and the Dynamic Synthetic Control method, create a figure `Figure_4.pdf` for a comparison of errors, and save it in folder `figures/`.
-- Programs in `Figure_5_1.R` replicate the application in Abadie and Gardeazabal (2003) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_1.Rds` in folder `data/`.
-- Programs in `Figure_5_2.R` replicate the application in Abadie, Diamond, and Hainmueller (2010) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_2.Rds` in folder `data/`.
-- Programs in `Figure_5_3.R` replicate the application in Abadie, Diamond, and Hainmueller (2015) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_3.Rds` in folder `data/`.
-- Programs in `Figure_5_all.R` load sub-figures from data files `Figure_5_1.Rds`, `Figure_5_2.Rds`, and `Figure_5_3.Rds`, create a figure `Figure_5.pdf`, and save it in folder `figures/`.
-- Programs in `Figure_A1.R` create an illustration figure `Figure_A1.pdf` for the speed problem with lags and polynomials, and save it in folder `figures/`.
-- Programs in `Figure_A2.R` create an illustration figure `Figure_A2.pdf` for the Monte-Carlo analysis, and save it in folder `figures/`.
-- Programs in `Figure_A3_1.R` replicate the application in Abadie and Gardeazabal (2003) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_1.Rds` in folder `data/`.
-- Programs in `Figure_A3_2.R` replicate the application in Abadie, Diamond, and Hainmueller (2010) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_2.Rds` in folder `data/`.
-- Programs in `Figure_A3_3.R` replicate the application in Abadie, Diamond, and Hainmueller (2015) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_3.Rds` in folder `data/`.
-- Programs in `Figure_A3_all.R` load sub-figures from data files `Figure_A3_1.Rds`, `Figure_A3_2.Rds`, and `Figure_A3_3.Rds`, create a figure `Figure_A3.pdf`, and save it in folder `figures/`.
+- Programs in `01_main_figures.R` source and run program files `Figure_1.R`, `Figure_2.R`, `Figure_3.R`, `Figure_4.R`, `Figure_5_1.R`, `Figure_5_2.R`, `Figure_5_3.R`, `Figure_5_all.R`, output `Figure_1.pdf`, `Figure_2.pdf`, `Figure_3.pdf`, `Figure_4.pdf`, `Figure_5.pdf`, and save them in folder `./results/`.
+- Programs in `02_appendix_figures.R` source and run program files `Figure_A1.R`, `Figure_A2.R`, `Figure_A3_1.R`, `Figure_A3_2.R`, `Figure_A3_3.R`, `Figure_A3_all.R`, output `Figure_A1.pdf`, `Figure_A2.pdf`, `Figure_A3.pdf`, and save them in folder `./results/`.
+- Programs in `Figure_1.R` create an illustration figure `Figure_1.pdf` for the speed problem, and save it in folder `./results/`.
+- Programs in `Figure_2.R` create an illustration figure `Figure_2.pdf` for the Dynamic Synthetic Control method, and save it in folder `./results/`.
+- Programs in `Figure_3.R` create an illustration figure `Figure_3.pdf` for the Dynamic Time Warping path, and save it in folder `./results/`.
+- Programs in `Figure_4.R` simulate 100 data sets, apply the standard Synthetic Control method and the Dynamic Synthetic Control method, create a figure `Figure_4.pdf` for a comparison of errors, and save it in folder `./results/`.
+- Programs in `Figure_5_1.R` replicate the application in Abadie and Gardeazabal (2003) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_1.Rds` in folder `./data/`.
+- Programs in `Figure_5_2.R` replicate the application in Abadie, Diamond, and Hainmueller (2010) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_2.Rds` in folder `./data/`.
+- Programs in `Figure_5_3.R` replicate the application in Abadie, Diamond, and Hainmueller (2015) using the standard Synthetic Control and the Dynamic Synthetic Control methods, create a sub-figure for Figure 5 for a comparison of errors in placebo tests, and save it into data file `Figure_5_3.Rds` in folder `./data/`.
+- Programs in `Figure_5_all.R` load sub-figures from data files `Figure_5_1.Rds`, `Figure_5_2.Rds`, and `Figure_5_3.Rds`, create a figure `Figure_5.pdf`, and save it in folder `./results/`.
+- Programs in `Figure_A1.R` create an illustration figure `Figure_A1.pdf` for the speed problem with lags and polynomials, and save it in folder `./results/`.
+- Programs in `Figure_A2.R` create an illustration figure `Figure_A2.pdf` for the Monte-Carlo analysis, and save it in folder `./results/`.
+- Programs in `Figure_A3_1.R` replicate the application in Abadie and Gardeazabal (2003) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_1.Rds` in folder `./data/`.
+- Programs in `Figure_A3_2.R` replicate the application in Abadie, Diamond, and Hainmueller (2010) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_2.Rds` in folder `./data/`.
+- Programs in `Figure_A3_3.R` replicate the application in Abadie, Diamond, and Hainmueller (2015) using the standard Synthetic Control and the Dynamic Synthetic Control methods with warped covariates, create a sub-figure for Figure A3 for a comparison of errors in placebo tests, and save it into data file `Figure_A3_3.Rds` in folder `./data/`.
+- Programs in `Figure_A3_all.R` load sub-figures from data files `Figure_A3_1.Rds`, `Figure_A3_2.Rds`, and `Figure_A3_3.Rds`, create a figure `Figure_A3.pdf`, and save it in folder `./results/`.
 - Programs in `grid.search.R` conduct grid search to find out the optimal parameters.
 - Programs in `implement.R` implement the Dynamic Synthetic Control method.
 - Programs in `misc.R` conduct data pre-processing, data transformation, and plot figures.
@@ -142,9 +132,9 @@ Portions of the code were last run on a **12-node AWS R3 cluster, consuming 20,0
 
 ## Instructions to Replicators
 
-- Edit and run `R/00_setup.R` to adjust the default path and install necessary packages.
-- Run `R/01_main_figures.R` to produce main paper figures 1-5. The figures are saved in folder `figures/`.
-- Run `R/02_appendix_figures.R` to produce appendix figures A1-A3. The figures are saved in folder `figures/`.
+- Edit and run `./code/00_setup.R` to adjust the default path and install necessary packages.
+- Run `./code/01_main_figures.R` to produce main paper figures 1-5. The figures are saved in folder `./results/`.
+- Run `./code/02_appendix_figures.R` to produce appendix figures A1-A3. The figures are saved in folder `./results/`.
 
 
 ## List of tables and programs
@@ -158,14 +148,14 @@ The provided code reproduces:
 
 | Figure/Table #    | Program                  | Line Number | Output file                              | Note                            |
 |-------------------|--------------------------|-------------|------------------------------------------|---------------------------------|
-| Figure 1          | R/Figure_1.R             |             | figures/Figure_1.pdf                     |                                 |
-| Figure 2          | R/Figure_2.R             |             | figures/Figure_2.pdf                     |                                 |
-| Figure 3          | R/Figure_3.R             |             | figures/Figure_3.pdf                     |                                 |
-| Figure 4          | R/Figure_4.R             |             | figures/Figure_4.pdf                     |                                 |
-| Figure 5          | R/Figure_5_all.R         |             | figures/Figure_5.pdf                     |                                 |
-| Figure A1         | R/Figure_A1.R            |             | figures/Figure_A1.pdf                    |                                 |
-| Figure A2         | R/Figure_A1.R            |             | figures/Figure_A2.pdf                    |                                 |
-| Figure A3         | R/Figure_A3_all.R        |             | figures/Figure_A3.pdf                    |                                 |
+| Figure 1          | ./code/Figure_1.R             |             | ./results/Figure_1.pdf                     |                                 |
+| Figure 2          | ./code/Figure_2.R             |             | ./results/Figure_2.pdf                     |                                 |
+| Figure 3          | ./code/Figure_3.R             |             | ./results/Figure_3.pdf                     |                                 |
+| Figure 4          | ./code/Figure_4.R             |             | ./results/Figure_4.pdf                     |                                 |
+| Figure 5          | ./code/Figure_5_all.R         |             | ./results/Figure_5.pdf                     |                                 |
+| Figure A1         | ./code/Figure_A1.R            |             | ./results/Figure_A1.pdf                    |                                 |
+| Figure A2         | ./code/Figure_A1.R            |             | ./results/Figure_A2.pdf                    |                                 |
+| Figure A3         | ./code/Figure_A3_all.R        |             | ./results/Figure_A3.pdf                    |                                 |
 
 
 ## References

@@ -133,7 +133,7 @@ fig.all = ggpubr::annotate_figure(fig.all,
                                   bottom = grid::textGrob("Time", 
                                                           gp = grid::gpar(cex = 1.3)))
 
-ggsave("./figures/Figure_A2.pdf",
+ggsave("./results/Figure_A2.pdf",
        fig.all, width = 6, height = 6,
        units = "in", limitsize = FALSE)
 
