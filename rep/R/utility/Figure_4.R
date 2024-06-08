@@ -170,7 +170,6 @@ for (i in 1:nrow(df.mse)) {
     synth.sc = results[[data.id]][[grid.id]][["res.synth.target.raw"]][[3]],
     synth.dsc = results[[data.id]][[grid.id]][["res.synth.target.TFDTW"]][[3]]
   )
-  print(i)
 }
 
 df.gap = df.gap %>%
