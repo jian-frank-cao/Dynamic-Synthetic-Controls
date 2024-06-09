@@ -22,9 +22,10 @@ pkgTest <- function(x,y="")
   return("OK")
 }
 
-global.libraries <- c("dtw", "emojifont", "forecast", "furrr", "ggpubr",
-                      "gridExtra", "purrr", "reshape2", "signal",
-                      "SimDesign", "Synth", "tidyverse", "TTR", "zoo")
+global.libraries <- c("dplyr", "dtw", "emojifont", "forecast", "furrr",
+                      "ggplot2", "ggpubr", "gridExtra", "magrittr",
+                      "Matrix", "purrr", "reshape2", "signal",
+                      "SimDesign", "Synth", "TTR", "zoo")
 
 results <- sapply(as.list(global.libraries), pkgTest)
 

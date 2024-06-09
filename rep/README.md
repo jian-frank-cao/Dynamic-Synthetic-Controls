@@ -9,7 +9,7 @@ contributors:
 
 ## Overview
 
-The code in this replication package constructs the analysis file from the three data sources (Abadie and Gardeazabal, 2003; Abadie, Diamond, and Hainmueller, 2010; Abadie, Diamond, and Hainmueller, 2015) using R. Two main files run all of the code to generate the data for the 5 figures in the main paper and 3 figures in the Appendix. The replicator should expect the code to run for about 10 hours.
+The code in this replication package constructs the analysis file from the three data sources (Abadie and Gardeazabal, 2003; Abadie, Diamond, and Hainmueller, 2010; Abadie, Diamond, and Hainmueller, 2015) using R. Two main files run all of the code to generate the data for the 5 figures in the main paper and 3 figures in the Appendix. The replicator should expect the code to run for about 20 hours.
 
 ## Data Availability and Provenance Statements
 
@@ -51,18 +51,21 @@ The data file "repgermany.tab" is available for replication at [Dataverse](https
 - [x] The replication package contains one or more programs to install all dependencies and set up the necessary directory structure. [HIGHLY RECOMMENDED]
 
 - R 4.2.0
+  - `dplyr` (1.1.3)
   - `dtw` (1.23-1)
   - `emojifont` (0.5.5)
   - `forecast` (8.21.1)
   - `furrr` (0.3.1)
+  - `ggplot2` (3.4.3)
   - `ggpubr` (0.6.0)
   - `gridExtra` (2.3)
+  - `magrittr` (2.0.3)
+  - `Matrix` (1.6-0)
   - `purrr` (1.0.2)
   - `reshape2` (1.4.4)
   - `signal` (0.7-7)
   - `SimDesign` (2.15.1)
   - `Synth` (1.1-8)
-  - `tidyverse` (2.0.0)
   - `TTR` (0.24.3)
   - `zoo` (1.8-12)
   - the file "`00_setup.R`" will install all dependencies (latest version), and should be run once prior to running other programs.
