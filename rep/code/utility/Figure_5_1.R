@@ -348,7 +348,9 @@ fig_basque = df.gap %>%
 
 saveRDS(fig_basque, "./data/Figure_5_1.Rds")
 
-
+ggsave("./results/Figure_5_1.pdf",
+       fig_basque,  width = 7, height = 3,
+       units = "in", limitsize = FALSE)
 
 
 

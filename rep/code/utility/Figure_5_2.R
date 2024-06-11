@@ -358,4 +358,6 @@ fig_tobacco = df.gap %>%
 
 saveRDS(fig_tobacco, "./data/Figure_5_2.Rds")
 
-
+ggsave("./results/Figure_5_2.pdf",
+       fig_tobacco,  width = 7, height = 3,
+       units = "in", limitsize = FALSE)
